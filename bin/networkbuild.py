@@ -3,6 +3,13 @@
 import csv, argparse, operator, sys, datetime, time, random, os.path, json, hppy as hy, re
 from math import log10, floor
 from hivclustering import *
+from functools import partial
+import multiprocessing
+
+run_settings = None
+
+def settings ():
+    return run_settings
 
 #-------------------------------------------------------------------------------
 def print_network_evolution (network, store_fitted = None, outdegree = False, distance = None, do_print = True, outfile = sys.stdout):
@@ -255,129 +262,139 @@ def get_sequence_ids(fn):
         if not len(filter_list):
             raise Exception('Empty file list')
         return list(set(filter_list))
+        
+        
+def build_a_network ():
 
-random.seed()
-arguments = argparse.ArgumentParser(description='Read filenames.')
-
-arguments.add_argument('-i', '--input',   help = 'Input CSV file with inferred genetic links (or stdin if omitted). Must be a CSV file with three columns: ID1,ID2,distance.')
-arguments.add_argument('-u', '--uds',   help = 'Input CSV file with UDS data. Must be a CSV file with three columns: ID1,ID2,distance.')
-arguments.add_argument('-d', '--dot',   help = 'Output DOT file for GraphViz (or stdout if omitted)')
-arguments.add_argument('-c', '--cluster', help = 'Output a CSV file with cluster assignments for each sequence')
-arguments.add_argument('-t', '--threshold', help = 'Only count edges where the distance is less than this threshold')
-arguments.add_argument('-e', '--edi',   help = 'A .json file with clinical information')
-arguments.add_argument('-z', '--old_edi',   help = 'A .csv file with legacy EDI dates')
-arguments.add_argument('-f', '--format',   help = 'Sequence ID format. One of AEH (ID | sample_date | otherfiels default), LANL (e.g. B_HXB2_K03455_1983 : subtype_country_id_year -- could have more fields), regexp (match a regular expression, use the first group as the ID), or plain (treat as sequence ID only, no meta)')
-arguments.add_argument('-x', '--exclude',   help = 'Exclude any sequence which belongs to a cluster containing a "reference" strain, defined by the year of isolation. The value of this argument is an integer year (e.g. 1983) so that any sequence isolated in or before that year (e.g. <=1983) is considered to be a lab strain. This option makes sense for LANL or AEH data.')
-arguments.add_argument('-r', '--resistance',   help = 'Load a JSON file with resistance annotation by sequence', type = argparse.FileType('r'))
-arguments.add_argument('-p', '--parser', help = 'The reg.exp pattern to split up sequence ids; only used if format is regexp', required = False, type = str)
-arguments.add_argument('-a', '--attributes',   help = 'Load a CSV file with optional node attributes', type = argparse.FileType('r'))
-arguments.add_argument('-j', '--json', help = 'Output the network report as a JSON object', required = False,  action = 'store_true', default = False)
-arguments.add_argument('-k', '--filter', help = 'Only return clusters with ids listed by a newline separated supplied file. ', required = False)
-arguments.add_argument('-s', '--sequences', help = 'Provide the MSA with sequences which were used to make the distance file. ', required = False)
-arguments.add_argument('-n', '--edge_filtering', choices = ['remove','report'] , help = 'Compute edge support and mark edges for removal using sequence-based triangle tests (requires the -s argument) and either only report them or remove the edges before doing other analyses ', required = False)
-
-settings = arguments.parse_args()
-
-if settings.input == None:
-	settings.input = sys.stdin
-else:
-	try:
-		settings.input = open (settings.input, 'r')
-	except IOError:
-		print ("Failed to open '%s' for reading" % (settings.input), file = sys.stderr)
-		raise
-
-if settings.dot == None:
-	settings.dot = sys.stdout
-else:
-	try:
-		settings.dot = open (settings.dot, 'w')
-	except IOError:
-		print ("Failed to open '%s' for writing" % (settings.dot), file = sys.stderr)
-		raise
+    random.seed()
+    arguments = argparse.ArgumentParser(description='Read filenames.')
 
 
-edi = None
-old_edi = False
 
-if settings.edi is not None:
-	try:
-		settings.edi = open (settings.edi, 'r')
-		edi = import_edi_json (settings.edi)
-	except IOError:
-		print ("Failed to open '%s' for reading" % (settings.edi), file = sys.stderr)
-		raise
+    arguments.add_argument('-i', '--input',   help = 'Input CSV file with inferred genetic links (or stdin if omitted). Must be a CSV file with three columns: ID1,ID2,distance.')
+    arguments.add_argument('-u', '--uds',   help = 'Input CSV file with UDS data. Must be a CSV file with three columns: ID1,ID2,distance.')
+    arguments.add_argument('-d', '--dot',   help = 'Output DOT file for GraphViz (or stdout if omitted)')
+    arguments.add_argument('-c', '--cluster', help = 'Output a CSV file with cluster assignments for each sequence')
+    arguments.add_argument('-t', '--threshold', help = 'Only count edges where the distance is less than this threshold')
+    arguments.add_argument('-e', '--edi',   help = 'A .json file with clinical information')
+    arguments.add_argument('-z', '--old_edi',   help = 'A .csv file with legacy EDI dates')
+    arguments.add_argument('-f', '--format',   help = 'Sequence ID format. One of AEH (ID | sample_date | otherfiels default), LANL (e.g. B_HXB2_K03455_1983 : subtype_country_id_year -- could have more fields), regexp (match a regular expression, use the first group as the ID), or plain (treat as sequence ID only, no meta)')
+    arguments.add_argument('-x', '--exclude',   help = 'Exclude any sequence which belongs to a cluster containing a "reference" strain, defined by the year of isolation. The value of this argument is an integer year (e.g. 1983) so that any sequence isolated in or before that year (e.g. <=1983) is considered to be a lab strain. This option makes sense for LANL or AEH data.')
+    arguments.add_argument('-r', '--resistance',   help = 'Load a JSON file with resistance annotation by sequence', type = argparse.FileType('r'))
+    arguments.add_argument('-p', '--parser', help = 'The reg.exp pattern to split up sequence ids; only used if format is regexp', required = False, type = str)
+    arguments.add_argument('-a', '--attributes',   help = 'Load a CSV file with optional node attributes', type = argparse.FileType('r'))
+    arguments.add_argument('-j', '--json', help = 'Output the network report as a JSON object', required = False,  action = 'store_true', default = False)
+    arguments.add_argument('-k', '--filter', help = 'Only return clusters with ids listed by a newline separated supplied file. ', required = False)
+    arguments.add_argument('-s', '--sequences', help = 'Provide the MSA with sequences which were used to make the distance file. ', required = False)
+    arguments.add_argument('-n', '--edge_filtering', choices = ['remove','report'] , help = 'Compute edge support and mark edges for removal using sequence-based triangle tests (requires the -s argument) and either only report them or remove the edges before doing other analyses ', required = False)
 
-if edi is None and settings.old_edi is not None:
-	try:
-		settings.old_edi = open (settings.old_edi, 'r')
-		edi = import_edi (settings.old_edi)
-		old_edi = True
-	except IOError:
-		print ("Failed to open '%s' for reading" % (settings.old_edi), file = sys.stderr)
-		raise
+    global run_settings
 
+    run_settings = arguments.parse_args()
 
-if settings.cluster is not None:
-    try:
-        settings.cluster = open (settings.cluster, 'w')
-    except IOError:
-        print ("Failed to open '%s' for writing" % (settings.cluster), file = sys.stderr)
-        raise
-
-formatter = parseAEH
-
-if settings.format is not None:
-	formats = {"AEH" : parseAEH, "LANL": parseLANL, "plain": parsePlain, "regexp": parseRegExp (None if settings.parser is None else re.compile(settings.parser))}
-	try:
-		formatter = formats[settings.format]
-	except KeyError:
-		print ("%s is not a valid setting for 'format' (must be in %s)" % (settings.format,str(list(formats.keys()))), file = sys.stderr)
-		raise
-
-if settings.exclude is not None:
-	try:
-		settings.exclude = datetime.datetime (int (settings.exclude), 12, 31)
-	except ValueError:
-		print ("Invalid contaminant threshold year '%s'" % (settings.exclude), file = sys.stderr)
-		raise
-
-
-if settings.threshold is not None:
-	settings.threshold = float (settings.threshold)
-
-
-if settings.uds is not None:
-	try:
-		settings.uds = open (settings.uds, 'r')
-	except IOError:
-		print ("Failed to open '%s' for reading" % (settings.uds), file = sys.stderr)
-		raise
-
-network = transmission_network ()
-network.read_from_csv_file (settings.input, formatter, settings.threshold, 'BULK')
-
-
-uds_attributes = None
-
-if settings.uds:
-    uds_attributes = network.read_from_csv_file (settings.uds, formatter, settings.threshold, 'UDS')
-
-network_stats = network.get_edge_node_count ()
-sys.setrecursionlimit(max(sys.getrecursionlimit(),network_stats['nodes']))
-
-if edi is not None:
-    if old_edi:
-        network.add_edi (edi)
+    if run_settings.input == None:
+        run_settings.input = sys.stdin
     else:
-        network.add_edi_json (edi)
-    print ("Added edi information to %d nodes" % len ([k for k in network.nodes if k.edi is not None]), file = sys.stderr)
+        try:
+            run_settings.input = open (run_settings.input, 'r')
+        except IOError:
+            print ("Failed to open '%s' for reading" % (run_settings.input), file = sys.stderr)
+            raise
 
-if settings.attributes is not None:
-    import_attributes ( settings.attributes, network)
+    if run_settings.dot == None:
+        run_settings.dot = sys.stdout
+    else:
+        try:
+            run_settings.dot = open (run_settings.dot, 'w')
+        except IOError:
+            print ("Failed to open '%s' for writing" % (run_settings.dot), file = sys.stderr)
+            raise
+
+
+    edi = None
+    old_edi = False
+
+    if run_settings.edi is not None:
+        try:
+            run_settings.edi = open (run_settings.edi, 'r')
+            edi = import_edi_json (run_settings.edi)
+        except IOError:
+            print ("Failed to open '%s' for reading" % (run_settings.edi), file = sys.stderr)
+            raise
+
+    if edi is None and run_settings.old_edi is not None:
+        try:
+            run_settings.old_edi = open (run_settings.old_edi, 'r')
+            edi = import_edi (run_settings.old_edi)
+            old_edi = True
+        except IOError:
+            print ("Failed to open '%s' for reading" % (run_settings.old_edi), file = sys.stderr)
+            raise
+
+
+    if run_settings.cluster is not None:
+        try:
+            run_settings.cluster = open (run_settings.cluster, 'w')
+        except IOError:
+            print ("Failed to open '%s' for writing" % (run_settings.cluster), file = sys.stderr)
+            raise
+
+    formatter = parseAEH
+
+    if run_settings.format is not None:
+        formats = {"AEH" : parseAEH, "LANL": parseLANL, "plain": parsePlain, "regexp": parseRegExp (None if run_settings.parser is None else re.compile(run_settings.parser))}
+        try:
+            formatter = formats[run_settings.format]
+        except KeyError:
+            print ("%s is not a valid setting for 'format' (must be in %s)" % (run_settings.format,str(list(formats.keys()))), file = sys.stderr)
+            raise
+
+    if run_settings.exclude is not None:
+        try:
+            run_settings.exclude = datetime.datetime (int (run_settings.exclude), 12, 31)
+        except ValueError:
+            print ("Invalid contaminant threshold year '%s'" % (run_settings.exclude), file = sys.stderr)
+            raise
+
+
+    if run_settings.threshold is not None:
+        run_settings.threshold = float (run_settings.threshold)
+
+
+    if run_settings.uds is not None:
+        try:
+            run_settings.uds = open (run_settings.uds, 'r')
+        except IOError:
+            print ("Failed to open '%s' for reading" % (run_settings.uds), file = sys.stderr)
+            raise
+
+    network = transmission_network ()
+    network.read_from_csv_file (run_settings.input, formatter, run_settings.threshold, 'BULK')
+
+
+    uds_attributes = None
+
+    if run_settings.uds:
+        uds_attributes = network.read_from_csv_file (run_settings.uds, formatter, run_settings.threshold, 'UDS')
+
+    network_stats = network.get_edge_node_count ()
+    sys.setrecursionlimit(max(sys.getrecursionlimit(),network_stats['nodes']))
+
+    if edi is not None:
+        if old_edi:
+            network.add_edi (edi)
+        else:
+            network.add_edi_json (edi)
+        print ("Added edi information to %d nodes" % len ([k for k in network.nodes if k.edi is not None]), file = sys.stderr)
+
+    if run_settings.attributes is not None:
+        import_attributes ( run_settings.attributes, network)
     
-if settings.sequences and settings.edge_filtering:                
-    network.test_edge_support (os.path.abspath (settings.sequences), network.find_all_triangles(network.reduce_edge_set()))
-    if settings.edge_filtering == 'remove':
-        network.prune_all_edges_lacking_support()
 
+    
+    if run_settings.sequences and run_settings.edge_filtering:                
+        network.test_edge_support (os.path.abspath (run_settings.sequences), network.find_all_triangles(network.reduce_edge_set()))
+        if run_settings.edge_filtering == 'remove':
+            network.prune_all_edges_lacking_support()
+
+    return network

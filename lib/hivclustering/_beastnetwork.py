@@ -1,12 +1,15 @@
 
 
-import datetime, time, random, itertools, operator, re
+import datetime, time, random, itertools, operator, re, sys
 from math import log
 from copy import copy, deepcopy
 from bisect import bisect_left
+from operator import itemgetter
 import hppy as hy
 import os
 import csv
+import multiprocessing
+from functools import partial
 
 __all__ = ['edge', 'patient', 'transmission_network', 'parseAEH', 'parseLANL', 'parsePlain', 'parseRegExp', 'describe_vector', 'tm_to_datetime', 'datetime_to_tm']
 #-------------------------------------------------------------------------------
@@ -80,6 +83,33 @@ def describe_vector (vector):
     vector.sort()
     l = len (vector)
     return {'count': l, 'min': vector[0], 'max': vector[-1], 'mean': sum(vector)/l, 'median':  vector [l//2] if l % 2 == 1 else 0.5*(vector[l//2-1]+vector[l//2]), "IQR": [vector [l//4], vector [(3*l)//4]] }
+    
+    
+def _test_edge_support (triangles, sequence_file_name, hy_instance, p_value_cutoff):
+    if hy_instance is None:
+        hy_instance = hy.HyphyInterface ();
+    script_path = os.path.realpath(__file__)
+    hbl_path =  os.path.join(os.path.dirname(script_path), "data", "HBL", "TriangleSupport.bf")
+
+    hy_instance.queuevar ('_py_sequence_file', sequence_file_name)
+    triangle_spec = []
+    for k in triangles:
+        for i in k[:3]:
+            triangle_spec.append (i)
+
+    hy_instance.queuevar ('_py_triangle_sequences', triangle_spec)    
+    hy_instance.runqueue (batchfile = hbl_path)
+    if len(hy_instance.stderr):
+        raise RuntimeError (hy_instance.stderr)
+
+
+    return_object = [] # ((triangle), (p-values))
+
+    for k, t in enumerate (triangles):
+        return_object.append ( (t, hy_instance.getvar (str(k),hy.HyphyInterface.MATRIX)) )
+    
+    return return_object
+
 
 #-------------------------------------------------------------------------------
 
@@ -834,13 +864,14 @@ class transmission_network:
 
         return None
 
-    def compute_adjacency (self,edges=False):
+    def compute_adjacency (self,edges=False,edge_set = None, both = False):
         self.adjacency_list = {}
-        for anEdge in self.edges:
+        
+        for anEdge in (edge_set if edge_set is not None else self.edges):
             if anEdge.visible:
                 if anEdge.p1 not in self.adjacency_list: self.adjacency_list [anEdge.p1] = set()
                 if anEdge.p2 not in self.adjacency_list: self.adjacency_list [anEdge.p2] = set()
-                if (edges):
+                if edges:
                     # check for duplication
                     processed = False
                     for an_edge in self.adjacency_list [anEdge.p1]:
@@ -855,6 +886,22 @@ class transmission_network:
                     if not processed:
                         self.adjacency_list [anEdge.p1].add (anEdge)
                         self.adjacency_list [anEdge.p2].add (anEdge)
+                elif both:
+                    # check for duplication
+                    processed = False
+                    for a_node, an_edge in self.adjacency_list [anEdge.p1]:
+                        if an_edge.p1 == anEdge.p1 and an_edge.p2 == anEdge.p2:
+                            if an_edge > anEdge: #existing is "greater", replace
+                                self.adjacency_list[anEdge.p1].remove ((a_node,an_edge))
+                                self.adjacency_list[anEdge.p2].remove ((a_node,an_edge))
+                            else:
+                                processed = True
+                            break
+
+                    if not processed:
+                        self.adjacency_list [anEdge.p1].add ((anEdge.p2,anEdge))
+                        self.adjacency_list [anEdge.p2].add ((anEdge.p1,anEdge))
+                
                 else:
                     self.adjacency_list [anEdge.p1].add (anEdge.p2)
                     self.adjacency_list [anEdge.p2].add (anEdge.p1)
@@ -1367,9 +1414,16 @@ class transmission_network:
 
     def find_all_triangles (self, edge_set):
         triangles                   =  set ()
-        sequences_involved_in_links =  set ()
-        sequence_pairs              =  set ()
+        #sequences_involved_in_links =  set ()
+        #sequence_pairs              =  set ()
 
+
+        if self.adjacency_list == None:
+            self.compute_adjacency (both = True, edge_set = edge_set)
+            
+        print ("Locating triangles in the network", file = sys.stderr)
+
+        '''
         for an_edge in edge_set:
             if an_edge.sequences is not None:
                 sequence_pairs.add (an_edge.sequences)
@@ -1381,48 +1435,96 @@ class transmission_network:
                 if (((third_apex, this_pair[0]) in sequence_pairs or (this_pair[0],third_apex) in sequence_pairs)
                     and ((third_apex, this_pair[1]) in sequence_pairs or (this_pair[1],third_apex) in sequence_pairs)):
                     triangles.add ((this_pair[0], this_pair[1], third_apex))
-
-
-        return triangles
+        '''
+        
+        # create a list of the form 
+        # node[id] = list of 
+        #   [node_id] = edge_id
+        
+        adjacency_map = {}
+        for node, edge_list in self.adjacency_list.items():
+            node_neighborhood = {}
+            for n, e in edge_list:
+                node_neighborhood [n] = e
+            adjacency_map[node] = node_neighborhood
+        
+        triangle_nodes = set ()
+        triangle_nodes_all = set ()
+        
+        count_by_sequence = {}
+        
+        for node, neighbors in adjacency_map.items():
+            if len (neighbors) > 1: # something to do
+                for node2 in neighbors:
+                    for node3 in adjacency_map[node2]: 
+                        if node in adjacency_map[node3]:   
+                            triad = sorted([node, node2, node3])
+                            triad = (triad[0], triad[1], triad[2])
+                            if triad not in triangle_nodes:
+                                sequence_set = set ()
+                                for triangle_edge in [adjacency_map[node][node2], adjacency_map[node][node3], adjacency_map[node2][node3]]:
+                                    sequence_set.update (triangle_edge.sequences)
+                                if  len (sequence_set) == 3:
+                                    triangle_nodes.add (triad)
+                                    seqs = [k for k in sequence_set]
+                                    triangles.add ((seqs[0], seqs[1], seqs[2]))
+                                    for s in seqs:
+                                        if s not in count_by_sequence:
+                                            count_by_sequence[s] = 1
+                                        else:
+                                            count_by_sequence[s] += 1
+                                        
+                                triangle_nodes_all.add (triad)
+                                
+                            
+                            
+            
+            
+        self.clear_adjacency()
+        print ("Found %d (%d) triangles in the network" % (len (triangles), len (triangle_nodes_all)), file = sys.stderr)
+    
+        return [ (t[0], t[1], t[2], sum([count_by_sequence [t[0]],count_by_sequence [t[1]],count_by_sequence [t[2]]]))  for t in triangles] 
+                            
 
     def test_edge_support (self, sequence_file_name, triangles, hy_instance = None, p_value_cutoff = 0.05):
-        if hy_instance is None:
-            hy_instance = hy.HyphyInterface ();
-        script_path = os.path.realpath(__file__)
-        hbl_path =  os.path.join(os.path.dirname(script_path), "data", "HBL", "TriangleSupport.bf")
 
-        hy_instance.queuevar ('_py_sequence_file', sequence_file_name)
-        triangle_spec = []
-        for k in triangles:
-            for i in k:
-                triangle_spec.append (i)
-        
-        hy_instance.queuevar ('_py_triangle_sequences', triangle_spec)    
-        hy_instance.runqueue (batchfile = hbl_path)
-        if len(hy_instance.stderr):
-            raise RuntimeError (hy_instance.stderr)
     
+        evaluator = partial (_test_edge_support, sequence_file_name = sequence_file_name, hy_instance = hy_instance, p_value_cutoff = p_value_cutoff)
+        #processed_objects = evaluator (triangles)
+        
+        blocked = [triangles[k : k + 256] for k in range (0, len (triangles), 256)]
+        
+        pool = multiprocessing.Pool()
+        #print (multiprocessing.cpu_count())
+        processed_objects = pool.map(evaluator, blocked)
+        pool.close ()
+        pool.join ()
+        
         seqs_to_edge = {}
         for e in self.edges:
             if e.sequences:
                 seqs_to_edge [e.sequences] = e
                 
+                
+        processed_objects = sorted ([k for p in processed_objects for k in p], key = lambda x: x[0][3])   
+                
         edges_removed = set()
-        must_keep     = set()           
+        must_keep     = set()     
+        
+              
 
-        for k in range (len (triangles)):
-            p_values = hy_instance.getvar (str(k),hy.HyphyInterface.MATRIX)
-            seq_id = [triangle_spec[k] for k in range (k*3,k*3+3)]
+        for t, p_values in processed_objects:
+            seq_id = t[:3]
             edges = [None,None,None]
             for pair_index,pair in enumerate(((0,1),(0,2),(1,2))):
                 for seq_tag in [(seq_id[pair[0]], seq_id[pair[1]]), (seq_id[pair[1]], seq_id[pair[0]])]:
                     if seq_tag in seqs_to_edge:
                         edges[pair_index] = seqs_to_edge[seq_tag]
                         break
-            
+        
             for i in range (3):
                edges[i].edge_reject_p = max (p_values[2-i], edges[i].edge_reject_p)
-               
+           
             max_p = max (p_values)
             if max_p > p_value_cutoff:
                 remove_index = 2 - p_values.index(max_p)

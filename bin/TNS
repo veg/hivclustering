@@ -488,90 +488,94 @@ def compute_tns (network, year_from, year_to, distance = 0.015, fitted = None, o
 
 from networkbuild import *
 
-network.generate_dot = generate_dot_tns
-patient.get_dot_string = get_dot_string_vl
+if __name__=='__main__':
+     
+    network = build_a_network ()
 
-distro_fit = describe_network (network)
+    network.generate_dot = generate_dot_tns
+    patient.get_dot_string = get_dot_string_vl
+
+    distro_fit = describe_network (network)
 
 
-'''
-early_t = network.get_all_treated_within_range(datetime.timedelta(days = 7*4))
-print ('\t'.join (['ID','EDI','ART','DIFF']))
-for n in early_t:
-    print ("\t".join([n.id, tm_to_datetime(n.get_edi()).strftime ("%Y-%m-%d"), tm_to_datetime(n.treatment_date).strftime ("%Y-%m-%d"), str(n.get_treatment_since_edi().days)]))
-    n.add_attribute ('eART')
+    '''
+    early_t = network.get_all_treated_within_range(datetime.timedelta(days = 7*4))
+    print ('\t'.join (['ID','EDI','ART','DIFF']))
+    for n in early_t:
+        print ("\t".join([n.id, tm_to_datetime(n.get_edi()).strftime ("%Y-%m-%d"), tm_to_datetime(n.treatment_date).strftime ("%Y-%m-%d"), str(n.get_treatment_since_edi().days)]))
+        n.add_attribute ('eART')
     
-e_cnt = len (early_t)
+    e_cnt = len (early_t)
 
-for k,v in network.get_node_degree_list(attribute_selector = 'eART',do_direction = True).items():
-    print (k,v[0]+v[1])
+    for k,v in network.get_node_degree_list(attribute_selector = 'eART',do_direction = True).items():
+        print (k,v[0]+v[1])
 
-obs = e_cnt + sum([k[0] + k[1] for k in list(network.get_node_degree_list(attribute_selector = 'eART',do_direction = True).values())])    
-print (obs)
-p  = 0
+    obs = e_cnt + sum([k[0] + k[1] for k in list(network.get_node_degree_list(attribute_selector = 'eART',do_direction = True).values())])    
+    print (obs)
+    p  = 0
 
-sim_degrees = []
+    sim_degrees = []
 
-for k in range (1000):
-    network.randomize_attribute ('eART', None)
-    sim_degrees.append (e_cnt + sum([k[0] + k[1] for k in list(network.get_node_degree_list(attribute_selector = 'eART',do_direction = True).values())]))
-    if sim_degrees[-1] <= obs:
-        p += 1
+    for k in range (1000):
+        network.randomize_attribute ('eART', None)
+        sim_degrees.append (e_cnt + sum([k[0] + k[1] for k in list(network.get_node_degree_list(attribute_selector = 'eART',do_direction = True).values())]))
+        if sim_degrees[-1] <= obs:
+            p += 1
      
     
-print ("EARLY ART degrees:" , describe_vector(sim_degrees), p/(k+1.), e_cnt)
-sys.exit(0)
-'''
-
-#print_tns (network, 0.8)
-
-'''
-precomputed_tns = {}
-
-with open ('data/TNS_new.txt', 'r') as tns_fh:
-    tns_reader = csv.reader (tns_fh,delimiter = '\t')
-    next(tns_reader)
-    for k in tns_reader:
-        precomputed_tns [k[0]] = float (k[3])
-'''
-        
-if settings.threshold is None: 
-    print ("%d nodes with multiple dates" % len (network_stats['multiple_dates']))
-    minfo = network.report_multiple_samples (network_stats['multiple_dates'])
-    print ("Samples per patient: %d-%d (median %d)" % (minfo['samples']['min'],minfo['samples']['max'],minfo['samples']['median']))
-    print ("Duration per patient (wks): %d-%d (median %d)" % (minfo['followup']['min']/7,minfo['followup']['max']/7,minfo['followup']['median']/7))
-    
-    earliest = None
-    latest   = None
-    
-    for k in network.nodes:
-        first  = k.get_baseline_date(True)
-        lastd = k.get_latest_date (True)
-        
-        if earliest is None or first < earliest:
-            earliest = first
-        if latest is None or lastd > latest:
-            latest = lastd
-    
-    print ("%d/%d/%d -- %d/%d/%d" % (earliest.tm_year, earliest.tm_mon, earliest.tm_mday, latest.tm_year, latest.tm_mon, latest.tm_mday))
-    
-    with open ('baseline.csv', 'w') as fh:
-        network.spool_pairwise_distances (fh, baseline = True)
-    
+    print ("EARLY ART degrees:" , describe_vector(sim_degrees), p/(k+1.), e_cnt)
     sys.exit(0)
+    '''
 
-network.drop_singleton_nodes ()
-network.compute_clusters()
-clusters = network.retrieve_clusters()
-print ("Found %d clusters" % len(clusters), file = sys.stderr)
-print ("Maximum cluster size = %d nodes" % max ([len (clusters[c]) for c in clusters if c is not None]), file = sys.stderr)
+    #print_tns (network, 0.8)
 
-print ("Fitting the degree distribution to various densities", file = sys.stderr)
-#print (network.get_degree_distribution())
-distro_fit = network.fit_degree_distribution ()
-print ("Best distribution is '%s' with rho = %g" % (distro_fit['Best'], distro_fit['rho'][distro_fit['Best']]))
+    '''
+    precomputed_tns = {}
 
-print_tns (network, 0.8)
-network.apply_date_filter( 2005, True, True)
-network.apply_date_filter( 2012, False, False)
-network.generate_dot (network, settings.dot, tns = precomputed_tns)
+    with open ('data/TNS_new.txt', 'r') as tns_fh:
+        tns_reader = csv.reader (tns_fh,delimiter = '\t')
+        next(tns_reader)
+        for k in tns_reader:
+            precomputed_tns [k[0]] = float (k[3])
+    '''
+        
+    if settings.threshold is None: 
+        print ("%d nodes with multiple dates" % len (network_stats['multiple_dates']))
+        minfo = network.report_multiple_samples (network_stats['multiple_dates'])
+        print ("Samples per patient: %d-%d (median %d)" % (minfo['samples']['min'],minfo['samples']['max'],minfo['samples']['median']))
+        print ("Duration per patient (wks): %d-%d (median %d)" % (minfo['followup']['min']/7,minfo['followup']['max']/7,minfo['followup']['median']/7))
+    
+        earliest = None
+        latest   = None
+    
+        for k in network.nodes:
+            first  = k.get_baseline_date(True)
+            lastd = k.get_latest_date (True)
+        
+            if earliest is None or first < earliest:
+                earliest = first
+            if latest is None or lastd > latest:
+                latest = lastd
+    
+        print ("%d/%d/%d -- %d/%d/%d" % (earliest.tm_year, earliest.tm_mon, earliest.tm_mday, latest.tm_year, latest.tm_mon, latest.tm_mday))
+    
+        with open ('baseline.csv', 'w') as fh:
+            network.spool_pairwise_distances (fh, baseline = True)
+    
+        sys.exit(0)
+
+    network.drop_singleton_nodes ()
+    network.compute_clusters()
+    clusters = network.retrieve_clusters()
+    print ("Found %d clusters" % len(clusters), file = sys.stderr)
+    print ("Maximum cluster size = %d nodes" % max ([len (clusters[c]) for c in clusters if c is not None]), file = sys.stderr)
+
+    print ("Fitting the degree distribution to various densities", file = sys.stderr)
+    #print (network.get_degree_distribution())
+    distro_fit = network.fit_degree_distribution ()
+    print ("Best distribution is '%s' with rho = %g" % (distro_fit['Best'], distro_fit['rho'][distro_fit['Best']]))
+
+    print_tns (network, 0.8)
+    network.apply_date_filter( 2005, True, True)
+    network.apply_date_filter( 2012, False, False)
+    network.generate_dot (network, settings.dot, tns = precomputed_tns)
