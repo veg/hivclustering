@@ -83,8 +83,8 @@ def describe_vector (vector):
     vector.sort()
     l = len (vector)
     return {'count': l, 'min': vector[0], 'max': vector[-1], 'mean': sum(vector)/l, 'median':  vector [l//2] if l % 2 == 1 else 0.5*(vector[l//2-1]+vector[l//2]), "IQR": [vector [l//4], vector [(3*l)//4]] }
-    
-    
+
+
 def _test_edge_support (triangles, sequence_file_name, hy_instance, p_value_cutoff):
     if hy_instance is None:
         hy_instance = hy.HyphyInterface ();
@@ -97,7 +97,7 @@ def _test_edge_support (triangles, sequence_file_name, hy_instance, p_value_cuto
         for i in k[:3]:
             triangle_spec.append (i)
 
-    hy_instance.queuevar ('_py_triangle_sequences', triangle_spec)    
+    hy_instance.queuevar ('_py_triangle_sequences', triangle_spec)
     hy_instance.runqueue (batchfile = hbl_path)
     if len(hy_instance.stderr):
         raise RuntimeError (hy_instance.stderr)
@@ -107,7 +107,7 @@ def _test_edge_support (triangles, sequence_file_name, hy_instance, p_value_cuto
 
     for k, t in enumerate (triangles):
         return_object.append ( (t, hy_instance.getvar (str(k),hy.HyphyInterface.MATRIX)) )
-    
+
     return return_object
 
 
@@ -135,7 +135,7 @@ class edge:
         self.sequences = sequence_ids
         self.edge_reject_p = 0.
         self.is_unsupported = False
-        
+
     def has_support (self):
         return self.is_unsupported == False
 
@@ -243,7 +243,7 @@ class edge:
     def update_attributes (self, desc):
         if desc is not None:
             self.attribute.add(desc)
-            
+
     def update_sequence_info (self, seq_info):
         if seq_info is not None:
             self.sequences = seq_info
@@ -839,7 +839,7 @@ class transmission_network:
         pid1 = self.make_sequence_key (patient1['id'],patient1['date'])
         if pid1 not in self.sequence_ids:
             self.sequence_ids [pid1] = patient1["rawid"]
-            
+
         pid2 = self.make_sequence_key (patient2['id'],patient2['date'])
         if pid2 not in self.sequence_ids:
             self.sequence_ids [pid2] = patient2["rawid"]
@@ -866,7 +866,7 @@ class transmission_network:
 
     def compute_adjacency (self,edges=False,edge_set = None, both = False):
         self.adjacency_list = {}
-        
+
         for anEdge in (edge_set if edge_set is not None else self.edges):
             if anEdge.visible:
                 if anEdge.p1 not in self.adjacency_list: self.adjacency_list [anEdge.p1] = set()
@@ -901,7 +901,7 @@ class transmission_network:
                     if not processed:
                         self.adjacency_list [anEdge.p1].add ((anEdge.p2,anEdge))
                         self.adjacency_list [anEdge.p2].add ((anEdge.p1,anEdge))
-                
+
                 else:
                     self.adjacency_list [anEdge.p1].add (anEdge.p2)
                     self.adjacency_list [anEdge.p2].add (anEdge.p1)
@@ -968,6 +968,87 @@ class transmission_network:
             distances = t
 
         return {'ordering': subset, 'distances': distances}
+
+    def compute_shortest_paths_with_reconstruction(self, subset = None, use_actual_distances = False):
+        ''' Same as compute shortest paths, but with an additional next parameter for reconstruction'''
+        self.compute_adjacency()
+
+        if subset is None:
+            subset = self.adjacency_list.keys()
+
+        node_count = len (subset)
+        distances  = []
+        next = []
+
+        for a_node in (subset):
+            distances.append ([None for k in range (node_count)])
+            next.append ([None for k in range (node_count)])
+
+        for index,a_node in enumerate(subset):
+            for index2, second_node in enumerate(subset):
+                if second_node != a_node:
+                    if second_node in self.adjacency_list [a_node]:
+                        distances[index][index2] = 1
+                        distances[index2][index] = 1
+
+
+        for index_i, n_i in enumerate(subset):
+            for index_j, n_j in enumerate(subset):
+                if index_i == index_j:
+                    next[index_i][index_j] = 0
+                else:
+                   next[index_i][index_j] = index_i
+
+        distances2 = deepcopy (distances)
+
+        for index_k, n_k in enumerate(subset):
+            for index_i,n_i in enumerate(subset):
+                for index_j, n_j in enumerate(subset):
+                    if n_i != n_j:
+                        d_ik = distances[index_k][index_i]
+                        d_jk = distances[index_k][index_j]
+                        d_ij = distances[index_i][index_j]
+                        if d_ik is not None and d_jk is not None:
+                            d_ik += d_jk
+                            if d_ij is None or d_ij > d_ik:
+                                distances2[index_i][index_j] = d_ik
+                                distances2[index_j][index_i] = d_ik
+                                next[index_i][index_j] = next[index_k][index_j]
+                                continue
+                        distances2[index_j][index_i] = distances[index_j][index_i]
+                        distances2[index_i][index_j] = distances[index_i][index_j]
+
+            t = distances2
+            distances2 = distances
+            distances = t
+
+        return {'ordering': subset, 'distances': distances, 'next' : next}
+
+    def get_path(self, next, dist, i, j):
+        '''
+        Same as compute shortest paths, but with an additional next
+        parameter for reconstruction
+        '''
+        intermediate = next[i][j]
+        if intermediate == i:
+            # the direct edge from i to j gives the shortest path
+            return ()
+        else:
+            #should return an ordered list instead of a string
+            return self.get_path(next, dist, i, intermediate) + (intermediate,) + self.get_path(next, dist, intermediate, j)
+
+    def node_in_path(self, node, next, dist, i, j):
+        return node in self.get_path(next, dist, i, j)
+
+    def betweenness_centrality(self, node):
+        ''' Returns dictonary of nodes with betweenness centrality as the value'''
+
+        paths = self.compute_shortest_paths_with_reconstruction()
+        length = len(paths['distances'])
+
+        ## If s->t goes through 1, add to sum
+        #Reconstruct each shortest path and check if node is in it
+        return sum([self.node_in_path(node, paths['next'], paths['distances'], i, j) for i in range(length) for j in range(length)])
 
     def get_all_treated_within_range (self, daterange, outside = False):
         selection = []
@@ -1237,8 +1318,8 @@ class transmission_network:
             if representative_edge.has_support () == False:
                 for e in byPairs[patient_pair]:
                     del self.edges[e]
-                
-    
+
+
 
     def generate_dot (self, file, year_vis = None, reduce_edges = True):
 
@@ -1420,7 +1501,7 @@ class transmission_network:
 
         if self.adjacency_list == None:
             self.compute_adjacency (both = True, edge_set = edge_set)
-            
+
         print ("Locating triangles in the network", file = sys.stderr)
 
         '''
@@ -1429,35 +1510,35 @@ class transmission_network:
                 sequence_pairs.add (an_edge.sequences)
                 for seq in an_edge.sequences:
                     sequences_involved_in_links.add (seq)
-            
+
         for this_pair in sequence_pairs:
-            for third_apex in sequences_involved_in_links: 
+            for third_apex in sequences_involved_in_links:
                 if (((third_apex, this_pair[0]) in sequence_pairs or (this_pair[0],third_apex) in sequence_pairs)
                     and ((third_apex, this_pair[1]) in sequence_pairs or (this_pair[1],third_apex) in sequence_pairs)):
                     triangles.add ((this_pair[0], this_pair[1], third_apex))
         '''
-        
-        # create a list of the form 
-        # node[id] = list of 
+
+        # create a list of the form
+        # node[id] = list of
         #   [node_id] = edge_id
-        
+
         adjacency_map = {}
         for node, edge_list in self.adjacency_list.items():
             node_neighborhood = {}
             for n, e in edge_list:
                 node_neighborhood [n] = e
             adjacency_map[node] = node_neighborhood
-        
+
         triangle_nodes = set ()
         triangle_nodes_all = set ()
-        
+
         count_by_sequence = {}
-        
+
         for node, neighbors in adjacency_map.items():
             if len (neighbors) > 1: # something to do
                 for node2 in neighbors:
-                    for node3 in adjacency_map[node2]: 
-                        if node in adjacency_map[node3]:   
+                    for node3 in adjacency_map[node2]:
+                        if node in adjacency_map[node3]:
                             triad = sorted([node, node2, node3])
                             triad = (triad[0], triad[1], triad[2])
                             if triad not in triangle_nodes:
@@ -1473,45 +1554,45 @@ class transmission_network:
                                             count_by_sequence[s] = 1
                                         else:
                                             count_by_sequence[s] += 1
-                                        
+
                                 triangle_nodes_all.add (triad)
-                                
-                            
-                            
-            
-            
+
+
+
+
+
         self.clear_adjacency()
         print ("Found %d (%d) triangles in the network" % (len (triangles), len (triangle_nodes_all)), file = sys.stderr)
-    
-        return [ (t[0], t[1], t[2], sum([count_by_sequence [t[0]],count_by_sequence [t[1]],count_by_sequence [t[2]]]))  for t in triangles] 
-                            
+
+        return [ (t[0], t[1], t[2], sum([count_by_sequence [t[0]],count_by_sequence [t[1]],count_by_sequence [t[2]]]))  for t in triangles]
+
 
     def test_edge_support (self, sequence_file_name, triangles, hy_instance = None, p_value_cutoff = 0.05):
 
-    
+
         evaluator = partial (_test_edge_support, sequence_file_name = sequence_file_name, hy_instance = hy_instance, p_value_cutoff = p_value_cutoff)
         #processed_objects = evaluator (triangles)
-        
+
         blocked = [triangles[k : k + 256] for k in range (0, len (triangles), 256)]
-        
+
         pool = multiprocessing.Pool()
         #print (multiprocessing.cpu_count())
         processed_objects = pool.map(evaluator, blocked)
         pool.close ()
         pool.join ()
-        
+
         seqs_to_edge = {}
         for e in self.edges:
             if e.sequences:
                 seqs_to_edge [e.sequences] = e
-                
-                
-        processed_objects = sorted ([k for p in processed_objects for k in p], key = lambda x: x[0][3])   
-                
+
+
+        processed_objects = sorted ([k for p in processed_objects for k in p], key = lambda x: x[0][3])
+
         edges_removed = set()
-        must_keep     = set()     
-        
-              
+        must_keep     = set()
+
+
 
         for t, p_values in processed_objects:
             seq_id = t[:3]
@@ -1521,10 +1602,10 @@ class transmission_network:
                     if seq_tag in seqs_to_edge:
                         edges[pair_index] = seqs_to_edge[seq_tag]
                         break
-        
+
             for i in range (3):
                edges[i].edge_reject_p = max (p_values[2-i], edges[i].edge_reject_p)
-           
+
             max_p = max (p_values)
             if max_p > p_value_cutoff:
                 remove_index = 2 - p_values.index(max_p)
@@ -1533,11 +1614,11 @@ class transmission_network:
                     edges_removed.add (edges[remove_index])
                     for e in [k for k in range (3) if k!=remove_index]:
                         must_keep.add (edges[e])
-                            
-            
-        
-                
-    
+
+
+
+
+
     def fit_degree_distribution (self, degree_option = None, hy_instance = None):
         if hy_instance is None:
             hy_instance = hy.HyphyInterface ();
