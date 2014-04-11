@@ -1,5 +1,6 @@
 #!/usr/bin/env python3.2
 
+from operator import itemgetter
 import json
 import csv
 import os.path
@@ -15,25 +16,6 @@ if __name__=='__main__':
 
     #Create a transmission network
     network = transmission_network()
-
-    #Andre, Beverly
-    #Andre, Carol
-    #Andre, Diane
-    #Andre, Fernando
-    #Beverly, Diane
-    #Beverly, Ed
-    #Beverly, Garth
-    #Carol, Diane
-    #Carol, Fernando
-    #Diane, Ed
-    #Diane, Fernando
-    #Diane, Garth
-    #Ed, Garth
-    #Fernando, Garth
-    #Fernando, Heather
-    #Garth, Heather
-    #Heather, Ike
-    #Ike, Jane
 
     #Add the nodes
     attrib = None
@@ -66,8 +48,13 @@ if __name__=='__main__':
     network.add_an_edge('Heather', 'Ike', 1, parsePlain)
     network.add_an_edge('Ike', 'Jane', 1, parsePlain)
 
-    for i in range(10):
-        print(network.betweenness_centrality(i))
+    centralities = [network.betweenness_centrality(i) for i in range(10)]
+    print(centralities)
+    
+    #normal = map(lambda x: (x[0], (x[1] - min(centralities, key=itemgetter(1))[1])/(max(centralities, key=itemgetter(1))[1] - min(centralities, key=itemgetter(1))[1])), centralities)
+    #import pprint
+    #pprint.pprint(sorted(list(normal),key=lambda student: student[1], reverse=True))
+
 
     #print(network.betweenness_centrality())
     #print ("\t".join(["ClusterID","NodeID","MeanPathLength","RelativeToClusterMin","ClusterSize"]))

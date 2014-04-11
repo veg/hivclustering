@@ -995,9 +995,9 @@ class transmission_network:
         for index_i, n_i in enumerate(subset):
             for index_j, n_j in enumerate(subset):
                 if index_i == index_j:
-                    next[index_i][index_j] = 0
+                    next[index_i][index_j] = []
                 else:
-                   next[index_i][index_j] = index_i
+                   next[index_i][index_j] = [index_i]
 
         distances2 = deepcopy (distances)
 
@@ -1010,11 +1010,16 @@ class transmission_network:
                         d_ij = distances[index_i][index_j]
                         if d_ik is not None and d_jk is not None:
                             d_ik += d_jk
+                            #map all paths at this length
                             if d_ij is None or d_ij > d_ik:
                                 distances2[index_i][index_j] = d_ik
                                 distances2[index_j][index_i] = d_ik
-                                next[index_i][index_j] = next[index_k][index_j]
+                                next[index_i][index_j] = []
+                                next[index_i][index_j].extend(next[index_k][index_j])
                                 continue
+                            elif d_ij == d_ik:
+                                next[index_i][index_j].extend(next[index_k][index_j])
+
                         distances2[index_j][index_i] = distances[index_j][index_i]
                         distances2[index_i][index_j] = distances[index_i][index_j]
 
@@ -1024,21 +1029,19 @@ class transmission_network:
 
         return {'ordering': subset, 'distances': distances, 'next' : next}
 
-    def get_path(self, next, dist, i, j):
+    def get_path(self, next, i, j):
         '''
-        Same as compute shortest paths, but with an additional next
-        parameter for reconstruction
+        Reconstructs path from floyd-warshall algorithm
         '''
+        # the direct edge from i to j gives the shortest path
         intermediate = next[i][j]
         if intermediate == i:
-            # the direct edge from i to j gives the shortest path
             return ()
         else:
-            #should return an ordered list instead of a string
-            return self.get_path(next, dist, i, intermediate) + (intermediate,) + self.get_path(next, dist, intermediate, j)
+            return self.get_path(next, i, intermediate) + (intermediate,) + self.get_path(next, intermediate, j)
 
     def node_in_path(self, node, next, dist, i, j):
-        return node in self.get_path(next, dist, i, j)
+        return node in self.get_path(next, i, j)
 
     def betweenness_centrality(self, node):
         ''' Returns dictonary of nodes with betweenness centrality as the value'''
@@ -1046,9 +1049,11 @@ class transmission_network:
         paths = self.compute_shortest_paths_with_reconstruction()
         length = len(paths['distances'])
 
-        ## If s->t goes through 1, add to sum
-        #Reconstruct each shortest path and check if node is in it
-        return sum([self.node_in_path(node, paths['next'], paths['distances'], i, j) for i in range(length) for j in range(length)])
+
+        # If s->t goes through 1, add to sum
+        Reconstruct each shortest path and check if node is in it
+        return (list(paths['ordering'])[node].id, sum([self.node_in_path(node, paths['next'], paths['distances'], i, j)
+                    for i in range(length) for j in range(length)]))
 
     def get_all_treated_within_range (self, daterange, outside = False):
         selection = []
