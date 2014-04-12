@@ -48,7 +48,7 @@ if __name__=='__main__':
     network.add_an_edge('Heather', 'Ike', 1, parsePlain)
     network.add_an_edge('Ike', 'Jane', 1, parsePlain)
 
-    centralities = [network.betweenness_centrality(i) for i in range(10)]
+    centralities = [network.betweenness_centrality(i) for i in range(1)]
     print(centralities)
     
     #normal = map(lambda x: (x[0], (x[1] - min(centralities, key=itemgetter(1))[1])/(max(centralities, key=itemgetter(1))[1] - min(centralities, key=itemgetter(1))[1])), centralities)

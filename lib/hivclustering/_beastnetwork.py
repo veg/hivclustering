@@ -1033,26 +1033,45 @@ class transmission_network:
         '''
         Reconstructs path from floyd-warshall algorithm
         '''
-        # the direct edge from i to j gives the shortest path
-        intermediate = next[i][j]
-        if intermediate == i:
-            return ()
-        else:
-            return self.get_path(next, i, intermediate) + (intermediate,) + self.get_path(next, intermediate, j)
+        all_paths = [[]]
 
-    def node_in_path(self, node, next, dist, i, j):
-        return node in self.get_path(next, i, j)
+        # the direct edge from i to j gives the shortest path
+        if len(next[i][j]):
+            for k in next[i][j]:
+                if not k:
+                    all_paths.append([i,j])
+                elif k == i:
+                    pass
+                else:
+                    paths_i_k = self.get_path(next, i, k)
+                    paths_k_j = self.get_path(next, k, j)
+                    for i_k in paths_i_k:
+                        for k_j in paths_k_j:
+                            all_paths.append(i_k.extend(k_j))
+            return all_paths
+
+    def node_in_path(self, node, next, i, j):
+        path = self.get_path(next, i, j)
+        print(path)
+        if not path:
+            return False
+        for sublist in path:
+            if not sublist:
+                pass
+            elif node in sublist:
+                return True
+        return False
 
     def betweenness_centrality(self, node):
         ''' Returns dictonary of nodes with betweenness centrality as the value'''
 
         paths = self.compute_shortest_paths_with_reconstruction()
         length = len(paths['distances'])
-
+        print(self.node_in_path(node, paths['next'], 0, 1))
 
         # If s->t goes through 1, add to sum
-        Reconstruct each shortest path and check if node is in it
-        return (list(paths['ordering'])[node].id, sum([self.node_in_path(node, paths['next'], paths['distances'], i, j)
+        # Reconstruct each shortest path and check if node is in it
+        return (list(paths['ordering'])[node].id, sum([self.node_in_path(node, paths['next'], i, j)
                     for i in range(length) for j in range(length)]))
 
     def get_all_treated_within_range (self, daterange, outside = False):
