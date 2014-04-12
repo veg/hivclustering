@@ -30,6 +30,7 @@ if __name__=='__main__':
     network.insert_patient('Ike',False, False, attrib)
 
     #Add the edges
+    network.add_an_edge('Andre', 'Beverly', 1, parsePlain)
     network.add_an_edge('Andre', 'Carol', 1, parsePlain)
     network.add_an_edge('Andre', 'Diane', 1, parsePlain)
     network.add_an_edge('Andre', 'Fernando', 1, parsePlain)
@@ -48,12 +49,11 @@ if __name__=='__main__':
     network.add_an_edge('Heather', 'Ike', 1, parsePlain)
     network.add_an_edge('Ike', 'Jane', 1, parsePlain)
 
-    centralities = [network.betweenness_centrality(i) for i in range(1)]
+    centralities = [network.betweenness_centrality(i) for i in range(10)]
     print(centralities)
-    
-    #normal = map(lambda x: (x[0], (x[1] - min(centralities, key=itemgetter(1))[1])/(max(centralities, key=itemgetter(1))[1] - min(centralities, key=itemgetter(1))[1])), centralities)
-    #import pprint
-    #pprint.pprint(sorted(list(normal),key=lambda student: student[1], reverse=True))
+    normal = map(lambda x: (x[0], (x[1] - min(centralities, key=itemgetter(1))[1])/(max(centralities, key=itemgetter(1))[1] - min(centralities, key=itemgetter(1))[1])), centralities)
+    import pprint
+    pprint.pprint(sorted(list(normal),key=lambda student: student[1], reverse=True))
 
 
     #print(network.betweenness_centrality())
