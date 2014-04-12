@@ -1057,7 +1057,7 @@ class transmission_network:
     def paths_with_node(self, node, next, i, j):
         paths = self.get_path(next, i, j)
         # We only care about intermediary paths
-        paths = [sublist[1:-1] for sublist in paths]
+        #paths = [sublist[1:-1] for sublist in paths]
         if not paths:
             return 0
         return sum([node in sublist for sublist in paths])
