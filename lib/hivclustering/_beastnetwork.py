@@ -1071,8 +1071,8 @@ class transmission_network:
 
         # If s->t goes through 1, add to sum
         # Reconstruct each shortest path and check if node is in it
-        return (list(paths['ordering'])[node].id, sum([self.paths_with_node(node, paths['next'], i, j)
-                    for i in range(length) for j in range(length)])*scale)
+        return {list(paths['ordering'])[node].id: sum([self.paths_with_node(node, paths['next'], i, j)
+                    for i in range(length) for j in range(length)])*scale}
 
     def get_all_treated_within_range (self, daterange, outside = False):
         selection = []

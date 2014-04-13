@@ -52,16 +52,16 @@ if __name__=='__main__':
         print (json.dumps (network_info, indent = 4, sort_keys = 4))
 
     else:
-        #Instead of describe network, I want to create my own cluster
         describe_network(network)
-        print(network.betweenness_centrality())
-        #print ("\t".join(["ClusterID","NodeID","MeanPathLength","RelativeToClusterMin","ClusterSize"]))
-        #for cid, a_cluster in network.retrieve_clusters(singletons = False).items():
-        #    paths = network.compute_shortest_paths(subset = a_cluster)
-        #    #print (paths)
-        #    paths = network.compute_path_stat(paths)
-        #    min_d = min(paths.values())
-        #    for n, d in paths.items():
-        #        network.has_node_with_id(n.id).set_label ("%2.3g" % d)
-        #        print ("%d\t%s\t%g\t%g\t%d" % (cid, n.id, d,d/min_d, len (a_cluster)))
+        print ("\t".join(["ClusterID","NodeID","MeanPathLength","RelativeToClusterMin","ClusterSize", "Betweenness Centrality"]))
+        for cid, a_cluster in network.retrieve_clusters(singletons = False).items():
+            paths = network.compute_shortest_paths(subset = a_cluster)
+            #print (paths)
+            centralities = {}
+            [centralities.update(network.betweenness_centrality(i)) for i in range(len(paths['distances']))]
+            paths = network.compute_path_stat(paths)
+            min_d = min(paths.values())
+            for n, d in paths.items():
+                network.has_node_with_id(n.id).set_label ("%2.3g" % d)
+                print ("%d\t%s\t%g\t%g\t%d\t%f" % (cid, n.id, d,d/min_d, len (a_cluster), centralities[n.id]))
 
