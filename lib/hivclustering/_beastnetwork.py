@@ -1057,22 +1057,22 @@ class transmission_network:
     def paths_with_node(self, node, next, i, j):
         paths = self.get_path(next, i, j)
         # We only care about intermediary paths
-        #paths = [sublist[1:-1] for sublist in paths]
+        paths = [sublist[1:-1] for sublist in paths]
         if not paths:
             return 0
-        return sum([node in sublist for sublist in paths])
+        return sum([node in sublist for sublist in paths])/len(paths)
 
     def betweenness_centrality(self, node):
         ''' Returns dictonary of nodes with betweenness centrality as the value'''
 
         paths = self.compute_shortest_paths_with_reconstruction()
         length = len(paths['distances'])
-        print(self.paths_with_node(node, paths['next'], 1, 9))
+        scale=1.0/((length-1)*(length-2))
 
         # If s->t goes through 1, add to sum
         # Reconstruct each shortest path and check if node is in it
         return (list(paths['ordering'])[node].id, sum([self.paths_with_node(node, paths['next'], i, j)
-                    for i in range(length) for j in range(length)]))
+                    for i in range(length) for j in range(length)])*scale)
 
     def get_all_treated_within_range (self, daterange, outside = False):
         selection = []

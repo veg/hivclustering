@@ -4,15 +4,14 @@ from operator import itemgetter
 import json
 import csv
 import os.path
+import nose
 
 
 from hivclustering import *
-from networkbuild import *
+#from networkbuild import *
 
-if __name__=='__main__':
-     
-    # Instead of reading from an input file, create my own cluster in
-    # order to test algorithms
+def test_centrality():
+    ''' Creates a Krackhardt kite and ensures betweenness is correct '''
 
     #Create a transmission network
     network = transmission_network()
@@ -50,19 +49,8 @@ if __name__=='__main__':
     network.add_an_edge('Ike', 'Jane', 1, parsePlain)
 
     centralities = [network.betweenness_centrality(i) for i in range(10)]
-    print(centralities)
-    normal = map(lambda x: (x[0], (x[1] - min(centralities, key=itemgetter(1))[1])/(max(centralities, key=itemgetter(1))[1] - min(centralities, key=itemgetter(1))[1])), centralities)
-    import pprint
-    pprint.pprint(sorted(list(normal),key=lambda student: student[1], reverse=True))
+    centralities = sorted(list(centralities),key=lambda student: student[1], reverse=True)
+    assert len(centralities) == 10
+    assert centralities[0][0] == 'Heather'
+    assert centralities[0][1] - .388888 < .0001
 
-
-    #print(network.betweenness_centrality())
-    #print ("\t".join(["ClusterID","NodeID","MeanPathLength","RelativeToClusterMin","ClusterSize"]))
-    #for cid, a_cluster in network.retrieve_clusters(singletons = False).items():
-    #    paths = network.compute_shortest_paths(subset = a_cluster)
-    #    #print (paths)
-    #    paths = network.compute_path_stat(paths)
-    #    min_d = min(paths.values())
-    #    for n, d in paths.items():
-    #        network.has_node_with_id(n.id).set_label ("%2.3g" % d)
-    #        print ("%d\t%s\t%g\t%g\t%d" % (cid, n.id, d,d/min_d, len (a_cluster)))
