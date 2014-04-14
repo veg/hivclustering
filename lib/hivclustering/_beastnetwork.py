@@ -9,7 +9,7 @@ import hppy as hy
 import os
 import csv
 import multiprocessing
-from functools import partial
+from functools import partial, lru_cache
 
 __all__ = ['edge', 'patient', 'transmission_network', 'parseAEH', 'parseLANL', 'parsePlain', 'parseRegExp', 'describe_vector', 'tm_to_datetime', 'datetime_to_tm']
 #-------------------------------------------------------------------------------
@@ -969,6 +969,7 @@ class transmission_network:
 
         return {'ordering': subset, 'distances': distances}
 
+    @lru_cache()
     def compute_shortest_paths_with_reconstruction(self, subset = None, use_actual_distances = False):
         ''' Same as compute shortest paths, but with an additional next parameter for reconstruction'''
         self.compute_adjacency()
@@ -1066,13 +1067,24 @@ class transmission_network:
         ''' Returns dictonary of nodes with betweenness centrality as the value'''
 
         paths = self.compute_shortest_paths_with_reconstruction()
+
+        #find id in ordering
+        index = -1
+        for i, x in enumerate(paths['ordering']):
+            if x.id == node:
+                index = i
+                break
+
+        if index == -1:
+            return None
+
+
         length = len(paths['distances'])
         scale=1.0/((length-1)*(length-2))
 
         # If s->t goes through 1, add to sum
         # Reconstruct each shortest path and check if node is in it
-        return {list(paths['ordering'])[node].id: sum([self.paths_with_node(node, paths['next'], i, j)
-                    for i in range(length) for j in range(length)])*scale}
+        return sum([self.paths_with_node(index, paths['next'], i, j) for i in range(length) for j in range(length)])*scale
 
     def get_all_treated_within_range (self, daterange, outside = False):
         selection = []

@@ -48,8 +48,5 @@ def test_centrality():
     network.add_an_edge('Heather', 'Ike', 1, parsePlain)
     network.add_an_edge('Ike', 'Jane', 1, parsePlain)
 
-    centralities = {}
-    [centralities.update(network.betweenness_centrality(i)) for i in range(10)]
-    assert len(centralities.keys()) == 10
-    assert centralities['Heather'] - .388888 < .0001
+    assert network.betweenness_centrality('Heather') - .388888 < .0001
 
