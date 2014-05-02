@@ -1,4 +1,4 @@
-#!/usr/bin/env python3.2
+#!/home/sweaver/bin/hivcluster/bin/python
 
 import json
 import csv
@@ -10,7 +10,7 @@ from networkbuild import *
 
 if __name__=='__main__':
      
-    network = build_a_network ()
+    network = build_a_network()
      
     if settings().filter:
         filter_list = get_sequence_ids(settings().filter)
@@ -30,7 +30,7 @@ if __name__=='__main__':
         for idx,cluster in cluster_info.items():
             for n in cluster:
                if idx is not None:
-                   nodes.append ({'id': n.id, 'cluster' : idx, 'attributes': list (n.attributes), 'edi': n.get_edi(), 'baseline': n.get_baseline_date(True)}) 
+                   nodes.append ({'id': n.id, 'cluster' : idx, 'attributes': list (n.attributes), 'edi': n.get_edi(), 'baseline': n.get_baseline_date(True), 'betweenness': network.betweenness_centrality(n.id)})
                node_idx [n] = len (nodes)-1
         
         edges = []
@@ -49,7 +49,16 @@ if __name__=='__main__':
         
         network_info['Nodes'] = nodes
         network_info['Edges'] = edges
-        print (json.dumps (network_info, indent = 4, sort_keys = 4))
+        print (json.dumps(network_info, indent = 4, sort_keys = 4))
 
     else:
-        describe_network (network)
+        describe_network(network)
+        print ("\t".join(["ClusterID","NodeID","MeanPathLength","RelativeToClusterMin","ClusterSize", "Betweenness Centrality"]))
+        for cid, a_cluster in network.retrieve_clusters(singletons = False).items():
+            paths = network.compute_shortest_paths(subset = a_cluster)
+            paths = network.compute_path_stat(paths)
+            min_d = min(paths.values())
+            for n, d in paths.items():
+                network.has_node_with_id(n.id).set_label ("%2.3g" % d)
+                print ("%d\t%s\t%g\t%g\t%d\t%f" % (cid, n.id, d,d/min_d, len (a_cluster), network.betweenness_centrality(n.id)))
+

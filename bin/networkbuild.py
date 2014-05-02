@@ -20,7 +20,7 @@ def print_network_evolution (network, store_fitted = None, outdegree = False, di
         network.apply_date_filter (year, do_clear= True)
         if distance is not None:
            network.apply_distance_filter (distance, do_clear = False)
-        network_stats = network.get_edge_node_count ()
+        network_stats = network.get_edge_node_count()
         network.compute_clusters()
         clusters = network.retrieve_clusters()
         if outdegree:
@@ -59,8 +59,8 @@ def print_degree_distro (network,distro_fit, outfile = sys.stdout):
 
 
 #-------------------------------------------------------------------------------
-def describe_network (network, json_output = False):
-    network_stats = network.get_edge_node_count ()
+def describe_network(network, json_output = False):
+    network_stats = network.get_edge_node_count()
     if json_output:
         return_json = {'Network Summary' : {'Edges' : network_stats['edges'], 'Nodes': network_stats['nodes'],
                         'Sequences used to make links': network_stats['total_sequences']},
@@ -262,8 +262,8 @@ def get_sequence_ids(fn):
         if not len(filter_list):
             raise Exception('Empty file list')
         return list(set(filter_list))
-        
-        
+
+
 def build_a_network ():
 
     random.seed()
@@ -389,10 +389,10 @@ def build_a_network ():
 
     if run_settings.attributes is not None:
         import_attributes ( run_settings.attributes, network)
-    
 
-    
-    if run_settings.sequences and run_settings.edge_filtering:                
+
+
+    if run_settings.sequences and run_settings.edge_filtering:
         network.test_edge_support (os.path.abspath (run_settings.sequences), network.find_all_triangles(network.reduce_edge_set()))
         if run_settings.edge_filtering == 'remove':
             network.prune_all_edges_lacking_support()
