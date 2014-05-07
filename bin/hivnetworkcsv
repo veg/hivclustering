@@ -28,10 +28,10 @@ if __name__=='__main__':
         node_idx = {}
     
         for idx,cluster in cluster_info.items():
+            rpaths = network.compute_shortest_paths_with_reconstruction(subset = cluster)
             for n in cluster:
                if idx is not None:
-                   #nodes.append ({'id': n.id, 'cluster' : idx, 'attributes': list (n.attributes), 'edi': n.get_edi(), 'baseline': n.get_baseline_date(True), 'betweenness': network.betweenness_centrality(n.id)})
-                   nodes.append ({'id': n.id, 'cluster' : idx, 'attributes': list (n.attributes), 'edi': n.get_edi(), 'baseline': n.get_baseline_date(True)})
+                   nodes.append ({'id': n.id, 'cluster' : idx, 'attributes': list (n.attributes), 'edi': n.get_edi(), 'baseline': n.get_baseline_date(True), 'betweenness': network.betweenness_centrality(n.id, paths=rpaths)})
                node_idx [n] = len (nodes)-1
         
         edges = []
