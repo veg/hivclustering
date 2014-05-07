@@ -969,7 +969,6 @@ class transmission_network:
 
         return {'ordering': subset, 'distances': distances}
 
-    @lru_cache()
     def compute_shortest_paths_with_reconstruction(self, subset = None, use_actual_distances = False):
         ''' Same as compute shortest paths, but with an additional next parameter for reconstruction'''
         self.compute_adjacency()
@@ -977,7 +976,7 @@ class transmission_network:
         if subset is None:
             subset = self.adjacency_list.keys()
 
-        node_count = len (subset)
+        node_count = len(subset)
         distances  = []
         next = []
 
@@ -1063,10 +1062,11 @@ class transmission_network:
             return 0
         return sum([node in sublist for sublist in paths])/len(paths)
 
-    def betweenness_centrality(self, node):
+    def betweenness_centrality(self, node, paths = None, newsubset = None):
         ''' Returns dictonary of nodes with betweenness centrality as the value'''
 
-        paths = self.compute_shortest_paths_with_reconstruction()
+        if paths == None:
+            paths = self.compute_shortest_paths_with_reconstruction(subset=newsubset)
 
         #find id in ordering
         index = -1
@@ -1080,7 +1080,11 @@ class transmission_network:
 
 
         length = len(paths['distances'])
-        scale=1.0/((length-1)*(length-2))
+
+        if length != 2:
+            scale=1.0/((length-1)*(length-2))
+        else:
+            scale = 1
 
         # If s->t goes through 1, add to sum
         # Reconstruct each shortest path and check if node is in it
