@@ -1,4 +1,4 @@
-#!/home/sweaver/bin/hivcluster/bin/python
+#!/usr/bin/env python3.2 
 
 import json
 import csv
@@ -28,10 +28,11 @@ if __name__=='__main__':
         node_idx = {}
     
         for idx,cluster in cluster_info.items():
-            rpaths = network.compute_shortest_paths_with_reconstruction(subset = cluster)
+            #rpaths = network.compute_shortest_paths_with_reconstruction(subset = cluster)
             for n in cluster:
                if idx is not None:
-                   nodes.append ({'id': n.id, 'cluster' : idx, 'attributes': list (n.attributes), 'edi': n.get_edi(), 'baseline': n.get_baseline_date(True), 'betweenness': network.betweenness_centrality(n.id, paths=rpaths)})
+                   #nodes.append ({'id': n.id, 'cluster' : idx, 'attributes': list (n.attributes), 'edi': n.get_edi(), 'baseline': n.get_baseline_date(True), 'betweenness': network.betweenness_centrality(n.id, paths=rpaths)})
+                   nodes.append ({'id': n.id, 'cluster' : idx, 'attributes': list (n.attributes), 'edi': n.get_edi(), 'baseline': n.get_baseline_date(True)})
                node_idx [n] = len (nodes)-1
         
         edges = []
@@ -62,4 +63,5 @@ if __name__=='__main__':
             min_d = min(paths.values())
             for n, d in paths.items():
                 network.has_node_with_id(n.id).set_label ("%2.3g" % d)
-                print ("%d\t%s\t%g\t%g\t%d\t%f" % (cid, n.id, d,d/min_d, len (a_cluster), network.betweenness_centrality(n.id, paths=rpaths)))
+                #print ("%d\t%s\t%g\t%g\t%d\t%f" % (cid, n.id, d,d/min_d, len (a_cluster), network.betweenness_centrality(n.id, paths=rpaths)))
+                print ("%d\t%s\t%g\t%g\t%d" % (cid, n.id, d,d/min_d, len (a_cluster)))
