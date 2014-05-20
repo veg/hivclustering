@@ -59,7 +59,7 @@ if __name__=='__main__':
         for cid, a_cluster in network.retrieve_clusters(singletons = False).items():
             paths = network.compute_shortest_paths(subset = a_cluster)
             paths = network.compute_path_stat(paths)
-            rpaths = network.compute_shortest_paths_with_reconstruction(subset = a_cluster)
+            #rpaths = network.compute_shortest_paths_with_reconstruction(subset = a_cluster)
             min_d = min(paths.values())
             for n, d in paths.items():
                 network.has_node_with_id(n.id).set_label ("%2.3g" % d)
