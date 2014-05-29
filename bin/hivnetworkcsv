@@ -20,8 +20,11 @@ if __name__=='__main__':
 
     if settings().json:
 
-        network_info = describe_network (network, True)
+        network_info = describe_network(network, True)
         nodes = []
+
+        if settings().dot:
+            network.generate_dot(settings().dot)
 
         cluster_info = network.retrieve_clusters ()
 
@@ -55,6 +58,9 @@ if __name__=='__main__':
 
     else:
         describe_network(network)
+        if settings().dot:
+            network.generate_dot(settings().dot)
+
         print ("\t".join(["ClusterID","NodeID","MeanPathLength","RelativeToClusterMin","ClusterSize", "Betweenness Centrality"]))
         for cid, a_cluster in network.retrieve_clusters(singletons = False).items():
             paths = network.compute_shortest_paths(subset = a_cluster)
