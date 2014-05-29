@@ -4,7 +4,6 @@ import json
 import csv
 import os.path
 
-
 from hivclustering import *
 from networkbuild import *
 
@@ -16,25 +15,18 @@ if __name__=='__main__':
         filter_list = get_sequence_ids(settings().filter)
         network.apply_id_filter(filter_list)
 
-
-
     if settings().json:
 
         network_info = describe_network(network, True)
         nodes = []
-
-        if settings().dot:
-            network.generate_dot(settings().dot)
 
         cluster_info = network.retrieve_clusters ()
 
         node_idx = {}
     
         for idx,cluster in cluster_info.items():
-            #rpaths = network.compute_shortest_paths_with_reconstruction(subset = cluster)
             for n in cluster:
                if idx is not None:
-                   #nodes.append ({'id': n.id, 'cluster' : idx, 'attributes': list (n.attributes), 'edi': n.get_edi(), 'baseline': n.get_baseline_date(True), 'betweenness': network.betweenness_centrality(n.id, paths=rpaths)})
                    nodes.append ({'id': n.id, 'cluster' : idx, 'attributes': list (n.attributes), 'edi': n.get_edi(), 'baseline': n.get_baseline_date(True)})
                node_idx [n] = len (nodes)-1
         
@@ -58,16 +50,13 @@ if __name__=='__main__':
 
     else:
         describe_network(network)
-        if settings().dot:
-            network.generate_dot(settings().dot)
 
-        print ("\t".join(["ClusterID","NodeID","MeanPathLength","RelativeToClusterMin","ClusterSize", "Betweenness Centrality"]))
-        for cid, a_cluster in network.retrieve_clusters(singletons = False).items():
-            paths = network.compute_shortest_paths(subset = a_cluster)
-            paths = network.compute_path_stat(paths)
-            rpaths = network.compute_shortest_paths_with_reconstruction(subset = a_cluster)
-            min_d = min(paths.values())
-            for n, d in paths.items():
-                network.has_node_with_id(n.id).set_label ("%2.3g" % d)
-                #print ("%d\t%s\t%g\t%g\t%d\t%f" % (cid, n.id, d,d/min_d, len (a_cluster), network.betweenness_centrality(n.id, paths=rpaths)))
-                print ("%d\t%s\t%g\t%g\t%d" % (cid, n.id, d,d/min_d, len (a_cluster)))
+    if settings().dot:
+        network.generate_dot(settings().dot)
+
+    if settings().cluster:
+        network.write_clusters(settings().cluster)
+
+    if settings().centralities:
+        network.write_centralities(settings().centralities)
+
