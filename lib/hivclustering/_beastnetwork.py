@@ -1224,7 +1224,7 @@ class transmission_network:
                 vis_count += edge.visible
         return vis_count
 
-    def apply_cluster_filter (self, cluster_ids, exclude = True, do_clear = True): # exclude all sequences in a given cluster(s)
+    def apply_cluster_filter(self, cluster_ids, exclude = True, do_clear = True): # exclude all sequences in a given cluster(s)
         if do_clear : self.clear_adjacency()
         vis_count = 0
 
@@ -1240,7 +1240,7 @@ class transmission_network:
         return vis_count
 
 
-    def retrieve_clusters (self, singletons = True):
+    def retrieve_clusters(self, singletons = True):
         clusters = {}
         for node in self.nodes:
             #if node.cluster_id == None:
@@ -1250,15 +1250,15 @@ class transmission_network:
             clusters [node.cluster_id].append (node)
 
         if not singletons:
-            clusters.pop (None,None)
+            clusters.pop(None,None)
         return clusters
 
 
-    def clear_filters           (self):
+    def clear_filters(self):
         for edge in self.edges:
             edge.visible = True
 
-    def cluster_size_by_node (self):
+    def cluster_size_by_node(self):
         if self.adjacency_list == None:
             self.compute_adjacency ()
         self.compute_clusters()
@@ -1321,6 +1321,17 @@ class transmission_network:
             if node.cluster_id != None:
                 file.write ("%s,%d\n" % (self.sequence_ids[self.make_sequence_key (node.id, node.dates[0])],node.cluster_id))
 
+    def write_centralities(self, file):
+        file.write("\t".join(["ClusterID","NodeID","MeanPathLength","RelativeToClusterMin", "Degrees", "Betweenness Centrality"]))
+        file.write("\n")
+        for cid, a_cluster in self.retrieve_clusters(singletons = False).items():
+            paths = self.compute_shortest_paths(subset = a_cluster)
+            paths = self.compute_path_stat(paths)
+            rpaths = self.compute_shortest_paths_with_reconstruction(subset = a_cluster)
+            min_d = min(paths.values())
+            for n, d in paths.items():
+                self.has_node_with_id(n.id).set_label ("%2.3g" % d)
+                file.write("%d\t%s\t%g\t%g\t%d\t%f\n" % (cid, n.id, d,d/min_d, n.degree, self.betweenness_centrality(n.id, paths=rpaths)))
 
     def reduce_edge_set (self, attribute_merge = True):
         byPairs = {}
@@ -1654,9 +1665,6 @@ class transmission_network:
                     edges_removed.add (edges[remove_index])
                     for e in [k for k in range (3) if k!=remove_index]:
                         must_keep.add (edges[e])
-
-
-
 
 
     def fit_degree_distribution (self, degree_option = None, hy_instance = None):

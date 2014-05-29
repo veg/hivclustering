@@ -8,7 +8,7 @@ import multiprocessing
 
 run_settings = None
 
-def settings ():
+def settings():
     return run_settings
 
 #-------------------------------------------------------------------------------
@@ -287,6 +287,7 @@ def build_a_network ():
     arguments.add_argument('-k', '--filter', help = 'Only return clusters with ids listed by a newline separated supplied file. ', required = False)
     arguments.add_argument('-s', '--sequences', help = 'Provide the MSA with sequences which were used to make the distance file. ', required = False)
     arguments.add_argument('-n', '--edge_filtering', choices = ['remove','report'] , help = 'Compute edge support and mark edges for removal using sequence-based triangle tests (requires the -s argument) and either only report them or remove the edges before doing other analyses ', required = False)
+    arguments.add_argument('-y', '--centralities', help = 'Output a CSV file with node centralities')
 
     global run_settings
 
@@ -301,13 +302,18 @@ def build_a_network ():
             print ("Failed to open '%s' for reading" % (run_settings.input), file = sys.stderr)
             raise
 
-    if run_settings.dot == None:
-        run_settings.dot = sys.stdout
-    else:
+    if run_settings.dot is not None:
         try:
             run_settings.dot = open (run_settings.dot, 'w')
         except IOError:
             print ("Failed to open '%s' for writing" % (run_settings.dot), file = sys.stderr)
+            raise
+
+    if run_settings.centralities is not None:
+        try:
+            run_settings.centralities = open (run_settings.centralities, 'w')
+        except IOError:
+            print ("Failed to open '%s' for writing" % (run_settings.centralities), file = sys.stderr)
             raise
 
 
@@ -369,7 +375,7 @@ def build_a_network ():
             raise
 
     network = transmission_network ()
-    network.read_from_csv_file (run_settings.input, formatter, run_settings.threshold, 'BULK')
+    network.read_from_csv_file(run_settings.input, formatter, run_settings.threshold, 'BULK')
 
 
     uds_attributes = None
@@ -389,7 +395,6 @@ def build_a_network ():
 
     if run_settings.attributes is not None:
         import_attributes ( run_settings.attributes, network)
-
 
 
     if run_settings.sequences and run_settings.edge_filtering:

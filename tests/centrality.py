@@ -5,16 +5,16 @@ import json
 import csv
 import os.path
 import nose
+import functools
 
 
 from hivclustering import *
 #from networkbuild import *
+network = transmission_network()
 
-def test_centrality():
+def setup():
     ''' Creates a Krackhardt kite and ensures betweenness is correct '''
-
     #Create a transmission network
-    network = transmission_network()
 
     #Add the nodes
     attrib = None
@@ -48,5 +48,16 @@ def test_centrality():
     network.add_an_edge('Heather', 'Ike', 1, parsePlain)
     network.add_an_edge('Ike', 'Jane', 1, parsePlain)
 
+
+@nose.with_setup(setup=setup)
+def test_centrality():
+    ''' Ensure betweenness is correct '''
     assert network.betweenness_centrality('Heather') - .388888 < .0001
+
+@nose.with_setup(setup=setup)
+def test_degrees():
+    ''' Ensure degrees are correct '''
+    patients = [k for k,v in network.nodes.items()]
+    expected = [9,9,18,15,12,6,15,12,9,3]
+    assert all(map(lambda x : x[0].degree == x[1], zip(patients,expected)))
 
