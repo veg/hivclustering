@@ -18,9 +18,7 @@ HyPhy Python library.
     cd [hyphy]/src/lib
     python3 setup.py install
 
-2) Install all dependent python packages by running install.sh
-
-    pip3 install -r requirements.txt
+2) Install all dependent python packages by running the included install.sh script
     
 
     
