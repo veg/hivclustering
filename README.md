@@ -9,19 +9,19 @@ To install
 Dependencies
 ------------
 
-1). The low level HyPhy Python library. 
-     
-Clone the HyPhy repo <git://github.com/veg/hyphy.git>
+HIVClustering can be installed in two easy steps.  Prior to installation, please
+ensure that you python 3 installed. 
+
+1) Clone the HyPhy repo <git://github.com/veg/hyphy.git>. This is the low level
+HyPhy Python library. 
 
     cd [hyphy]/src/lib
-    sudo python3 setup.py install
+    python3 setup.py install
+
+2) Install all dependent python packages by running install.sh
+
+    pip3 install -r requirements.txt
     
-2). The higher level Python-HyPhy interface (hppy)
-
-Clone the hppy repo <git://github.com/nlhepler/hppy.git>
-
-    cd [hppy]
-    sudo python3 setup.py install
 
     
 USAGE
@@ -87,3 +87,5 @@ USAGE
                             argument) and either only report them or remove the
                             edges before doing other analyses
 
+      -y CENTRALITIES, --centralities CENTRALITIES
+                            Output a CSV file with centrality information
