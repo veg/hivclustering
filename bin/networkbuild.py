@@ -138,7 +138,11 @@ def describe_network(network, json_output = False):
                                    'rho CI': distro_fit['rho_ci'][distro_fit['Best']],
                                    'fitted': distro_fit['fitted'][distro_fit['Best']] }
     else:
-        print ("Best distribution is '%s' with rho = %g" % (distro_fit['Best'], distro_fit['rho'][distro_fit['Best']]))
+        if (distro_fit['Best'] != "Negative Binomial"):
+            print ("Best distribution is '%s' with rho = %g" % (distro_fit['Best'], distro_fit['rho'][distro_fit['Best']]))
+        else:
+            print ("Best distribution is '%s'" % (distro_fit['Best']))
+
 
     # find diffs in directed edges
     '''for anEdge in network.edges:
