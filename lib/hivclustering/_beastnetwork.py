@@ -1,7 +1,7 @@
 
 
 import datetime, time, random, itertools, operator, re, sys
-from math import log
+from math import log, exp
 from copy import copy, deepcopy
 from bisect import bisect_left
 from operator import itemgetter
@@ -11,7 +11,7 @@ import csv
 import multiprocessing
 from functools import partial, lru_cache
 
-__all__ = ['edge', 'patient', 'transmission_network', 'parseAEH', 'parseLANL', 'parsePlain', 'parseRegExp', 'describe_vector', 'tm_to_datetime', 'datetime_to_tm']
+__all__ = ['edge', 'patient', 'transmission_network', 'parseAEH', 'parseLANL', 'parsePlain', 'parseRegExp', 'describe_vector', 'tm_to_datetime', 'datetime_to_tm',]
 #-------------------------------------------------------------------------------
 
 
@@ -87,7 +87,7 @@ def describe_vector (vector):
 
 def _test_edge_support (triangles, sequence_file_name, hy_instance, p_value_cutoff):
     if hy_instance is None:
-        hy_instance = hy.HyphyInterface ();
+        hy_instance = hy.HyphyInterface ()
     script_path = os.path.realpath(__file__)
     hbl_path =  os.path.join(os.path.dirname(script_path), "data", "HBL", "TriangleSupport.bf")
 
@@ -109,6 +109,42 @@ def _test_edge_support (triangles, sequence_file_name, hy_instance, p_value_cuto
         return_object.append ( (t, hy_instance.getvar (str(k),hy.HyphyInterface.MATRIX)) )
 
     return return_object
+    
+#[node.sequence,sim_matrix,hy_instance,index_to_node_id]
+def _batch_sequence_sim (spec):
+    return [_simulate_HIV_sequences (spec[0], spec[1], spec[2]), spec[3]]
+         
+def _simulate_HIV_sequences (sequence, tree_matrix, hy_instance):
+    if hy_instance is None:
+        hy_instance = hy.HyphyInterface ()
+        
+    script_path = os.path.realpath(__file__)
+    hbl_path =  os.path.join(os.path.dirname(script_path), "data", "HBL", "SimulateSequence.bf")
+    
+    #print ("Simulating a chain with %d sequences" % len (tree_matrix), file = sys.stderr)
+ 
+    hy_instance.queuevar ('_baseline_sequence', sequence)
+    hy_instance.queuevar ('tree_matrix', tree_matrix)
+    hy_instance.runqueue (batchfile = hbl_path)
+    if len(hy_instance.stderr):
+        raise RuntimeError (hy_instance.stderr)
+
+    res = {}
+    for k in [str(t[0]) for t in tree_matrix]:
+        res [int(k)] = hy_instance.getvar (k,hy.HyphyInterface.STRING)
+    
+    '''
+    diff = 0 
+    for k in range (len(res)):
+        if res[k] != sequence[k]:
+            diff += 1
+            
+    print ("%g %d\n" % (div, diff))
+    '''
+    #print ("[DONE] Simulating a chain with %d sequences" % len (tree_matrix), file = sys.stderr)
+    
+    return res
+    
 
 
 #-------------------------------------------------------------------------------
@@ -315,6 +351,7 @@ class patient:
         self.naive             = None
         self.attributes        = set ()
         self.label             = None
+        self.sequence          = None
 
     def __hash__ (self):
         return self.id.__hash__()
@@ -471,7 +508,7 @@ class patient:
 
         shape = 'ellipse'
         color = 'white'
-        label = str(get_vl()) if self.get_vl() is not None else ""
+        label = str(self.get_vl()) if self.get_vl() is not None else ""
 
         edi_info = self.get_treatment_since_edi()
 
@@ -557,9 +594,13 @@ class transmission_network:
 
             node_neighbs   = {}
             sampling_probs = {}
+            
+            if self.adjacency_list is None:
+                self.compute_adjacency ()
 
             for a_node in self.nodes:
-                node_neighbs [a_node]   = self.get_node_neighborhood (a_node.id,True,False)
+                #node_neighbs [a_node]   = self.get_node_neighborhood (a_node.id,True,False)
+                node_neighbs[a_node] = self.adjacency_list[a_node] if a_node in self.adjacency_list else set ()
                 sampling_probs [a_node] = 1.
 
             nodes.add                    (a_node)
@@ -574,7 +615,7 @@ class transmission_network:
 
             while len (nodes) < how_many_nodes:
                 up_to = random.random() * upper_bound
-                local_sum = 0
+                local_sum = 0.
                 for a_node in left_over:
                     local_sum += sampling_probs[a_node]
                     if local_sum >= up_to:
@@ -637,20 +678,31 @@ class transmission_network:
                         #print (node_pair[0].dates[0], node_pair[1].dates[0])
                         self.add_an_edge ("|".join ([node_pair[0].id,time.strftime("%m%d%Y",node_pair[0].dates[0])]), "|".join ([node_pair[1].id,time.strftime("%m%d%Y",node_pair[1].dates[0])]), 0.01, header_parser = parseAEH)
 
-    def create_a_pref_attachment_network (self, network_size = 100, random_attachment = 0.0, start_new_tree = 0.0, start_date = None, tick_rate = None):
-        attach_to = [1,2]
+    def create_a_pref_attachment_network (self, network_size = 100, start_with = 1, random_attachment = 0.0, start_new_tree = 0.0, start_date = None, tick_rate = None, poisson_mean = None):
         current_date = start_date
+        
+        simulation_start = []
+        attach_to        = []
+        
+        dates_by_chain          = []
+        parent_chain            = {}
+        burst_size_by_chain     = []
+        
+        for k in range (1,start_with+1):
+            simulation_start.append(self.insert_patient (str(k), datetime_to_tm(current_date), False, None))
+            dates_by_chain.append (start_date)
+            attach_to.append      (k)
+            burst_size_by_chain.append (1)
+            parent_chain [str(k)] = len (dates_by_chain) - 1
 
-        self.insert_patient (str(1), datetime_to_tm(current_date), False, None)
-        self.insert_patient (str(2), datetime_to_tm(current_date), False, None)
-
-        for node_id in range (3, network_size+1):
-            if current_date is not None:
-                current_date += datetime.timedelta (days = random.expovariate (tick_rate))
-                #print (current_date)
+        for node_id in range (k+1, network_size+1):
+                
             if start_new_tree > 0.0 and random.random () < start_new_tree:
-                self.insert_patient (str(node_id), datetime_to_tm(current_date), False, None)
                 attach_to.append (node_id)
+                simulation_start.append (self.insert_patient (str(node_id), datetime_to_tm(current_date), False, None))
+                parent_chain[str(node_id)] = len (burst_size_by_chain)
+                burst_size_by_chain.append (1)
+                dates_by_chain.append (random.choice (dates_by_chain))
                 continue
 
 
@@ -659,13 +711,121 @@ class transmission_network:
             else:
                 k = random.choice (attach_to)
 
+            if start_date is not None:
+                parent_chain_id = parent_chain[str(k)]
+                burst_size_by_chain[parent_chain_id] -= 1
+                if burst_size_by_chain[parent_chain_id] <= 0:
+                    dates_by_chain[parent_chain_id] += datetime.timedelta (days = random.expovariate (1./tick_rate))                    
+                    if poisson_mean is not None:
+                        L = exp (-poisson_mean)
+                        b = 0
+                        p = 1.
+                    
+                        while (p > L):
+                            b += 1
+                            p = p * random.random()
+                        
+                        #print (burst_size)
+                        burst_size_by_chain[parent_chain_id] = b
+                    else:
+                        burst_size_by_chain[parent_chain_id] = 1
+                    current_date = dates_by_chain[parent_chain_id]
+                parent_chain [str(node_id)] = parent_chain_id
+                
+
             if current_date is not None:
                 self.add_an_edge ("|".join([str(node_id),current_date.strftime("%m%d%Y")]), "|".join ([str(k),time.strftime("%m%d%Y",self.has_node_with_id(str(k)).dates[0])]), 1, header_parser = parseAEH)
             else:
                 self.add_an_edge (str(node_id), str(k), 1, header_parser = parsePlain)
             attach_to.extend ([k, node_id])
 
-        return self
+        print (max(dates_by_chain))
+        return simulation_start
+        
+    def dump_as_fasta (self, fh, add_dates = False, filter_on_set = None):
+        for n in self.nodes:
+            if filter_on_set is not None and n not in filter_on_set: continue
+            print (">%s%s\n%s" % (n.id, '' if add_dates == False else "|" + time.strftime("%m%d%Y",n.dates[0]) + "|" + str (n.dates[1]) , n.sequence), file = fh)
+
+
+    def construct_cluster_representation (self, root_node, already_simulated, the_cluster):
+        if root_node in self.adjacency_list:
+            for n in self.adjacency_list [root_node]:
+                if n not in already_simulated:
+                    already_simulated.add (n)
+                    the_cluster.append ([root_node, n])
+                    self.construct_cluster_representation (n, already_simulated, the_cluster)
+                    
+                
+    def simulate_sequence_evolution (self, founders, founder_sequences, rate_per_year, sampling_delay = None):
+        if self.adjacency_list is None:
+            self.compute_adjacency ()
+
+        hy_instance = hy.HyphyInterface ()
+        already_simulated = set ()
+        
+        
+        objects_to_send = []
+        index_mapper    = []
+        
+        alpha = 0.7
+        beta  = 0.1
+        beta_mean = alpha / (alpha + beta)
+        
+        delay_dates = []
+
+        for node in self.nodes:
+            try:
+                in_founders = founders.index (node)
+                already_simulated.add (node)
+                node.sequence = founder_sequences[in_founders]
+                the_cluster = []
+                self.construct_cluster_representation (node, already_simulated,the_cluster)
+                
+                delay_date = 1 /beta_mean * sampling_delay * random.betavariate (alpha, beta) if sampling_delay is not None else 0.0
+                node.dates.append (delay_date)
+                delay_dates.append (delay_date)
+                
+                sim_matrix = [[1,-1,0, delay_date / 365 * rate_per_year]]
+                
+                node_id_to_index = {node.id : 1};
+                index_to_node_id = {1: node};
+                
+                for i,pair in enumerate(the_cluster):
+                    for n in pair:
+                        if n.id not in node_id_to_index:
+                            node_id_to_index[n.id] = len (node_id_to_index) + 1
+                            index_to_node_id [len (node_id_to_index)] = n
+                    
+                    delay_date = 1 /beta_mean * sampling_delay * random.betavariate (alpha, beta) if sampling_delay is not None else 0.0
+                    delay_dates.append (delay_date)
+                    pair[1].dates.append (delay_date)
+                    sim_matrix.append ([node_id_to_index [pair[1].id], node_id_to_index [pair[0].id], abs(tm_to_datetime (pair[1].dates[0]) - tm_to_datetime (pair[0].dates[0])).days*rate_per_year/365, delay_date / 365 * rate_per_year])
+                
+                #seqs = _simulate_HIV_sequences (node.sequence, sim_matrix, hy_instance)
+                index_mapper.append (index_to_node_id)
+                objects_to_send.append ([node.sequence,sim_matrix,None,len(objects_to_send)])
+                
+                #for id, seq in seqs.items():
+                #    index_to_node_id[id].sequence = seq    
+                    
+                #print (sim_matrix)
+            except ValueError:
+                pass
+        
+        pool = multiprocessing.Pool()
+        processed_objects = pool.map (_batch_sequence_sim, objects_to_send)
+        pool.close()
+        pool.join()
+        
+        #print (describe_vector (delay_dates), file = sys.stderr)
+        
+        for seq_n_id in processed_objects:
+            index_to_node_id = index_mapper[seq_n_id[1]]
+            seqs = seq_n_id[0]
+            for id, seq in seqs.items():
+                index_to_node_id[id].sequence = seq    
+ 
 
     def insert_patient (self, id, date, add_degree, attributes):
         pat = patient (id)
@@ -682,7 +842,7 @@ class transmission_network:
 
     def make_sequence_key (self, id, date):
         if date != None:
-            return "-".join((id,time.strftime ("%m-%d-%Y",date)))
+            return "|".join((id,time.strftime ("%m-%d-%Y",date)))
         return id
 
     def add_edi  (self, edi):
@@ -1119,10 +1279,19 @@ class transmission_network:
         edge_count = 0
 
         nodes_by_stage = {}
+        edges_by_stage = {}
 
         for edge in self.edges:
             if edge.visible:
                 edge_count += 1
+                
+                edge_designation = "-".join (sorted ([str (edge.p1.stage), str (edge.p2.stage)]))
+                if edge_designation not in edges_by_stage:
+                    edges_by_stage[edge_designation] = 1
+                else:
+                    edges_by_stage[edge_designation] += 1
+                    
+                
                 for p in [edge.p1,edge.p2]:
                     if p not in vis_nodes:
                         if attributes_to_check is not None:
@@ -1141,7 +1310,7 @@ class transmission_network:
                 edge_set.add ((edge.p1, edge.p2))
 
 
-        return {'edges': len(edge_set), 'nodes': len(vis_nodes), 'total_edges': edge_count, 'multiple_dates':[[k[0],k[1].days] for k in multiple_samples], 'total_sequences': len(vis_nodes) + sum([k[0] for k in multiple_samples]) - len(multiple_samples), 'stages' : nodes_by_stage }
+        return {'edges': len(edge_set), 'nodes': len(vis_nodes), 'total_edges': edge_count, 'multiple_dates':[[k[0],k[1].days] for k in multiple_samples], 'total_sequences': len(vis_nodes) + sum([k[0] for k in multiple_samples]) - len(multiple_samples), 'stages' : nodes_by_stage, 'edge-stages': edges_by_stage }
 
     def clear_adjacency (self, clear_filter = True):
         if self.adjacency_list is not None:
@@ -1274,7 +1443,7 @@ class transmission_network:
         return size_by_node
 
 
-    def drop_singleton_nodes (self):
+    def extract_singleton_nodes (self):
         if self.adjacency_list == None:
             self.compute_adjacency ()
 
@@ -1282,7 +1451,11 @@ class transmission_network:
         for a_node in self.nodes:
             if a_node not in self.adjacency_list:
                 drop_these.add (a_node)
+                
+        return drop_these
 
+    def drop_singleton_nodes (self):
+        drop_these = self.extract_singleton_nodes()
         for delete_me in drop_these:
             del self.nodes[delete_me]
 
@@ -1318,8 +1491,13 @@ class transmission_network:
     def write_clusters (self, file):
         file.write ("SequenceID,ClusterID\n")
         for node in self.nodes:
-            if node.cluster_id != None:
-                file.write ("%s,%d\n" % (self.sequence_ids[self.make_sequence_key (node.id, node.dates[0])],node.cluster_id))
+            if node.cluster_id is not None:
+                for d in node.dates:
+                    try:
+                        file.write ("%s,%d\n" % (self.sequence_ids[self.make_sequence_key (node.id, d)],node.cluster_id))
+                        break
+                    except KeyError: 
+                        pass
 
     def write_centralities(self, file):
         file.write("\t".join(["ClusterID","NodeID","MeanPathLength","RelativeToClusterMin", "Degrees", "Betweenness Centrality"]))

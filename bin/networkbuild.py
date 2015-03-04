@@ -7,9 +7,13 @@ from functools import partial
 import multiprocessing
 
 run_settings = None
+uds_settings = None
 
 def settings():
     return run_settings
+
+def uds_attributes ():
+    return uds_settings
 
 #-------------------------------------------------------------------------------
 def print_network_evolution (network, store_fitted = None, outdegree = False, distance = None, do_print = True, outfile = sys.stdout):
@@ -59,8 +63,8 @@ def print_degree_distro (network,distro_fit, outfile = sys.stdout):
 
 
 #-------------------------------------------------------------------------------
-def describe_network(network, json_output = False):
-    network_stats = network.get_edge_node_count()
+def describe_network (network, json_output = False, keep_singletons = False):
+    network_stats = network.get_edge_node_count ()
     if json_output:
         return_json = {'Network Summary' : {'Edges' : network_stats['edges'], 'Nodes': network_stats['nodes'],
                         'Sequences used to make links': network_stats['total_sequences']},
@@ -71,7 +75,7 @@ def describe_network(network, json_output = False):
     else:
         print ("%d edges on %d nodes" % (network_stats['edges'], network_stats['nodes']), file = sys.stderr)
 
-    network.compute_clusters()
+    network.compute_clusters(keep_singletons)
     clusters = network.retrieve_clusters()
     #print (describe_vector([len(clusters[c]) for c in clusters]))
 
@@ -99,6 +103,7 @@ def describe_network(network, json_output = False):
 
     if json_output:
         return_json ['HIV Stages'] = {}
+        return_json ['Edge Stages'] = {}
 
     for key in set(map.values()):
         total = 0
@@ -131,15 +136,21 @@ def describe_network(network, json_output = False):
 
     print ("Fitting the degree distribution to various densities", file = sys.stderr)
     distro_fit = network.fit_degree_distribution ()
+    ci = distro_fit['rho_ci'][distro_fit['Best']]
+    rho = distro_fit['rho'][distro_fit['Best']]
+    rho = rho if rho is not None else 0.
+    ci = ci if ci is not None else [0.,0.]
     if json_output:
         return_json ['Degrees'] = {'Distribution' : distro_fit['degrees'],
                                    'Model': distro_fit['Best'],
-                                   'rho' : distro_fit['rho'][distro_fit['Best']],
-                                   'rho CI': distro_fit['rho_ci'][distro_fit['Best']],
+                                   'rho' : rho,
+                                   'rho CI': ci,
                                    'fitted': distro_fit['fitted'][distro_fit['Best']] }
     else:
         if (distro_fit['Best'] != "Negative Binomial"):
-            print ("Best distribution is '%s' with rho = %g" % (distro_fit['Best'], distro_fit['rho'][distro_fit['Best']]))
+            ci = distro_fit['rho_ci'][distro_fit['Best']]
+            rho = distro_fit['rho'][distro_fit['Best']]
+            print ("Best distribution is '%s' with rho = %g %s" % (distro_fit['Best'], rho, ("[%g - %g]" % (ci[0], ci[1]))))
         else:
             print ("Best distribution is '%s'" % (distro_fit['Best']))
 
@@ -288,6 +299,7 @@ def build_a_network ():
     arguments.add_argument('-p', '--parser', help = 'The reg.exp pattern to split up sequence ids; only used if format is regexp', required = False, type = str)
     arguments.add_argument('-a', '--attributes',   help = 'Load a CSV file with optional node attributes', type = argparse.FileType('r'))
     arguments.add_argument('-j', '--json', help = 'Output the network report as a JSON object', required = False,  action = 'store_true', default = False)
+    arguments.add_argument('-o', '--singletons', help = 'Include singletons in JSON output', required = False,  action = 'store_true', default = False)
     arguments.add_argument('-k', '--filter', help = 'Only return clusters with ids listed by a newline separated supplied file. ', required = False)
     arguments.add_argument('-s', '--sequences', help = 'Provide the MSA with sequences which were used to make the distance file. ', required = False)
     arguments.add_argument('-n', '--edge_filtering', choices = ['remove','report'] , help = 'Compute edge support and mark edges for removal using sequence-based triangle tests (requires the -s argument) and either only report them or remove the edges before doing other analyses ', required = False)
@@ -382,10 +394,10 @@ def build_a_network ():
     network.read_from_csv_file(run_settings.input, formatter, run_settings.threshold, 'BULK')
 
 
-    uds_attributes = None
+    uds_settings = None
 
     if run_settings.uds:
-        uds_attributes = network.read_from_csv_file (run_settings.uds, formatter, run_settings.threshold, 'UDS')
+        uds_settings = network.read_from_csv_file (run_settings.uds, formatter, run_settings.threshold, 'UDS')
 
     network_stats = network.get_edge_node_count ()
     sys.setrecursionlimit(max(sys.getrecursionlimit(),network_stats['nodes']))
