@@ -1500,8 +1500,11 @@ class transmission_network:
                         pass
 
     def write_centralities(self, file):
-        file.write("\t".join(["ClusterID","NodeID","MeanPathLength","RelativeToClusterMin", "Degrees", "Betweenness Centrality"]))
-        file.write("\n")
+        writer = csv.writer (file, delimiter = '\t')
+        writer.writerow(["ClusterID","NodeID","MeanPathLength","RelativeToClusterMin", "Degrees", "Betweenness Centrality"])
+        
+        centralities = []
+        
         for cid, a_cluster in self.retrieve_clusters(singletons = False).items():
             paths = self.compute_shortest_paths(subset = a_cluster)
             paths = self.compute_path_stat(paths)
@@ -1509,7 +1512,10 @@ class transmission_network:
             min_d = min(paths.values())
             for n, d in paths.items():
                 self.has_node_with_id(n.id).set_label ("%2.3g" % d)
-                file.write("%d\t%s\t%g\t%g\t%d\t%f\n" % (cid, n.id, d,d/min_d, n.degree, self.betweenness_centrality(n.id, paths=rpaths)))
+                centralities.append ([cid, n.id, d, d/min_d, n.degree, self.betweenness_centrality(n.id, paths=rpaths)])
+                writer.writerow ([str(k) for k in centralities[-1]])
+                
+        return centralities
 
     def reduce_edge_set (self, attribute_merge = True):
         byPairs = {}

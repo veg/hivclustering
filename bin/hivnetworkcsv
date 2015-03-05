@@ -7,8 +7,7 @@ import os.path
 from hivclustering import *
 from networkbuild import *
 
-if __name__=='__main__':
-     
+def make_hiv_network ():
     network = build_a_network()
      
     if settings().filter:
@@ -59,4 +58,10 @@ if __name__=='__main__':
 
     if settings().centralities:
         network.write_centralities(settings().centralities)
+        
+    return network
+    
+if __name__=='__main__':
+    make_hiv_network () 
+    
 
