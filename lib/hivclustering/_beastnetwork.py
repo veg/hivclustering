@@ -1620,6 +1620,7 @@ class transmission_network:
 
     def test_edge_support (self, sequence_file_name, triangles, hy_instance = None, p_value_cutoff = 0.05):
 
+        if len (triangles) == 0: return None
 
         evaluator = partial (_test_edge_support, sequence_file_name = sequence_file_name, hy_instance = hy_instance, p_value_cutoff = p_value_cutoff)
         #processed_objects = evaluator (triangles)
