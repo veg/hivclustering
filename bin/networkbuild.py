@@ -267,24 +267,24 @@ def import_edi_json (file):
 
     return edi_by_id
 
+#-------------------------------------------------------------------------------
 def get_sequence_ids(fn):
     '''Expects newline separated file of node ids'''
     with open(fn, 'r') as filter_file:
         reader = csv.reader(filter_file)
-        filter_list = []
+        filter_list = set ()
         for row in reader:
-            filter_list.append(row[0])
+            filter_list.add(row[0])
         if not len(filter_list):
             raise Exception('Empty file list')
-        return list(set(filter_list))
+        return filter_list
 
 
+#-------------------------------------------------------------------------------
 def build_a_network ():
 
     random.seed()
     arguments = argparse.ArgumentParser(description='Read filenames.')
-
-
 
     arguments.add_argument('-i', '--input',   help = 'Input CSV file with inferred genetic links (or stdin if omitted). Must be a CSV file with three columns: ID1,ID2,distance.')
     arguments.add_argument('-u', '--uds',   help = 'Input CSV file with UDS data. Must be a CSV file with three columns: ID1,ID2,distance.')
@@ -412,6 +412,8 @@ def build_a_network ():
     if run_settings.attributes is not None:
         import_attributes ( run_settings.attributes, network)
 
+    if run_settings.filter:
+        print ("Retained %d edges after applying node list filtering" % network.apply_cluster_membership_filter(get_sequence_ids(settings().filter)))
 
     if run_settings.sequences and run_settings.edge_filtering:
         network.test_edge_support (os.path.abspath (run_settings.sequences), network.find_all_triangles(network.reduce_edge_set()))

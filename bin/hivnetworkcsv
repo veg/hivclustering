@@ -8,12 +8,9 @@ from hivclustering import *
 from networkbuild import *
 
 def make_hiv_network ():
+    
     network = build_a_network()
-     
-    if settings().filter:
-        filter_list = get_sequence_ids(settings().filter)
-        network.apply_id_filter(filter_list)
-
+        
     if settings().json:
 
         network_info = describe_network(network, True)

@@ -1372,6 +1372,17 @@ class transmission_network:
                 vis_count += edge.visible
         return vis_count
 
+    def apply_cluster_membership_filter (self, white_list, do_clear = True):
+        extended_white_list = set (white_list) 
+        self.compute_clusters()
+        
+        for cluster_id, cluster_nodes in self.retrieve_clusters().items():
+            cluster_node_ids = set ([node.id for node in cluster_nodes])
+            if len (cluster_node_ids & white_list):
+                extended_white_list.update (cluster_node_ids)
+            
+        return self.apply_id_filter (extended_white_list, do_clear = do_clear)
+
     def apply_removed_edge_filter (self, do_clear = True):
         if do_clear : self.clear_adjacency()
         vis_count = 0
