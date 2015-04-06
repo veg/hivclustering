@@ -413,7 +413,7 @@ def build_a_network ():
         import_attributes ( run_settings.attributes, network)
 
     if run_settings.filter:
-        print ("Retained %d edges after applying node list filtering" % network.apply_cluster_membership_filter(get_sequence_ids(settings().filter)))
+        print ("Retained %d edges after applying node list filtering" % network.apply_cluster_membership_filter(get_sequence_ids(settings().filter)), file = sys.stderr)
 
     if run_settings.sequences and run_settings.edge_filtering:
         network.test_edge_support (os.path.abspath (run_settings.sequences), network.find_all_triangles(network.reduce_edge_set()))
