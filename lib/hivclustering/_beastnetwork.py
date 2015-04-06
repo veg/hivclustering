@@ -1553,11 +1553,12 @@ class transmission_network:
     def prune_all_edges_lacking_support (self):
         byPairs = {}
         for anEdge in self.edges:
-            patient_pair = (anEdge.p1, anEdge.p2)
-            if patient_pair in byPairs:
-                byPairs[patient_pair].append (anEdge)
-            else:
-                byPairs[patient_pair] = [anEdge]
+            if anEdge.visible:
+                patient_pair = (anEdge.p1, anEdge.p2)
+                if patient_pair in byPairs:
+                    byPairs[patient_pair].append (anEdge)
+                else:
+                    byPairs[patient_pair] = [anEdge]
 
         for patient_pair in byPairs:
             representative_edge = min (byPairs[patient_pair])

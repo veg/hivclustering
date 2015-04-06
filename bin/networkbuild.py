@@ -417,6 +417,8 @@ def build_a_network ():
 
     if run_settings.sequences and run_settings.edge_filtering:
         network.test_edge_support (os.path.abspath (run_settings.sequences), network.find_all_triangles(network.reduce_edge_set()))
+        #need to reapply the filter because find_all_triangles will reset the filters
+        network.apply_cluster_membership_filter(get_sequence_ids(settings().filter))
         if run_settings.edge_filtering == 'remove':
             network.prune_all_edges_lacking_support()
 
