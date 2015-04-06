@@ -413,12 +413,14 @@ def build_a_network ():
         import_attributes ( run_settings.attributes, network)
 
     if run_settings.filter:
-        print ("Retained %d edges after applying node list filtering" % network.apply_cluster_membership_filter(get_sequence_ids(settings().filter)), file = sys.stderr)
+        run_settings.filter = get_sequence_ids(settings().filter)
+        print ("Retained %d edges after applying node list filtering" % network.apply_cluster_membership_filter(run_settings.filter), file = sys.stderr)
 
     if run_settings.sequences and run_settings.edge_filtering:
         network.test_edge_support (os.path.abspath (run_settings.sequences), network.find_all_triangles(network.reduce_edge_set()))
         #need to reapply the filter because find_all_triangles will reset the filters
-        network.apply_cluster_membership_filter(get_sequence_ids(settings().filter))
+        if run_settings.filter:
+            network.apply_cluster_membership_filter(run_settings.filter)
         if run_settings.edge_filtering == 'remove':
             network.prune_all_edges_lacking_support()
 
