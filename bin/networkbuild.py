@@ -302,8 +302,10 @@ def build_a_network ():
     arguments.add_argument('-o', '--singletons', help = 'Include singletons in JSON output', required = False,  action = 'store_true', default = False)
     arguments.add_argument('-k', '--filter', help = 'Only return clusters with ids listed by a newline separated supplied file. ', required = False)
     arguments.add_argument('-s', '--sequences', help = 'Provide the MSA with sequences which were used to make the distance file. ', required = False)
-    arguments.add_argument('-n', '--edge_filtering', choices = ['remove','report'] , help = 'Compute edge support and mark edges for removal using sequence-based triangle tests (requires the -s argument) and either only report them or remove the edges before doing other analyses ', required = False)
+    arguments.add_argument('-n', '--edge-filtering', dest = 'edge_filtering', choices = ['remove','report'] , help = 'Compute edge support and mark edges for removal using sequence-based triangle tests (requires the -s argument) and either only report them or remove the edges before doing other analyses ', required = False)
     arguments.add_argument('-y', '--centralities', help = 'Output a CSV file with node centralities')
+    arguments.add_argument('-C', '--contaminants', help = 'Screen for contaminants by marking or removing sequences that cluster with any of the contaminant IDs (-F option) [default is not to screen]', choices = ['report', 'remove'])
+    arguments.add_argument('-F', '--contaminant-file', dest = 'contaminant_file', help = 'IDs of contaminant sequences', type = str)
 
     global run_settings
 
@@ -390,6 +392,12 @@ def build_a_network ():
             print ("Failed to open '%s' for reading" % (run_settings.uds), file = sys.stderr)
             raise
 
+    if len ([k for k in [run_settings.contaminants, run_settings.contaminant_file] if k is None]) == 1:     
+        raise ValueError ('Two arguments (-F and -S) are needed for contaminant screeening options')
+
+    if len ([k for k in [run_settings.edge_filtering, run_settings.sequences] if k is None]) == 1:     
+        raise ValueError ('Two arguments (-n and -s) are needed for edge filtering options')
+
     network = transmission_network ()
     network.read_from_csv_file(run_settings.input, formatter, run_settings.threshold, 'BULK')
 
@@ -413,14 +421,20 @@ def build_a_network ():
         import_attributes ( run_settings.attributes, network)
 
     if run_settings.filter:
-        run_settings.filter = get_sequence_ids(settings().filter)
+        run_settings.filter = get_sequence_ids(run_settings.filter)
         print ("Retained %d edges after applying node list filtering" % network.apply_cluster_membership_filter(run_settings.filter), file = sys.stderr)
+
+    if run_settings.contaminant_file:
+        run_settings.contaminant_file = get_sequence_ids(run_settings.contaminant_file)
+        network.apply_cluster_membership_filter(run_settings.contaminant_file, filter_out = True, set_attribute = 'problematic')
+        if run_settings.contaminants == 'remove':
+            print ("Retained %d edges after applying contaminant linkage filtering" % network.apply_attribute_filter ('problematic', filter_out = True), file = sys.stderr)
 
     if run_settings.sequences and run_settings.edge_filtering:
         network.test_edge_support (os.path.abspath (run_settings.sequences), network.find_all_triangles(network.reduce_edge_set()))
         #need to reapply the filter because find_all_triangles will reset the filters
-        if run_settings.filter:
-            network.apply_cluster_membership_filter(run_settings.filter)
+        #if run_settings.filter:
+        #    network.apply_cluster_membership_filter(run_settings.filter)
         if run_settings.edge_filtering == 'remove':
             network.prune_all_edges_lacking_support()
 

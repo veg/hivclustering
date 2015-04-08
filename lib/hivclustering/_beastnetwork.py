@@ -1024,48 +1024,53 @@ class transmission_network:
 
         return None
 
-    def compute_adjacency (self,edges=False,edge_set = None, both = False):
-        self.adjacency_list = {}
+    def compute_adjacency (self,edges=False,edge_set = None, both = False, storage = None):
+        if storage is None:
+            if self.adjacency_list is None:
+                self.adjacency_list = {}
+                
+            self.compute_adjacency (edges, edge_set, both, self.adjacency_list)
+        else:
+            for anEdge in (edge_set if edge_set is not None else self.edges):
+                if anEdge.visible:
+                    if anEdge.p1 not in storage: storage [anEdge.p1] = set()
+                    if anEdge.p2 not in storage: storage [anEdge.p2] = set()
+                    if edges:
+                        # check for duplication
+                        processed = False
+                        for an_edge in storage [anEdge.p1]:
+                            if an_edge.p1 == anEdge.p1 and an_edge.p2 == anEdge.p2:
+                                if an_edge > anEdge: #existing is "greater", replace
+                                    storage[anEdge.p1].remove (an_edge)
+                                    storage[anEdge.p2].remove (an_edge)
+                                else:
+                                    processed = True
+                                break
 
-        for anEdge in (edge_set if edge_set is not None else self.edges):
-            if anEdge.visible:
-                if anEdge.p1 not in self.adjacency_list: self.adjacency_list [anEdge.p1] = set()
-                if anEdge.p2 not in self.adjacency_list: self.adjacency_list [anEdge.p2] = set()
-                if edges:
-                    # check for duplication
-                    processed = False
-                    for an_edge in self.adjacency_list [anEdge.p1]:
-                        if an_edge.p1 == anEdge.p1 and an_edge.p2 == anEdge.p2:
-                            if an_edge > anEdge: #existing is "greater", replace
-                                self.adjacency_list[anEdge.p1].remove (an_edge)
-                                self.adjacency_list[anEdge.p2].remove (an_edge)
-                            else:
-                                processed = True
-                            break
+                        if not processed:
+                            storage [anEdge.p1].add (anEdge)
+                            storage [anEdge.p2].add (anEdge)
+                    elif both:
+                        # check for duplication
+                        processed = False
+                        for a_node, an_edge in storage [anEdge.p1]:
+                            if an_edge.p1 == anEdge.p1 and an_edge.p2 == anEdge.p2:
+                                if an_edge > anEdge: #existing is "greater", replace
+                                    storage[anEdge.p1].remove ((a_node,an_edge))
+                                    storage[anEdge.p2].remove ((a_node,an_edge))
+                                else:
+                                    processed = True
+                                break
 
-                    if not processed:
-                        self.adjacency_list [anEdge.p1].add (anEdge)
-                        self.adjacency_list [anEdge.p2].add (anEdge)
-                elif both:
-                    # check for duplication
-                    processed = False
-                    for a_node, an_edge in self.adjacency_list [anEdge.p1]:
-                        if an_edge.p1 == anEdge.p1 and an_edge.p2 == anEdge.p2:
-                            if an_edge > anEdge: #existing is "greater", replace
-                                self.adjacency_list[anEdge.p1].remove ((a_node,an_edge))
-                                self.adjacency_list[anEdge.p2].remove ((a_node,an_edge))
-                            else:
-                                processed = True
-                            break
+                        if not processed:
+                            storage [anEdge.p1].add ((anEdge.p2,anEdge))
+                            storage [anEdge.p2].add ((anEdge.p1,anEdge))
 
-                    if not processed:
-                        self.adjacency_list [anEdge.p1].add ((anEdge.p2,anEdge))
-                        self.adjacency_list [anEdge.p2].add ((anEdge.p1,anEdge))
-
-                else:
-                    self.adjacency_list [anEdge.p1].add (anEdge.p2)
-                    self.adjacency_list [anEdge.p2].add (anEdge.p1)
-
+                    else:
+                        storage [anEdge.p1].add (anEdge.p2)
+                        storage [anEdge.p2].add (anEdge.p1)
+                    
+ 
 
     def compute_path_stat (self, distances, stat = "mean"):
         result = {}
@@ -1360,19 +1365,35 @@ class transmission_network:
                 vis_count += edge.visible
         return vis_count
 
-    def apply_id_filter (self, list, strict = False, do_clear = True):
+
+    def apply_id_filter (self, list, strict = False, do_clear = True, filter_out = False, set_attribute = None):
         if do_clear : self.clear_adjacency()
+        
+        if filter_out :
+            visibility_check = lambda x : not x
+        else:
+            visibility_check = lambda x : x
+        
+        #print (filter_out, visibility_check (True), set_attribute)
+        
         vis_count = 0
         for edge in self.edges:
             if edge.visible:
                 if strict:
-                    edge.visible = edge.p1.id in list and edge.p2.id in list
+                    edge.visible = visibility_check(edge.p1.id in list and edge.p2.id in list)
                 else:
-                    edge.visible = edge.p1.id in list or edge.p2.id in list
+                    edge.visible = visibility_check(edge.p1.id in list or edge.p2.id in list)
+                
+                if set_attribute:
+                    if edge.visible != filter_out:
+                        edge.p1.add_attribute (set_attribute)
+                        edge.p2.add_attribute (set_attribute)
+                    edge.visible = True
+                    
                 vis_count += edge.visible
         return vis_count
 
-    def apply_cluster_membership_filter (self, white_list, do_clear = True):
+    def apply_cluster_membership_filter (self, white_list, do_clear = True, filter_out = False, set_attribute = None):
         extended_white_list = set (white_list) 
         self.compute_clusters()
         
@@ -1380,8 +1401,8 @@ class transmission_network:
             cluster_node_ids = set ([node.id for node in cluster_nodes])
             if len (cluster_node_ids & white_list):
                 extended_white_list.update (cluster_node_ids)
-            
-        return self.apply_id_filter (extended_white_list, do_clear = do_clear)
+                            
+        return self.apply_id_filter (extended_white_list, do_clear = do_clear, filter_out = filter_out, set_attribute = set_attribute)
 
     def apply_removed_edge_filter (self, do_clear = True):
         if do_clear : self.clear_adjacency()
@@ -1392,15 +1413,21 @@ class transmission_network:
             vis_count += edge.visible
         return vis_count
 
-    def apply_attribute_filter (self, attribute_value, do_clear = True, strict = False):
+    def apply_attribute_filter (self, attribute_value, do_clear = True, strict = False, filter_out = False):
         if do_clear : self.clear_adjacency()
+
+        if filter_out :
+            visibility_check = lambda x : not x
+        else:
+            visibility_check = lambda x : x
+
         vis_count = 0
         for edge in self.edges:
             if edge.visible:
                 if strict:
-                    edge.visible = edge.p1.has_attribute(attribute_value) and edge.p2.has_attribute(attribute_value)
+                    edge.visible = visibility_check(edge.p1.has_attribute(attribute_value) and edge.p2.has_attribute(attribute_value))
                 else:
-                    edge.visible = edge.p1.has_attribute(attribute_value) or edge.p2.has_attribute(attribute_value)
+                    edge.visible = visibility_check(edge.p1.has_attribute(attribute_value) or edge.p2.has_attribute(attribute_value))
                 vis_count += edge.visible
         return vis_count
 
@@ -1746,8 +1773,8 @@ class transmission_network:
         #sequence_pairs              =  set ()
 
 
-        if self.adjacency_list == None:
-            self.compute_adjacency (both = True, edge_set = edge_set)
+        node_and_edge_am = {}
+        self.compute_adjacency (both = True, edge_set = edge_set, storage = node_and_edge_am)
 
         print ("Locating triangles in the network", file = sys.stderr)
 
@@ -1770,7 +1797,7 @@ class transmission_network:
         #   [node_id] = edge_id
 
         adjacency_map = {}
-        for node, edge_list in self.adjacency_list.items():
+        for node, edge_list in node_and_edge_am.items():
             node_neighborhood = {}
             for n, e in edge_list:
                 node_neighborhood [n] = e
@@ -1808,7 +1835,7 @@ class transmission_network:
 
 
 
-        self.clear_adjacency()
+        del node_and_edge_am
         print ("Found %d (%d) triangles in the network" % (len (triangles), len (triangle_nodes_all)), file = sys.stderr)
 
         return [ (t[0], t[1], t[2], sum([count_by_sequence [t[0]],count_by_sequence [t[1]],count_by_sequence [t[2]]]))  for t in triangles]
