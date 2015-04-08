@@ -97,10 +97,19 @@ all_p_values = {triangle_count, 3};
 
 for (_t = 0; _t < triangle_count; _t += 1) {
     _toffset = _t * 3;
+    
+    _sidx1 = nameToIndex[_py_triangle_sequences[_toffset] && 1] - 1;
+    assert (_sidx1 >= 0, "Failed to map " + _py_triangle_sequences[_toffset]);
+    _sidx2 = nameToIndex[_py_triangle_sequences[_toffset + 1] && 1] - 1;
+    assert (_sidx2 >= 0, "Failed to map " + _py_triangle_sequences[_toffset + 1]);
+    _sidx3 = nameToIndex[_py_triangle_sequences[_toffset + 2] && 1] - 1;
+    assert (_sidx3 >= 0, "Failed to map " + _py_triangle_sequences[_toffset + 2]);
+    
+    
     lpv = _testNetworkTriangle ("filteredData", globalFreqs,  
-                                                     nameToIndex[_py_triangle_sequences[_toffset]]-1,
-                                                     nameToIndex[_py_triangle_sequences[_toffset+1]]-1,
-                                                     nameToIndex[_py_triangle_sequences[_toffset+2]]-1);
+                                                    _sidx1,
+                                                    _sidx2,
+                                                    _sidx3);
                                                      
     for (z = 0; z < 3; z+=1) {                                                 
         all_p_values [_t][z] = lpv[z];                                                 
