@@ -1767,7 +1767,7 @@ class transmission_network:
                 return 'edge'
         return None
 
-    def find_all_triangles (self, edge_set):
+    def find_all_triangles (self, edge_set, maximum_number = 2**17):
         triangles                   =  set ()
         #sequences_involved_in_links =  set ()
         #sequence_pairs              =  set ()
@@ -1808,28 +1808,34 @@ class transmission_network:
 
         count_by_sequence = {}
 
-        for node, neighbors in adjacency_map.items():
-            if len (neighbors) > 1: # something to do
-                for node2 in neighbors:
-                    for node3 in adjacency_map[node2]:
-                        if node in adjacency_map[node3]:
-                            triad = sorted([node, node2, node3])
-                            triad = (triad[0], triad[1], triad[2])
-                            if triad not in triangle_nodes:
-                                sequence_set = set ()
-                                for triangle_edge in [adjacency_map[node][node2], adjacency_map[node][node3], adjacency_map[node2][node3]]:
-                                    sequence_set.update (triangle_edge.sequences)
-                                if  len (sequence_set) == 3:
-                                    triangle_nodes.add (triad)
-                                    seqs = [k for k in sequence_set]
-                                    triangles.add ((seqs[0], seqs[1], seqs[2]))
-                                    for s in seqs:
-                                        if s not in count_by_sequence:
-                                            count_by_sequence[s] = 1
-                                        else:
-                                            count_by_sequence[s] += 1
 
-                                triangle_nodes_all.add (triad)
+        try:
+            for node, neighbors in adjacency_map.items():
+                if len (neighbors) > 1: # something to do
+                    for node2 in neighbors:
+                        for node3 in adjacency_map[node2]:
+                            if node in adjacency_map[node3]:
+                                triad = sorted([node, node2, node3])
+                                triad = (triad[0], triad[1], triad[2])
+                                if triad not in triangle_nodes:
+                                    sequence_set = set ()
+                                    for triangle_edge in [adjacency_map[node][node2], adjacency_map[node][node3], adjacency_map[node2][node3]]:
+                                        sequence_set.update (triangle_edge.sequences)
+                                    if  len (sequence_set) == 3:
+                                        triangle_nodes.add (triad)
+                                        seqs = [k for k in sequence_set]
+                                        triangles.add ((seqs[0], seqs[1], seqs[2]))
+                                        for s in seqs:
+                                            if s not in count_by_sequence:
+                                                count_by_sequence[s] = 1
+                                            else:
+                                                count_by_sequence[s] += 1
+
+                                    triangle_nodes_all.add (triad)
+                                    if len (triangle_nodes) > maximum_number:
+                                        raise UserWarning ('Too many triangles to attempt full filtering; stopped at %d' % maximum_number)
+        except UserWarning as e:
+            print (e, file = sys.stderr)
 
 
 
