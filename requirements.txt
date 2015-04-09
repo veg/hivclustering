@@ -6,7 +6,7 @@ pysam
 scikit-learn==0.14.1
 scipy==0.13.0
 six==1.6.1
--e git+git@github.com:veg/BioExt.git@1b30d92841e2356d99ca3deaa037138f6b207fd3#egg=bioext-master
+-e git+git@github.com:veg/BioExt.git@a9584a2d34d14b21e675a147e23154377fe7fb9e#egg=bioext-master
 -e git+https://github.com/veg/hppy.git@953c90625fd914335eebe9a45ed02849be36c8da#egg=hppy-master
 -e git+https://github.com/veg/idepi.git@cee5b306e0814dbd9bd43c80039d69430f8d819d#egg=idepi-master
 -e git+git@github.com:nlhepler/sklmrmr.git@c76bed7598e94d03a0ef7e0311b588da985ddde6#egg=sklmrmr-master
