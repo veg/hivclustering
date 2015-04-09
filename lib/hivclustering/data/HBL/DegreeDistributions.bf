@@ -185,7 +185,6 @@ Optimize (res, likeFuncYule(degreeCounts,x1));
 fprintf (stdout, "\n\nYule:\nLog(L) = ", res[1][0], "\nBIC = ", -res[1][0]*2 + Log(totalNon0) * res[1][1], "\nrho = ", x1, "\n");
 
 x1MLE = x1;
-critLevel = 1.92073*2;
 FindRoot (zU, res[1][0] - likeFuncYule(degreeCounts,x1) - critLevel,x1, x1MLE, 10000);
 FindRoot (zL, res[1][0] - likeFuncYule(degreeCounts,x1) - critLevel,x1, 0, x1MLE);
 x1 = x1MLE;
@@ -206,8 +205,13 @@ x1 :> 0;
 x1 :< 1e26;
 
 Optimize (res, likeFuncPareto(degreeCounts,x1));
-fprintf (stdout, "\n\nPareto:\nLog(L) = ", res[1][0], "\nBIC = ", -res[1][0]*2 + Log(totalNon0) * res[1][1], "\np = ", x1,"\n");
-_degree_fit_results ["Pareto"] = {"logL" : res[1][0], "BIC": -res[1][0]*2 + Log(totalNon0) * res[1][1], "rho": x1};
+fprintf (stdout, "\n\nPareto:\nLog(L) = ", res[1][0], "\nBIC = ", -res[1][0]*2 + Log(totalNon0) * res[1][1], "\nrho = ", x1,"\n");
+x1MLE = x1;
+FindRoot (zU, res[1][0] - likeFuncPareto(degreeCounts,x1) - critLevel,x1, x1MLE, 10000);
+FindRoot (zL, res[1][0] - likeFuncPareto(degreeCounts,x1) - critLevel,x1, 0, x1MLE);
+x1 = x1MLE;
+
+_degree_fit_results ["Pareto"] = {"logL" : res[1][0], "BIC": -res[1][0]*2 + Log(totalNon0) * res[1][1], "rho": x1, "rho_ci": {{zL__,zU__}}};
 
 
 function _THyPhyAskFor(key)
@@ -247,12 +251,21 @@ function _THyPhyAskFor(key)
         return res["Exp(yuleDensity(_MATRIX_ELEMENT_ROW_+1,"+(_degree_fit_results ["Yule"])["rho"] + "))"];
     }
 
+    if (key == "Parto_PDF") {
+        res = {Abs(allDegs),1};
+        return res["Exp(paretoDensity(_MATRIX_ELEMENT_ROW_+1,"+(_degree_fit_results ["Parto_PDF"])["rho"] + "))"];
+    }
+
     if (key == "Waring_rho_ci") {
         return (_degree_fit_results ["Waring"])["rho_ci"];
     }
     
     if (key == "Yule_rho_ci") {
         return (_degree_fit_results ["Yule"])["rho_ci"];
+    }
+
+    if (key == "Pareto_rho_ci") {
+        return (_degree_fit_results ["Pareto"])["rho_ci"];
     }
 
     if (key == "Waring" || key == "Yule" || key == "Pareto")
