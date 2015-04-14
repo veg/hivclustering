@@ -431,7 +431,7 @@ def build_a_network ():
         run_settings.contaminant_file = get_sequence_ids(run_settings.contaminant_file)
         network.apply_cluster_membership_filter(run_settings.contaminant_file, filter_out = True, set_attribute = 'problematic')
         
-        print ("Marked %d nodes as being in the contaminant clusters" % len ([n for n in network.nodes if n.has_attribute ('problematic')]))
+        print ("Marked %d nodes as being in the contaminant clusters" % len ([n for n in network.nodes if n.has_attribute ('problematic')]), file = sys.stderr)
         
         if run_settings.contaminants == 'remove':
            print ("Contaminant linkage filtering removed %d edges" %  network.conditional_prune_edges(condition = lambda x: x.p1.has_attribute ('problematic') or x.p2.has_attribute ('problematic')), file = sys.stderr)
