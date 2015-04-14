@@ -424,20 +424,26 @@ def build_a_network ():
 
     if run_settings.filter:
         run_settings.filter = get_sequence_ids(run_settings.filter)
-        print ("Retained %d edges after applying node list filtering" % network.apply_cluster_membership_filter(run_settings.filter), file = sys.stderr)
+        print ("Included %d edges after applying node list filtering" % network.apply_cluster_membership_filter(run_settings.filter), file = sys.stderr)
 
 
     if run_settings.contaminant_file:
         run_settings.contaminant_file = get_sequence_ids(run_settings.contaminant_file)
         network.apply_cluster_membership_filter(run_settings.contaminant_file, filter_out = True, set_attribute = 'problematic')
+        
+        print ("Marked %d nodes as being in the contaminant clusters" % len ([n for n in network.nodes if n.has_attribute ('problematic')]))
+        
         if run_settings.contaminants == 'remove':
            print ("Contaminant linkage filtering removed %d edges" %  network.conditional_prune_edges(condition = lambda x: x.p1.has_attribute ('problematic') or x.p2.has_attribute ('problematic')), file = sys.stderr)
 
     edge_visibility = network.get_edge_visibility()
 
     if run_settings.sequences and run_settings.edge_filtering:
-        
-        network.apply_attribute_filter ('problematic', filter_out = True)
+              
+        network.apply_attribute_filter ('problematic', filter_out = True, do_clear = False)
+        if run_settings.filter:
+            network.apply_id_filter (list = run_settings.filter, do_clear = False)
+            
         edge_stats = network.test_edge_support (os.path.abspath (run_settings.sequences), *network.find_all_triangles(network.reduce_edge_set()))
         network.set_edge_visibility (edge_visibility)
         

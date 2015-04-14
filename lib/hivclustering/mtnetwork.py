@@ -1422,7 +1422,7 @@ class transmission_network:
                 else:
                     edge.visible = visibility_check(edge.p1.id in list or edge.p2.id in list)
                 
-                if set_attribute:
+                if set_attribute is not None:
                     if edge.visible != filter_out:
                         edge.p1.add_attribute (set_attribute)
                         edge.p2.add_attribute (set_attribute)
