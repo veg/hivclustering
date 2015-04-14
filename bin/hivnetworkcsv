@@ -14,6 +14,13 @@ def make_hiv_network ():
     if settings().json:
 
         network_info = describe_network(network, True)
+
+        
+        network_info ['Settings'] = {'threshold' : settings().threshold,
+                                     'edge-filtering': settings().edge_filtering,
+                                     'contaminants': settings().contaminants}
+                                     
+        
         nodes = []
 
         cluster_info = network.retrieve_clusters ()
@@ -38,10 +45,11 @@ def make_hiv_network ():
                     src = node_idx[e.p1]
                     rcp = node_idx[e.p2]
                     directed = False
-                edges.append ({'source': src, 'target': rcp, 'directed': directed, 'length': network.edges[e], 'support' : e.edge_reject_p, 'removed': not e.has_support(), 'sequences' : e.sequences})
+                edges.append ({'source': src, 'target': rcp, 'directed': directed, 'length': network.distances[e], 'support' : e.edge_reject_p, 'removed': not e.has_support(), 'sequences' : e.sequences, 'attributes': list (e.attribute)})
         
         network_info['Nodes'] = nodes
         network_info['Edges'] = edges
+        
         print (json.dumps(network_info, indent = 4, sort_keys = 4))
 
     else:

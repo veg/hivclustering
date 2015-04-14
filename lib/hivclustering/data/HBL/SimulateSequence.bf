@@ -44,14 +44,6 @@ function defineModel () {
 AUTOMATICALLY_CONVERT_BRANCH_LENGTHS = 1;
 ACCEPT_ROOTED_TREES = 1;
 
-/*tree_matrix = 
-{{1,-1,0.01,0.01},
-{2,1,0.05,0.0},
-{3,1,0.02,0.0},
-{4,3,0.03,0.0},
-{5,-1,0.01,0.0},
-{6,1,0.02,0.0}};*/
-
 Topology TP = ((fake_root:0.0,root:0.0));
 
 node_to_internal_id = {}; 
@@ -149,14 +141,8 @@ for (si = 0; si < seq_count; si += 1) {
     _returnstring [seq_tag] * 0;
 }
 
-fprintf (stdout, _returnstring["1"], "\n");
+//fprintf (stdout, _returnstring["1"], "\n");
 
-/*fprintf (stdout, _returnstring, "\n");
-fprintf (stdout, ">1\n" + _baseline_sequence + "\n>2\n" + _returnstring, "\n");
-DataSet simD = ReadFromString (">1\n" + _baseline_sequence + "\n>2\n" + _returnstring);
-LikelihoodFunction lf_sim = (sim_filter, T);
-Optimize (res, lf_sim);
-fprintf (stdout, lf_sim,"\n", base_rate, "\n", T.2.mu, "\n");*/
 
 function rescale_tree (tree, param, names, factor) {
     for (b = 0; b < Columns (names); b+=1) {
@@ -164,6 +150,8 @@ function rescale_tree (tree, param, names, factor) {
     }
     return 0;
 }
+
+//fprintf (stdout, sim_strings);
 
 function _THyPhyAskFor(key)
 {

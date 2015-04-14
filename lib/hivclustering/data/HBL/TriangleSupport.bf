@@ -5,7 +5,6 @@ first_call = 1;
 function _testNetworkTriangle (filter, efv, seq1, seq2, seq3) {
 // seq_i is the list of sequence indices within the datafilter
         
-    
     if (first_call) {    
         global R1 = 2;
         global R2 = 2;
@@ -16,8 +15,8 @@ function _testNetworkTriangle (filter, efv, seq1, seq2, seq3) {
              
         Model TN93 = (qTN93, efv, 1);
         Tree          T3 = (1,2,3);
-        first_call = 0;
-    } else {
+        first_call = 0; 
+     } else {
         R1 = 2;
         R2 = 2;
     }
@@ -29,9 +28,9 @@ function _testNetworkTriangle (filter, efv, seq1, seq2, seq3) {
     OPTIMIZATION_METHOD    = 4;
         
     ClearConstraints (T3);
-    
     LikelihoodFunction L3 = (D3,T3);
     Optimize (full, L3);
+    
     
     // stash all MLEs
     
@@ -78,15 +77,19 @@ function _testNetworkTriangle (filter, efv, seq1, seq2, seq3) {
 
 map = {triangle_count, 3};
 
+//fprintf (stdout, "Loading...\n");
 DataSet       ds           = ReadDataFile (_py_sequence_file);
 DataSetFilter filteredData = CreateFilter (ds,1);
 
 nameToIndex = {};
 
+//fprintf (stdout, "Indexing...\n");
 for (k = 0; k < filteredData.species; k+=1) {
     GetString (seq_name, filteredData, k);
     nameToIndex[seq_name] = k + 1;
 }
+
+//fprintf (stdout, "Getting frequencies...\n");
 
 COUNT_GAPS_IN_FREQUENCIES = 0;
 HarvestFrequencies          (globalFreqs, filteredData, 1,1,1);
@@ -95,8 +98,11 @@ HarvestFrequencies          (globalFreqs, filteredData, 1,1,1);
 triangle_count = Abs(_py_triangle_sequences) $ 3;
 all_p_values = {triangle_count, 3};
 
+
 for (_t = 0; _t < triangle_count; _t += 1) {
     _toffset = _t * 3;
+    
+    //fprintf (stdout, _t, "\n");
     
     _sidx1 = nameToIndex[_py_triangle_sequences[_toffset]] - 1;
     assert (_sidx1 >= 0, "Failed to map " + _py_triangle_sequences[_toffset]);

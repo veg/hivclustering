@@ -1,7 +1,7 @@
 
 
 import datetime, time, random, itertools, operator, re, sys
-from math import log, exp
+from math import log, exp, floor
 from copy import copy, deepcopy
 from bisect import bisect_left
 from operator import itemgetter
@@ -92,18 +92,27 @@ def _test_edge_support (triangles, sequence_file_name, hy_instance, p_value_cuto
     hbl_path =  os.path.join(os.path.dirname(script_path), "data", "HBL", "TriangleSupport.bf")
 
     hy_instance.queuevar ('_py_sequence_file', sequence_file_name)
+    
+    #print (sequence_file_name)
+    
     triangle_spec = []
+
+    #print ("%d triangles" % len (triangles))
+
     for k in triangles:
         for i in k[:3]:
             triangle_spec.append (i)
 
     hy_instance.queuevar ('_py_triangle_sequences', triangle_spec)
+    #print (triangle_spec)
+    
     hy_instance.runqueue (batchfile = hbl_path)
     if len(hy_instance.stderr):
         raise RuntimeError (hy_instance.stderr)
 
 
     return_object = [] # ((triangle), (p-values))
+
 
     for k, t in enumerate (triangles):
         return_object.append ( (t, hy_instance.getvar (str(k),hy.HyphyInterface.MATRIX)) )
@@ -150,7 +159,7 @@ def _simulate_HIV_sequences (sequence, tree_matrix, hy_instance):
 #-------------------------------------------------------------------------------
 
 class edge:
-    def __init__ (self, patient1, patient2, date1, date2, visible, attribute = None, sequence_ids = None):
+    def __init__ (self, patient1, patient2, date1, date2, visible, attribute = None, sequence_ids = None, date_aware = True):
         if patient1 < patient2:
             self.p1    = patient1
             self.p2    = patient2
@@ -171,9 +180,57 @@ class edge:
         self.sequences = sequence_ids
         self.edge_reject_p = 0.
         self.is_unsupported = False
+        self.date_aware = date_aware
+        
 
+    def __hash__ (self):
+       if self.date_aware:
+            return self.p1.__hash__() ^ self.p2.__hash__() ^ self.date1.__hash__() ^ self.date2.__hash__()
+                
+       return hash(self.p1) ^ hash(self.p2)
+
+
+        
+    def __comp__ (self,other):
+        # 0: equal; 1: self is greater; -1: other is greater
+            
+        if self.p1 == other.p1 and self.p2 == other.p2:
+            if not self.date_aware or self.date1 == other.date1 and self.date2 == other.date2:
+                return 0
+            if self.date1 is not None:
+                if other.date1 is None:
+                    return 1
+                else:
+                    if other.date1 > self.date1:
+                        return -1
+                    else:
+                        if other.date1 < self.date1:
+                            return 1
+            else:
+                if other.date1 is not None:
+                    return -1
+
+            if self.date2 is not None:
+                if other.date2 is None:
+                    return 1
+                else:
+                    if other.date2 > self.date2:
+                        return -1
+                    else:
+                        if other.date2 < self.date2:
+                            return 1
+            return -1
+
+        if self.p1 < other.p1:
+            return -1
+        elif self.p1 > other.p1:
+            return 1
+        elif self.p2 < other.p2:
+            return -1
+        return 1
+        
     def has_support (self):
-        return self.is_unsupported == False
+        return not self.is_unsupported
 
     def compute_direction (self, return_diff = False, min_days = 30, assume_missing_is_chronic = 180):
     # returns the node FROM which the edge is pointing AWAY
@@ -236,53 +293,17 @@ class edge:
             return str (diff.days/7)'''
         return ''
 
-    def __hash__ (self):
-        return self.p1.__hash__() + self.p2.__hash__() + self.date1.__hash__() + self.date2.__hash__()
 
-    def __comp__ (self,other):
-        # 0: equal; 1: self is greater; -1: other is greater
-        if self.p1 == other.p1 and self.p2 == other.p2:
-            if self.date1 == other.date1 and self.date2 == other.date2:
-                return 0
-            if self.date1 is not None:
-                if other.date1 is None:
-                    return 1
-                else:
-                    if other.date1 > self.date1:
-                        return -1
-                    else:
-                        if other.date1 < self.date1:
-                            return 1
-            else:
-                if other.date1 is not None:
-                    return -1
-
-            if self.date2 is not None:
-                if other.date2 is None:
-                    return 1
-                else:
-                    if other.date2 > self.date2:
-                        return -1
-                    else:
-                        if other.date2 < self.date2:
-                            return 1
-            return -1
-
-        if self.p1 < other.p1:
-            return -1
-        elif self.p1 > other.p1:
-            return 1
-        elif self.p2 < other.p2:
-            return -1
-        return 1
 
     def update_attributes (self, desc):
         if desc is not None:
             self.attribute.add(desc)
+        return self
 
     def update_sequence_info (self, seq_info):
         if seq_info is not None:
             self.sequences = seq_info
+        return self
 
     def has_attribute (self, attr):
         return attr in self.attribute
@@ -304,22 +325,22 @@ class edge:
             return (self.date1 <= the_date) and (self.date2 <= the_date)
 
     def __lt__ (self, other):
-        return self.__comp__ (other) == -1
+        return self.__comp__ (other) < 0
 
     def __le__ (self, other):
         return self.__comp__ (other) <= 0
 
     def __gt__ (self, other):
-        return self.__comp__ (other) == 1
+        return self.__comp__ (other) > 0
 
     def __ge__ (self, other):
         return self.__comp__ (other) >= 0
 
     def __ne__ (self, other):
-        return not self.__eq__ (other)
+        return self.__comp__ (other) != 0
 
     def __eq__ (self,other):
-        return self.p1 == other.p1 and self.p2 == other.p2 and self.date1 == other.date1 and self.date2 == other.date2
+        return self.__comp__ (other) == 0
 
     def __repr__ (self):
         dir = self.compute_direction()
@@ -354,14 +375,15 @@ class patient:
         self.sequence          = None
 
     def __hash__ (self):
-        return self.id.__hash__()
+        return hash (self.id)
 
     def __comp__ (self,other):
         if self.id == other.id:
             return 0
-        if self.id < other.id:
+        elif self.id < other.id:
             return -1
-        return 1
+        else:
+            return 1
 
     def __eq__ (self,other):
         return self.id == other.id
@@ -533,10 +555,13 @@ class patient:
 
 class transmission_network:
 
-    def __init__ (self):
+    def __init__ (self, multiple_edges = False):
         self.nodes     = {}
         self.edges     = {}
+        self.distances = {}
+        
         self.adjacency_list = None
+        self.multiple_edges = multiple_edges
         self.sequence_ids = {} # this will store unique sequence ids keyed by edge information (pid and date)
 
     def read_from_csv_file (self,file_name, formatter = None, distance_cut = None, default_attribute = None, bootstrap_mode = False):
@@ -562,6 +587,12 @@ class transmission_network:
 
         return edgeAnnotations
 
+    def make_network_edge (self,*args,**kwargs):
+        return edge (*args, date_aware = self.multiple_edges, **kwargs)
+        
+    def edge_iterator (self):
+        return self.edges.values() 
+
     def ensure_node_is_added (self, id1, header_parser, default_attribute, bootstrap_mode, cache):
         if id1 not in cache:
             cache.add (id1)
@@ -576,9 +607,9 @@ class transmission_network:
             if how_many_edges >= len (self.edges):
                 return self
             subset_network = transmission_network()
-            sampled_edges = random.sample (list(self.edges), how_many_edges)
+            sampled_edges = random.sample (list(self.edge_iterator()), how_many_edges)
             for an_edge in sampled_edges:
-                subset_network.add_an_edge (an_edge.p1.id, an_edge.p2.id, self.edges[an_edge], header_parser = parsePlain)
+                subset_network.add_an_edge (an_edge.p1.id, an_edge.p2.id, self[an_edge], header_parser = parsePlain)
             return subset_network
 
 
@@ -646,9 +677,9 @@ class transmission_network:
             this_node = self.nodes[a_node]
             subset_network.insert_patient (this_node.id, this_node.dates[0], False, None)
 
-        for an_edge in self.edges:
+        for an_edge in self.edge_iterator():
             if an_edge.p1 in subset_network.nodes and an_edge.p2 in subset_network.nodes:
-                subset_network.add_an_edge (an_edge.p1.id, an_edge.p2.id, self.edges[an_edge], header_parser = parsePlain)
+                subset_network.add_an_edge (an_edge.p1.id, an_edge.p2.id, self[an_edge], header_parser = parsePlain)
 
         return subset_network
 
@@ -744,7 +775,8 @@ class transmission_network:
         
     def dump_as_fasta (self, fh, add_dates = False, filter_on_set = None):
         for n in self.nodes:
-            if filter_on_set is not None and n not in filter_on_set: continue
+            if filter_on_set is not None and n not in filter_on_set: 
+                continue
             print (">%s%s\n%s" % (n.id, '' if add_dates == False else "|" + time.strftime("%m%d%Y",n.dates[0]) + "|" + str (n.dates[1]) , n.sequence), file = fh)
 
 
@@ -920,7 +952,7 @@ class transmission_network:
 
         result = {'compared' : 0, 'shared' : 0};
 
-        for anEdge in self.edges if reduce_edges == False else self.reduce_edge_set():
+        for anEdge in self.edge_iterator() if reduce_edges == False else self.reduce_edge_set():
             if anEdge.visible or ignore_visible:
                 result['compared'] += 1
                 if attribute_value is None:
@@ -929,10 +961,6 @@ class transmission_network:
                     result['shared'] += (1 if anEdge.p1.has_attribute (attribute_value) and anEdge.p2.has_attribute (attribute_value) else 0)
 
         return result;
-
-    def has_an_edge        (self, id1, id2):
-        test_edge = edge (patient (id1), patient (id2), None, None, True)
-        return self.edges[test_edge] if test_edge in self.edges else None
 
     def has_node_with_id        (self, id):
         pat_with_id = patient (id)
@@ -943,7 +971,7 @@ class transmission_network:
     def get_all_edges_linking_to_a_node  (self, id1, ignore_visible = False, use_direction = False, incoming = False, add_undirected = False, only_undirected = False, reduce_edges = True):
         list_of_nodes = set()
         pat = patient (id1)
-        for anEdge in self.edges if reduce_edges == False else self.reduce_edge_set():
+        for anEdge in self.edge_iterator() if reduce_edges == False else self.reduce_edge_set():
             if anEdge.visible or ignore_visible:
                 if pat == anEdge.p2 or pat == anEdge.p1:
                     if use_direction:
@@ -973,7 +1001,7 @@ class transmission_network:
 
     def summarize_bootstrap (self):
         edge_support = {}
-        for edge in self.edges:
+        for edge in self.edge_iterator():
             pair = (edge.p1, edge.p2)
             if pair not in edge_support:
                 edge_support[pair] = set()
@@ -991,10 +1019,11 @@ class transmission_network:
 
         patient1,attrib = header_parser (id1)
         patient2,attrib = header_parser (id2)
-        same = patient1['id'] == patient2['id']
+        
+        loop = patient1['id'] == patient2['id']
 
-        p1 = self.insert_patient (patient1['id'],patient1['date'], not same and not node_only, attrib)
-        p2 = self.insert_patient (patient2['id'],patient2['date'], not same and not node_only, attrib)
+        p1 = self.insert_patient (patient1['id'],patient1['date'], not loop and not node_only, attrib)
+        p2 = self.insert_patient (patient2['id'],patient2['date'], not loop and not node_only, attrib)
 
         pid1 = self.make_sequence_key (patient1['id'],patient1['date'])
         if pid1 not in self.sequence_ids:
@@ -1004,21 +1033,26 @@ class transmission_network:
         if pid2 not in self.sequence_ids:
             self.sequence_ids [pid2] = patient2["rawid"]
 
+        
+
         if node_only == False:
-            if not same:
-                new_edge = edge (p1,p2,patient1['date'],patient2['date'],True, edge_attribute, (patient1["rawid"], patient2["rawid"]))
+            if not loop:
+            
+                new_edge = min (self.make_network_edge (p1,p2,patient1['date'],patient2['date'],True, edge_attribute, (patient1["rawid"], patient2["rawid"])),
+                                self.make_network_edge (p2,p1,patient2['date'],patient1['date'],True, edge_attribute, (patient2["rawid"], patient1["rawid"])))
+                
+                #new_edge = self.make_network_edge (p1,p2,patient1['date'],patient2['date'],True, edge_attribute, (patient1["rawid"], patient2["rawid"]))                               
                 if new_edge not in self.edges:
                     if not bootstrap_mode or edge_attribute is None:
-                        self.edges [new_edge] = distance
-                else:
-                    for k in self.edges:
-                        if k == new_edge:
-                            k.update_attributes (edge_attribute)
-                            k.update_sequence_info ((patient1["rawid"], patient2["rawid"]))
-                            break
-
-                    if distance < self.edges [new_edge]:
-                        self.edges [new_edge] = distance
+                        self.edges [new_edge] = new_edge
+                        self.distances [new_edge] = distance
+                        
+                else:               
+                    #print (id1, id2)                             
+                    self.edges[new_edge].update_attributes (edge_attribute)
+                    if distance < self.distances [new_edge]:
+                        self.edges[new_edge].update_sequence_info (new_edge.sequences)
+                        self.distances [new_edge] = distance
 
                 return new_edge
 
@@ -1031,21 +1065,23 @@ class transmission_network:
                 
             self.compute_adjacency (edges, edge_set, both, self.adjacency_list)
         else:
-            for anEdge in (edge_set if edge_set is not None else self.edges):
+            for anEdge in (edge_set if edge_set is not None else self.edge_iterator()):
                 if anEdge.visible:
                     if anEdge.p1 not in storage: storage [anEdge.p1] = set()
                     if anEdge.p2 not in storage: storage [anEdge.p2] = set()
                     if edges:
                         # check for duplication
                         processed = False
-                        for an_edge in storage [anEdge.p1]:
-                            if an_edge.p1 == anEdge.p1 and an_edge.p2 == anEdge.p2:
-                                if an_edge > anEdge: #existing is "greater", replace
-                                    storage[anEdge.p1].remove (an_edge)
-                                    storage[anEdge.p2].remove (an_edge)
-                                else:
-                                    processed = True
-                                break
+                        
+                        if self.multiple_edges:
+                            for an_edge in storage [anEdge.p1]:
+                                if an_edge.p1 == anEdge.p1 and an_edge.p2 == anEdge.p2:
+                                    if an_edge > anEdge: #existing is "greater", replace
+                                        storage[anEdge.p1].remove (an_edge)
+                                        storage[anEdge.p2].remove (an_edge)
+                                    else:
+                                        processed = True
+                                    break
 
                         if not processed:
                             storage [anEdge.p1].add (anEdge)
@@ -1053,14 +1089,16 @@ class transmission_network:
                     elif both:
                         # check for duplication
                         processed = False
-                        for a_node, an_edge in storage [anEdge.p1]:
-                            if an_edge.p1 == anEdge.p1 and an_edge.p2 == anEdge.p2:
-                                if an_edge > anEdge: #existing is "greater", replace
-                                    storage[anEdge.p1].remove ((a_node,an_edge))
-                                    storage[anEdge.p2].remove ((a_node,an_edge))
-                                else:
-                                    processed = True
-                                break
+                        
+                        if self.multiple_edges:
+                            for a_node, an_edge in storage [anEdge.p1]:
+                                if an_edge.p1 == anEdge.p1 and an_edge.p2 == anEdge.p2:
+                                    if an_edge > anEdge: #existing is "greater", replace
+                                        storage[anEdge.p1].remove ((a_node,an_edge))
+                                        storage[anEdge.p2].remove ((a_node,an_edge))
+                                    else:
+                                        processed = True
+                                    break
 
                         if not processed:
                             storage [anEdge.p1].add ((anEdge.p2,anEdge))
@@ -1286,7 +1324,7 @@ class transmission_network:
         nodes_by_stage = {}
         edges_by_stage = {}
 
-        for edge in self.edges:
+        for edge in self.edge_iterator():
             if edge.visible:
                 edge_count += 1
                 
@@ -1328,7 +1366,7 @@ class transmission_network:
     def apply_disease_stage_filter  (self, stages, do_clear = True, do_exclude = False):
         if do_clear : self.clear_adjacency()
         vis_count = 0
-        for edge in self.edges:
+        for edge in self.edge_iterator():
             if edge.visible:
                 if do_exclude:
                     edge.visible = edge.p1.stage not in stages and edge.p2.stage not in stages
@@ -1341,7 +1379,7 @@ class transmission_network:
     def apply_date_filter     (self, edge_year, newer = False, do_clear = True):
         if do_clear : self.clear_adjacency()
         vis_count = 0
-        for edge in self.edges:
+        for edge in self.edge_iterator():
             if edge.visible:
                 edge.visible = edge.check_date (edge_year, newer)
                 vis_count += edge.visible
@@ -1350,7 +1388,7 @@ class transmission_network:
     def apply_exact_date_filter     (self, the_date, newer = False, do_clear = True):
         if do_clear : self.clear_adjacency()
         vis_count = 0
-        for edge in self.edges:
+        for edge in self.edge_iterator():
             if edge.visible:
                 edge.visible = edge.check_exact_date (the_date, newer)
                 vis_count += edge.visible
@@ -1359,9 +1397,9 @@ class transmission_network:
     def apply_distance_filter (self, distance, do_clear = True):
         if do_clear : self.clear_adjacency()
         vis_count = 0
-        for edge in self.edges:
+        for edge in self.edge_iterator():
             if edge.visible:
-                edge.visible = self.edges[edge] <= distance
+                edge.visible = self.distances[edge] <= distance
                 vis_count += edge.visible
         return vis_count
 
@@ -1377,7 +1415,7 @@ class transmission_network:
         #print (filter_out, visibility_check (True), set_attribute)
         
         vis_count = 0
-        for edge in self.edges:
+        for edge in self.edge_iterator():
             if edge.visible:
                 if strict:
                     edge.visible = visibility_check(edge.p1.id in list and edge.p2.id in list)
@@ -1397,17 +1435,33 @@ class transmission_network:
         extended_white_list = set (white_list) 
         self.compute_clusters()
         
+        #print (len (extended_white_list))
+        
         for cluster_id, cluster_nodes in self.retrieve_clusters().items():
-            cluster_node_ids = set ([node.id for node in cluster_nodes])
-            if len (cluster_node_ids & white_list):
-                extended_white_list.update (cluster_node_ids)
+            if cluster_id is not None:
+                cluster_node_ids = set ([node.id for node in cluster_nodes])
+                if len (cluster_node_ids & white_list) > 0:
+                    #print ("Adding cluster %s with %d nodes because of %s" % (str(cluster_id), len (cluster_nodes), str (cluster_node_ids & white_list)), file = sys.stderr)
+                    extended_white_list.update (cluster_node_ids)
                             
         return self.apply_id_filter (extended_white_list, do_clear = do_clear, filter_out = filter_out, set_attribute = set_attribute)
+
+    def get_edge_visibility (self):
+        flags = {}
+        for edge in self.edge_iterator():
+            flags [edge] = edge.visible
+        return flags
+        
+    def set_edge_visibility (self, flags):
+        for edge in self.edge_iterator():
+            if edge in flags:
+                edge.visible = flags[edge]
+                    
 
     def apply_removed_edge_filter (self, do_clear = True):
         if do_clear : self.clear_adjacency()
         vis_count = 0
-        for edge in self.edges:
+        for edge in self.edge_iterator():
             if edge.visible:
                 edge.visible = edge.has_support()
             vis_count += edge.visible
@@ -1422,7 +1476,7 @@ class transmission_network:
             visibility_check = lambda x : x
 
         vis_count = 0
-        for edge in self.edges:
+        for edge in self.edge_iterator():
             if edge.visible:
                 if strict:
                     edge.visible = visibility_check(edge.p1.has_attribute(attribute_value) and edge.p2.has_attribute(attribute_value))
@@ -1435,7 +1489,7 @@ class transmission_network:
         if do_clear : self.clear_adjacency()
         vis_count = 0
 
-        for edge in self.edges:
+        for edge in self.edge_iterator():
             if edge.visible:
                 if edge.p1.cluster_id in cluster_ids or edge.p2.cluster_id in cluster_ids:
                     edge.visible = not exclude
@@ -1462,7 +1516,7 @@ class transmission_network:
 
 
     def clear_filters(self):
-        for edge in self.edges:
+        for edge in self.edge_iterator():
             edge.visible = True
 
     def cluster_size_by_node(self):
@@ -1497,9 +1551,12 @@ class transmission_network:
         for delete_me in drop_these:
             del self.nodes[delete_me]
 
-    def compute_clusters (self, singletons = False):
-        if self.adjacency_list == None:
+    def compute_clusters (self, singletons = False, adjacency_matrix = None):
+        
+        if self.adjacency_list is None and adjacency_matrix is None:
             self.compute_adjacency ()
+
+        use_this_am = adjacency_matrix if adjacency_matrix is not None else self.adjacency_list
 
         for aNode in self.nodes:
             aNode.cluster_id = None
@@ -1507,24 +1564,24 @@ class transmission_network:
         cluster_id = [0] # this will pass the object by reference
 
         for node in self.nodes:
-            if (singletons or node in self.adjacency_list) and node.cluster_id == None:
-                self.breadth_first_traverse (node, cluster_id)
+            if (singletons or node in use_this_am) and node.cluster_id == None:
+                self.breadth_first_traverse (node, cluster_id, use_this_am)
 
-    def breadth_first_traverse (self, node, cluster_id):
+    def breadth_first_traverse (self, node, cluster_id, use_this_am):
         if node.cluster_id == None:
             cluster_id [0] += 1
             node.cluster_id = cluster_id [0]
-        if node in self.adjacency_list:
-            for neighbor_node in self.adjacency_list[node]:
+        if node in use_this_am:
+            for neighbor_node in use_this_am[node]:
                 if neighbor_node.cluster_id == None:
                     neighbor_node.cluster_id = node.cluster_id
-                    self.breadth_first_traverse(neighbor_node, cluster_id)
+                    self.breadth_first_traverse(neighbor_node, cluster_id, use_this_am)
 
     def generate_csv (self, file):
         file.write ("ID1,ID2,Distance")
-        for edge in self.edges:
+        for edge in self.edge_iterator():
             if edge.visible:
-                file.write("%s,%s,%g\n" % (edge.p1.id, edge.p2.id, self.edges[edge]))
+                file.write("%s,%s,%g\n" % (edge.p1.id, edge.p2.id, self.distances[edge]))
 
     def write_clusters (self, file):
         file.write ("SequenceID,ClusterID\n")
@@ -1556,30 +1613,37 @@ class transmission_network:
         return centralities
 
     def reduce_edge_set (self, attribute_merge = True):
+        if self.multiple_edges:
+            byPairs = {}
+            for anEdge in self.edge_iterator():
+                if anEdge.visible:
+                    patient_pair = (anEdge.p1, anEdge.p2)
+                    if patient_pair in byPairs:
+                        byPairs[patient_pair].append (anEdge)
+                    else:
+                        byPairs[patient_pair] = [anEdge]
+
+            edge_set = set ()
+            for patient_pair in byPairs:
+                representative_edge = min (byPairs[patient_pair])
+                if attribute_merge:
+                    attribute_set = set ()
+                    for an_edge in byPairs[patient_pair]:
+                        attribute_set = attribute_set.union (an_edge.attribute)
+                    for attr in attribute_set:
+                        representative_edge.update_attributes(attr)
+
+                edge_set.add (representative_edge)
+            return edge_set
+        else:
+            return set ([edge for edge in self.edge_iterator() if edge.visible ])
+
+    def conditional_prune_edges (self, clear_filters = False, condition = lambda x : not x.has_support ()):
         byPairs = {}
-        for anEdge in self.edges:
-            patient_pair = (anEdge.p1, anEdge.p2)
-            if patient_pair in byPairs:
-                byPairs[patient_pair].append (anEdge)
-            else:
-                byPairs[patient_pair] = [anEdge]
-
-        edge_set = set ()
-        for patient_pair in byPairs:
-            representative_edge = min (byPairs[patient_pair])
-            if attribute_merge:
-                attribute_set = set ()
-                for an_edge in byPairs[patient_pair]:
-                    attribute_set = attribute_set.union (an_edge.attribute)
-                for attr in attribute_set:
-                    representative_edge.update_attributes(attr)
-
-            edge_set.add (representative_edge)
-        return edge_set
-
-    def prune_all_edges_lacking_support (self):
-        byPairs = {}
-        for anEdge in self.edges:
+        
+        counter = 0
+        
+        for anEdge in self.edge_iterator():
             if anEdge.visible:
                 patient_pair = (anEdge.p1, anEdge.p2)
                 if patient_pair in byPairs:
@@ -1589,10 +1653,19 @@ class transmission_network:
 
         for patient_pair in byPairs:
             representative_edge = min (byPairs[patient_pair])
-            if representative_edge.has_support () == False:
+            if condition (representative_edge):
+                counter += 1
                 for e in byPairs[patient_pair]:
                     del self.edges[e]
-
+                    del self.distances[e]
+                    
+           
+                    
+        if counter > 0:
+            self.clear_adjacency(clear_filter = clear_filters)
+             
+        return counter
+        
 
 
     def generate_dot (self, file, year_vis = None, reduce_edges = True):
@@ -1605,9 +1678,9 @@ class transmission_network:
 
         directed = {'undirected':0, 'directed':0}
 
-        for edge in self.edges if reduce_edges == False else self.reduce_edge_set():
+        for edge in self.edge_iterator() if reduce_edges == False else self.reduce_edge_set():
             if edge.visible:
-                distance = self.edges[edge]
+                distance = self.distances[edge]
 
                 if edge.p1 not in nodes_drawn:
                     nodes_drawn[edge.p1] = edge.p1.get_baseline_date()
@@ -1639,9 +1712,9 @@ class transmission_network:
              self.compute_adjacency()
 
         file.write("%s\n"%','.join(['ID1','ID2','Linktype']))
-        for edge in self.edges if reduce_edges == False else self.reduce_edge_set():
+        for edge in self.edge_iterator() if reduce_edges == False else self.reduce_edge_set():
             if edge.visible:
-                distance = self.edges[edge]
+                distance = self.distances[edge]
 
 
                 edge_attr = edge.direction(do_csv=True)
@@ -1656,11 +1729,11 @@ class transmission_network:
     def spool_pairwise_distances (self,file,baseline = False):
         file.write (','.join (['Seq1','Seq2','Distance']))
         file.write ('\n')
-        for ext_edge in self.edges:
+        for ext_edge in self.edge_iterator():
             if baseline:
                  if ext_edge.p1.get_baseline_date (True) != ext_edge.date1 or ext_edge.p2.get_baseline_date (True) != ext_edge.date2:
                     continue
-            file.write (','.join ([ext_edge.p1.id, ext_edge.p2.id, str(self.edges[ext_edge])]))
+            file.write (','.join ([ext_edge.p1.id, ext_edge.p2.id, str(self.distances[ext_edge])]))
             file.write ('\n')
 
     def get_node_degree_list (self, year_cap = None, do_direction = False, id_list = None, attribute_selector = None, clear_filters = True):
@@ -1741,8 +1814,9 @@ class transmission_network:
 
     def delete_edge_subset (self, edges):
         for an_edge in edges:
-            if an_edge in self.edges:
+            if an_edge in self.edge_iterator():
                 del self.edges[an_edge]
+                del self.distances[an_edge]
 
     def sample_subset_year_list    (self, years):
         selected_nodes = set()
@@ -1776,7 +1850,7 @@ class transmission_network:
         node_and_edge_am = {}
         self.compute_adjacency (both = True, edge_set = edge_set, storage = node_and_edge_am)
 
-        print ("Locating triangles in the network", file = sys.stderr)
+        #print ("Locating triangles in the network", file = sys.stderr)
 
         '''
         for an_edge in edge_set:
@@ -1817,85 +1891,175 @@ class transmission_network:
                             if node in adjacency_map[node3]:
                                 triad = sorted([node, node2, node3])
                                 triad = (triad[0], triad[1], triad[2])
+                                
                                 if triad not in triangle_nodes:
                                     sequence_set = set ()
-                                    for triangle_edge in [adjacency_map[node][node2], adjacency_map[node][node3], adjacency_map[node2][node3]]:
+                                    for triangle_edge in [adjacency_map[triad[0]][triad[1]], adjacency_map[triad[0]][triad[2]], adjacency_map[triad[1]][triad[2]]]:
                                         sequence_set.update (triangle_edge.sequences)
+                                        
+                                        
                                     if  len (sequence_set) == 3:
                                         triangle_nodes.add (triad)
-                                        seqs = [k for k in sequence_set]
-                                        triangles.add ((seqs[0], seqs[1], seqs[2]))
-                                        for s in seqs:
+                                        sequence_set = sorted (list (sequence_set))
+                                        sequence_set = (sequence_set[0], sequence_set[1], sequence_set[2])
+                                        triangles.add (sequence_set)
+                                        for s in sequence_set:
                                             if s not in count_by_sequence:
                                                 count_by_sequence[s] = 1
                                             else:
                                                 count_by_sequence[s] += 1
+                                    else:
+                                        pass
+                                        #print (sequence_set)
 
                                     triangle_nodes_all.add (triad)
-                                    if len (triangle_nodes) > maximum_number:
+                                    if len (triangle_nodes) >= maximum_number:
                                         raise UserWarning ('Too many triangles to attempt full filtering; stopped at %d' % maximum_number)
         except UserWarning as e:
             print (e, file = sys.stderr)
 
+        #self.find_all_bridges()
+    
+        sorted_result = sorted ( [(t[0], t[1], t[2], sum([count_by_sequence[k] for k in t]))  for t in triangles], key = lambda x : (x[3],x[0],x[1],x[2]), reverse = True)
+        
+        #del node_and_edge_am
+        #print ("Found %d triangles with sequences (total triangles %d) in the network" % (len (triangles), len (triangle_nodes_all)), file = sys.stderr)
 
+        return sorted_result, node_and_edge_am
 
-
-
-        del node_and_edge_am
-        print ("Found %d (%d) triangles in the network" % (len (triangles), len (triangle_nodes_all)), file = sys.stderr)
-
-        return [ (t[0], t[1], t[2], sum([count_by_sequence [t[0]],count_by_sequence [t[1]],count_by_sequence [t[2]]]))  for t in triangles]
-
-
-    def test_edge_support (self, sequence_file_name, triangles, hy_instance = None, p_value_cutoff = 0.05):
+    
+    def find_all_bridges (self, adjacency_list = None, clusters = None, attr = 'bridge'):
+        
+        def dfs_helper (node, parent = None):
+            parents    [node] = parent
+            self.discovery_step += 1
+            discovered [node] = self.discovery_step
+            earliest [node] = self.discovery_step
+            visited.add (node)
+            
+            #earliest   [node] = 
+            
+            for child, edge in adjacency_list [node]:
+                edge.remove_attribute (attr)
+                if child in visited:
+                    if parent is not None and child != parent:
+                        earliest[node] = min (earliest[node], discovered[child])
+                else:
+                    dfs_helper (child, node)
+                    earliest [node] = min (earliest[node], earliest[child])
+                    if earliest [child] > discovered[node]:
+                        edge.update_attributes (attr)
+              
+        
+        if adjacency_list is None:
+            adjacency_list = {}
+            self.compute_adjacency (both = True, storage = adjacency_list)
+ 
+        if clusters is None:
+            reduced_set = {}
+            for n,k in adjacency_list.items():
+                reduced_set [n] = set([p[0] for p in k])
+            
+            self.compute_clusters (adjacency_matrix = reduced_set)
+            clusters = self.retrieve_clusters (singletons = False)
+            
+        
+        for cid, cluster_nodes in clusters.items():        
+            self.discovery_step = 0 # what order was a particular node found in the DFS traversal
+            parents     = {} # the parent of a given node in the DFS traversal
+            discovered = {} # discovery step for each node
+            earliest   = {} # what is the earliest discovered node that this node connects to
+            visited     = set ()
+            
+            dfs_helper (cluster_nodes[0])
+                
+            
+    def will_cluster_disconnect (self, cluster, adjacency, edge_to_check):
+        
+        visited = set ()
+        
+        def helper (node):
+            for child, edge in adjacency[node]:
+                if child not in visited:
+                    if edge.has_support () and edge != edge_to_check:
+                        visited.add (child)
+                        helper (child)
+                    
+        helper (cluster[0])                
+        return len (visited) != len (cluster)
+            
+        
+    def test_edge_support (self, sequence_file_name, triangles, adjacency_set, hy_instance = None, p_value_cutoff = 0.05):
 
         if len (triangles) == 0: return None
 
         evaluator = partial (_test_edge_support, sequence_file_name = sequence_file_name, hy_instance = hy_instance, p_value_cutoff = p_value_cutoff)
         #processed_objects = evaluator (triangles)
+    
+        chunk = 2**(max(floor (log (len (triangles)/multiprocessing.cpu_count(),2)), 8))
 
-        blocked = [triangles[k : k + 256] for k in range (0, len (triangles), 256)]
+        blocked = [triangles[k : k + chunk] for k in range (0, len (triangles), chunk)]
 
         pool = multiprocessing.Pool()
-        #print (multiprocessing.cpu_count())
+        #print ()
         processed_objects = pool.map(evaluator, blocked)
         pool.close ()
         pool.join ()
 
         seqs_to_edge = {}
-        for e in self.edges:
+        for e in self.edge_iterator():
             if e.sequences:
                 seqs_to_edge [e.sequences] = e
-
 
         processed_objects = sorted ([k for p in processed_objects for k in p], key = lambda x: x[0][3])
 
         edges_removed = set()
         must_keep     = set()
 
+        reduced_set = {}
+        for n,k in adjacency_set.items():
+            reduced_set [n] = set([p[0] for p in k])
+        
+        self.compute_clusters (adjacency_matrix = reduced_set)
+        clusters = self.retrieve_clusters (singletons = False)
 
+        #self.find_all_bridges (adjacency_list = adjacency_set)
+        
+        stats = {'triangles':len (processed_objects),'unsupported edges' : 0,'removed edges': 0}
+        
+        unsupported_edges = set ()
+        removed_edges     = set ()
+        bridges           = set ()
 
         for t, p_values in processed_objects:
             seq_id = t[:3]
-            edges = [None,None,None]
-            for pair_index,pair in enumerate(((0,1),(0,2),(1,2))):
+            #edges = [None,None,None]
+            for pair_index,pair in enumerate (((0,1),(0,2),(1,2))):
+                this_edge = None
                 for seq_tag in [(seq_id[pair[0]], seq_id[pair[1]]), (seq_id[pair[1]], seq_id[pair[0]])]:
                     if seq_tag in seqs_to_edge:
-                        edges[pair_index] = seqs_to_edge[seq_tag]
+                        this_edge = seqs_to_edge[seq_tag]
                         break
-
-            for i in range (3):
-               edges[i].edge_reject_p = max (p_values[2-i], edges[i].edge_reject_p)
-
-            max_p = max (p_values)
-            if max_p > p_value_cutoff:
-                remove_index = 2 - p_values.index(max_p)
-                if edges[remove_index] not in edges_removed and edges[remove_index] not in must_keep:
-                    edges[remove_index].is_unsupported = True
-                    edges_removed.add (edges[remove_index])
-                    for e in [k for k in range (3) if k!=remove_index]:
-                        must_keep.add (edges[e])
-
+                        
+                if this_edge:
+                    this_edge.edge_reject_p = max (p_values[2-pair_index], this_edge.edge_reject_p)
+                    if  this_edge.edge_reject_p > p_value_cutoff:
+                        if this_edge not in unsupported_edges:
+                            unsupported_edges.add (this_edge)
+                            stats['unsupported edges'] += 1
+                            
+        unsupported_edges = sorted (list (unsupported_edges), key = lambda x: x.edge_reject_p, reverse = True)
+        
+        for flake in unsupported_edges:
+            if flake not in bridges and flake not in removed_edges:
+                if not self.will_cluster_disconnect (clusters[flake.p1.cluster_id], adjacency_set, flake):
+                    flake.is_unsupported = True
+                    stats ['removed edges'] += 1
+                    removed_edges.add (flake)
+                else:   
+                    bridges.add (flake)
+                             
+        return stats
 
     def fit_degree_distribution (self, degree_option = None, hy_instance = None):
         if hy_instance is None:
