@@ -1,6 +1,6 @@
-#!/usr/bin/env python3.2
+#!/usr/bin/env python3
 
-import csv, argparse, operator, sys, datetime, time, random, os.path, json, hypy as hy
+import csv, argparse, operator, sys, datetime, time, random, os.path, json, hppy as hy
 from math import log10
 #from scipy import stats
 from hivclustering import *
@@ -488,8 +488,7 @@ def compute_tns (network, year_from, year_to, distance = 0.015, fitted = None, o
 
 from networkbuild import *
 
-if __name__=='__main__':
-     
+def main(): 
     network = build_a_network ()
 
     network.generate_dot = generate_dot_tns
@@ -579,3 +578,6 @@ if __name__=='__main__':
     network.apply_date_filter( 2005, True, True)
     network.apply_date_filter( 2012, False, False)
     network.generate_dot (network, settings.dot, tns = precomputed_tns)
+
+if __name__=='__main__':
+    main()

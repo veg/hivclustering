@@ -1,4 +1,4 @@
-#!/usr/bin/env python3.2
+#!/usr/bin/env python3
 
 import csv, argparse, operator, sys, datetime, time, random, os.path, json, hppy as hy, re
 from math import log10, floor
@@ -307,7 +307,7 @@ def build_a_network ():
     arguments.add_argument('-C', '--contaminants', help = 'Screen for contaminants by marking or removing sequences that cluster with any of the contaminant IDs (-F option) [default is not to screen]', choices = ['report', 'remove'])
     arguments.add_argument('-F', '--contaminant-file', dest = 'contaminant_file', help = 'IDs of contaminant sequences', type = str)
     arguments.add_argument('-M', '--multiple-edges', dest = 'multiple_edges', help = 'Permit multiple edges (e.g. different dates) to link the same pair of nodes in the network [default is to choose the one with the shortest distance]', default = False, action = 'store_true')
-    
+
 
     global run_settings
 
@@ -394,10 +394,10 @@ def build_a_network ():
             print ("Failed to open '%s' for reading" % (run_settings.uds), file = sys.stderr)
             raise
 
-    if len ([k for k in [run_settings.contaminants, run_settings.contaminant_file] if k is None]) == 1:     
+    if len ([k for k in [run_settings.contaminants, run_settings.contaminant_file] if k is None]) == 1:
         raise ValueError ('Two arguments (-F and -S) are needed for contaminant screeening options')
 
-    if len ([k for k in [run_settings.edge_filtering, run_settings.sequences] if k is None]) == 1:     
+    if len ([k for k in [run_settings.edge_filtering, run_settings.sequences] if k is None]) == 1:
         raise ValueError ('Two arguments (-n and -s) are needed for edge filtering options')
 
     network = transmission_network (multiple_edges = run_settings.multiple_edges)
@@ -430,29 +430,29 @@ def build_a_network ():
     if run_settings.contaminant_file:
         run_settings.contaminant_file = get_sequence_ids(run_settings.contaminant_file)
         network.apply_cluster_membership_filter(run_settings.contaminant_file, filter_out = True, set_attribute = 'problematic')
-        
+
         print ("Marked %d nodes as being in the contaminant clusters" % len ([n for n in network.nodes if n.has_attribute ('problematic')]), file = sys.stderr)
-        
+
         if run_settings.contaminants == 'remove':
            print ("Contaminant linkage filtering removed %d edges" %  network.conditional_prune_edges(condition = lambda x: x.p1.has_attribute ('problematic') or x.p2.has_attribute ('problematic')), file = sys.stderr)
 
     edge_visibility = network.get_edge_visibility()
 
     if run_settings.sequences and run_settings.edge_filtering:
-              
+
         network.apply_attribute_filter ('problematic', filter_out = True, do_clear = False)
         if run_settings.filter:
             network.apply_id_filter (list = run_settings.filter, do_clear = False)
-            
+
         edge_stats = network.test_edge_support (os.path.abspath (run_settings.sequences), *network.find_all_triangles(network.reduce_edge_set()))
         network.set_edge_visibility (edge_visibility)
-        
+
         print ("Edge filtering examined %d triangles, found %d poorly supported edges, and marked %d edges for removal" % (edge_stats['triangles'], edge_stats['unsupported edges'], edge_stats['removed edges']), file = sys.stderr)
         if run_settings.edge_filtering == 'remove':
             #print (len ([e for e in network.edge_iterator() if not e.has_support()]))
             print ("Edge filtering removed %d edges" %  network.conditional_prune_edges(), file = sys.stderr)
             #network.find_all_bridges()
-    
+
 
 
     return network
