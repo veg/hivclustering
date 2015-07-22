@@ -5,7 +5,7 @@ import csv
 import os.path
 
 from hivclustering import *
-from networkbuild import *
+from hivclustering.networkbuild import *
 
 def make_hiv_network ():
     
