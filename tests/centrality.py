@@ -1,4 +1,4 @@
-#!/usr/bin/env python3.2
+#!/usr/bin/env python3
 
 from operator import itemgetter
 import json
@@ -59,5 +59,6 @@ def test_degrees():
     ''' Ensure degrees are correct '''
     patients = [k for k,v in network.nodes.items()]
     expected = [9,9,18,15,12,6,15,12,9,3]
+    print(list(map(lambda x : x[0].degree == x[1], zip(patients,expected))))
     assert all(map(lambda x : x[0].degree == x[1], zip(patients,expected)))
 
