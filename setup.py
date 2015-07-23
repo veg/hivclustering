@@ -18,9 +18,6 @@ setup(name='hivclustering',
       package_data={'hivclustering': [
             'data/HBL/*.bf',
     ]},
-    package_dir={
-        'networkbuild': 'hivclustering/networkbuild',
-    },
     scripts=[
         'scripts/hivnetworkcsv',
     ],
