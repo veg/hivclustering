@@ -447,7 +447,11 @@ def build_a_network ():
         edge_stats = network.test_edge_support (os.path.abspath (run_settings.sequences), *network.find_all_triangles(network.reduce_edge_set()))
         network.set_edge_visibility (edge_visibility)
 
-        print ("Edge filtering examined %d triangles, found %d poorly supported edges, and marked %d edges for removal" % (edge_stats['triangles'], edge_stats['unsupported edges'], edge_stats['removed edges']), file = sys.stderr)
+        if edge_stats:
+            print("Edge filtering examined %d triangles, found %d poorly supported edges, and marked %d edges for removal" % (edge_stats['triangles'], edge_stats['unsupported edges'], edge_stats['removed edges']), file = sys.stderr)
+        else:
+            print("Edge filtering examined %d triangles, found %d poorly supported edges, and marked %d edges for removal" % (0, 0, 0), file = sys.stderr)
+
         if run_settings.edge_filtering == 'remove':
             #print (len ([e for e in network.edge_iterator() if not e.has_support()]))
             print ("Edge filtering removed %d edges" %  network.conditional_prune_edges(), file = sys.stderr)
