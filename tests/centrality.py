@@ -58,7 +58,7 @@ def test_centrality():
 def test_degrees():
     ''' Ensure degrees are correct '''
     patients = [k for k,v in network.nodes.items()]
-    expected = [9,9,18,15,12,6,15,12,9,3]
-    print(list(map(lambda x : x[0].degree == x[1], zip(patients,expected))))
-    assert all(map(lambda x : x[0].degree == x[1], zip(patients,expected)))
+    patients = [(patient.id, patient.degree) for patient in patients]
+    expected = [('Carol', 9), ('Ed', 9), ('Diane', 18), ('Jane', 3), ('Fernando', 15), ('Andre', 12), ('Ike', 6), ('Beverly', 12), ('Heather', 9), ('Garth', 15)]
+    assert set(patients) == set(expected)
 
