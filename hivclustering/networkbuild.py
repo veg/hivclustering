@@ -15,6 +15,7 @@ from math import log10, floor
 from hivclustering import *
 from functools import partial
 import multiprocessing
+import itertools
 
 run_settings = None
 uds_settings = None
@@ -305,6 +306,16 @@ def get_sequence_ids(fn):
 
 
 #-------------------------------------------------------------------------------
+
+def get_fasta_ids(fn):
+    fh = open(fn)
+    for line in fh:
+        if line[0] == '>':
+            yield line[1:].strip()
+
+
+
+#-------------------------------------------------------------------------------
 def build_a_network():
 
     random.seed()
@@ -464,6 +475,15 @@ def build_a_network():
 
     if run_settings.sequences and run_settings.edge_filtering:
 
+        # Check that all sequences defined in distance file occur in source fasta file
+        distance_ids = network.sequence_ids.keys()
+        source_fasta_ids = [id for id in get_fasta_ids(run_settings.sequences)]
+
+        if any([x not in source_fasta_ids for x in distance_ids]):
+            missing_ids = [x for x in distance_ids if x not in source_fasta_ids]
+            raise Exception("Incorrect source file. Sequence ids referenced in input do not appear in source fasta ids. \n Missing ids in fasta file: %s " %  ', '.join(missing_ids))
+
+
         network.apply_attribute_filter('problematic', filter_out=True, do_clear=False)
         if run_settings.filter:
             network.apply_id_filter(list=run_settings.filter, do_clear=False)
@@ -485,3 +505,5 @@ def build_a_network():
             # network.find_all_bridges()
 
     return network
+
+

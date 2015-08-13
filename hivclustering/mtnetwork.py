@@ -1840,7 +1840,7 @@ class transmission_network:
                 return 'edge'
         return None
 
-    def find_all_triangles(self, edge_set, maximum_number=2**17):
+    def find_all_triangles(self, edge_set, maximum_number=2**18):
         triangles = set()
         #sequences_involved_in_links =  set ()
         #sequence_pairs              =  set ()
