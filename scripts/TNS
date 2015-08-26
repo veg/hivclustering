@@ -529,9 +529,9 @@ def main():
     '''
 
     #print_tns (network, 0.8)
-
+    
     '''
-    precomputed_tns = {}
+    
 
     with open ('data/TNS_new.txt', 'r') as tns_fh:
         tns_reader = csv.reader (tns_fh,delimiter = '\t')
@@ -577,9 +577,9 @@ def main():
     print ("Best distribution is '%s' with rho = %g" % (distro_fit['Best'], distro_fit['rho'][distro_fit['Best']]))
 
     print_tns (network, 0.8)
-    network.apply_date_filter( date_range[0], True, True)
-    network.apply_date_filter( date_range[1], False, False)
-    network.generate_dot (network, settings().dot, tns = precomputed_tns)
+    #network.apply_date_filter( date_range[0], True, True)
+    #network.apply_date_filter( date_range[1], False, False)
+    #network.generate_dot (network, settings().dot, tns = precomputed_tns)
 
 if __name__=='__main__':
     main()
