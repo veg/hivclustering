@@ -20,6 +20,7 @@ setup(name='hivclustering',
     ]},
     scripts=[
         'scripts/hivnetworkcsv',
+        'scripts/TNS'
     ],
     dependency_links = ['git+git://github.com/veg/hyphy-python.git@0.1.1#egg=HyPhy-0.1.1',
                         'git+git://github.com/veg/BioExt.git@0.17.2#egg=BioExt-0.17.3',

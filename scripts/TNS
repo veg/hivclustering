@@ -538,7 +538,7 @@ def main():
             precomputed_tns [k[0]] = float (k[3])
     '''
         
-    if settings.threshold is None: 
+    if settings().threshold is None: 
         print ("%d nodes with multiple dates" % len (network_stats['multiple_dates']))
         minfo = network.report_multiple_samples (network_stats['multiple_dates'])
         print ("Samples per patient: %d-%d (median %d)" % (minfo['samples']['min'],minfo['samples']['max'],minfo['samples']['median']))
