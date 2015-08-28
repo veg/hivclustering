@@ -16,11 +16,18 @@ def make_hiv_network():
 
         network_info = describe_network(network, True)
 
-        network_info['Settings'] = {'threshold': settings().threshold,
-                                    'edge-filtering': settings().edge_filtering,
-                                    'edge-filtering': settings().edge_filtering,
-                                    'contaminants': settings().contaminants,
-                                    'contaminant-ids': list(settings().contaminant_file)}
+        if settings().contaminant_file:
+            network_info['Settings'] = {'threshold': settings().threshold,
+                                        'edge-filtering': settings().edge_filtering,
+                                        'contaminants': settings().contaminants
+                                        }
+        else:
+            network_info['Settings'] = {'threshold': settings().threshold,
+                                        'edge-filtering': settings().edge_filtering,
+                                        'contaminants': settings().contaminants,
+                                        'contaminant-ids': list(settings().contaminant_file)
+                                        }
+
 
         nodes = []
 
