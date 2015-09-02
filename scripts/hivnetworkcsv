@@ -19,13 +19,13 @@ def make_hiv_network():
         if settings().contaminant_file:
             network_info['Settings'] = {'threshold': settings().threshold,
                                         'edge-filtering': settings().edge_filtering,
-                                        'contaminants': settings().contaminants
+                                        'contaminants': settings().contaminants,
+                                        'contaminant-ids': list(settings().contaminant_file)
                                         }
         else:
             network_info['Settings'] = {'threshold': settings().threshold,
                                         'edge-filtering': settings().edge_filtering,
-                                        'contaminants': settings().contaminants,
-                                        'contaminant-ids': list(settings().contaminant_file)
+                                        'contaminants': settings().contaminants
                                         }
 
 
