@@ -4,73 +4,66 @@ import csv, argparse, operator, sys, datetime, time, random, os.path, json, hppy
 from math import log10
 #from scipy import stats
 from hivclustering import *
+from datetime import date 
 
-date_range = [2005,2014]
+date_range = [1996,date.today().year]
 
 
-def print_tns (network, print_level = None):
+def print_tns (clusters, network, print_level = None):
     print ("\t".join(['ID','Year','BaselineDegree','TNS','Outbound_1st','Undirected_1st','Outbound_after1st','Undirected_after1st','BaselineSequence','BaselineVLDate','BaselineVL']))
     
-    for a_node in network.nodes:
-        base_date = a_node.get_baseline_date (complete = True)
-        if base_date.tm_year >= date_range[0] and base_date.tm_year < date_range[1]:
-            base_date_plus_one = datetime.date.timetuple(tm_to_datetime(base_date) + datetime.timedelta (days = 365))
-            network.clear_filters()
-            network.apply_exact_date_filter (base_date)
-            distro_fit = network.fit_degree_distribution ()
-            stats      = network.get_edge_node_count ()
-            #print ("Nodes %d, Edges %d" % (stats['nodes'], stats['edges']))
-            #print ("Best distribution is '%s' with rho = %g" % (distro_fit['Best'], distro_fit['rho'][distro_fit['Best']]))
-            all_edges = network.get_all_edges_linking_to_a_node (a_node.id,ignore_visible=True,use_direction=False)
-            
-            enrollment_edges = 0
-            additional_edges = [0,0,0,0,0,0] # in, out, undirected
-            
-
-            for an_edge in all_edges:
-                if a_node.treatment_date:
-                    if (an_edge.check_exact_date (a_node.treatment_date) == False): 
-                        continue
+    for key, a_cluster in clusters.items():
+        is_singleton = key is None
+        for a_node in a_cluster:
+            base_date = a_node.get_baseline_date (complete = True)
+            if base_date.tm_year >= date_range[0] and base_date.tm_year <= date_range[1]:
+                base_date_plus_one = datetime.date.timetuple(tm_to_datetime(base_date) + datetime.timedelta (days = 365))
                 
-                if an_edge.check_exact_date (base_date):
-                    enrollment_edges += 1
-                else:
-                    base_index = 0 if an_edge.check_exact_date (base_date_plus_one) else 3
-                    direction = an_edge.compute_direction()
-                    if direction is None:
-                        index = base_index + 2
-                    elif direction.id == a_node.id:
-                        index = base_index + 1
-                        #an_edge.update_attributes ('UDS')
-                    else:
-                        index = base_index + 0
-                    additional_edges [index] += 1
+                enrollment_edges = 0
+                additional_edges = [0,0,0,0,0,0] # in, out, undirected
+                if not is_singleton:
+                    network.clear_filters()
+                    network.apply_exact_date_filter (base_date)
+                    distro_fit = network.fit_degree_distribution ()
+                    stats      = network.get_edge_node_count ()
+                    all_edges = network.get_all_edges_linking_to_a_node (a_node.id,ignore_visible=True,use_direction=False,reduce_edges=False)
+                
+                    for an_edge in all_edges:
+                        if a_node.treatment_date:
+                            if (an_edge.check_exact_date (a_node.treatment_date) == False): 
+                                #print ("Edge treated")
+                                continue
+                
+                        if an_edge.check_exact_date (base_date):
+                            enrollment_edges += 1
+                            #print ("Base", an_edge, a_node, base_date)
+                        else:
+                            #print ("Branch")
+                            base_index = 0 if an_edge.check_exact_date (base_date_plus_one) else 3
+                            direction = an_edge.compute_direction()
+                            if direction is None:
+                                index = base_index + 2
+                            elif direction.id == a_node.id:
+                                index = base_index + 1
+                            else:
+                                index = base_index + 0
+                            additional_edges [index] += 1
                                     
-            node_tns   = tns (enrollment_edges, None, distro_fit['fitted'][distro_fit['Best']])
+                    node_tns   = tns (enrollment_edges, None, distro_fit['fitted'][distro_fit['Best']])
+                else:
+                    node_tns = 0
             
-            vl = a_node.get_vl_by_date (tm_to_datetime(base_date))
-            if vl is None:
-                vl = ['NULL','NULL']
-            else:
-                vl = [vl[0].strftime("%Y%m%d"), str(vl[1])]
-            base_seq = tm_to_datetime(base_date).strftime("%Y%m%d")
+                vl = a_node.get_vl_by_date (tm_to_datetime(base_date))
+                if vl is None:
+                    vl = ['NULL','NULL']
+                else:
+                    vl = [vl[0].strftime("%Y%m%d"), str(vl[1])]
+                base_seq = tm_to_datetime(base_date).strftime("%Y%m%d")
                      
-            print ("\t".join([a_node.id,str(base_date.tm_year),str(enrollment_edges),str(node_tns),str(additional_edges[1]), str(additional_edges[2]),str(additional_edges[4]), str(additional_edges[5]), base_seq, vl[0], vl[1]]))
-            if print_level is not None and node_tns >= print_level:
-                a_node.add_attribute('focus')
-            '''
-            if print_level is not None and node_tns >= print_level:
-                #print (network.get_all_edges_linking_to_a_node (a_node.id,ignore_visible=False,use_direction=False))
-                a_node.add_attribute('focus')
-                network.apply_exact_date_filter (base_date_plus_one)
-                network.apply_id_filter ([a_node.id], do_clear = False)
-                with open ("data/%s.dot"%a_node.id, "w") as fh:
-                    network.generate_dot (fh)
-                a_node.remove_attribute('focus')
-
-            for an_edge in all_edges:
-                an_edge.remove_attribute ('UDS')
-            '''
+                print ("\t".join([a_node.id,str(base_date.tm_year),str(enrollment_edges),str(node_tns),str(additional_edges[1]), str(additional_edges[2]),str(additional_edges[4]), str(additional_edges[5]), base_seq, vl[0], vl[1]]))
+                if print_level is not None and node_tns is not None and node_tns >= print_level:
+                    a_node.add_attribute('focus')
+           
 
 
 #-------------------------------------------------------------------------------		
@@ -430,7 +423,8 @@ def tns (degree, cluster_size, fitted = None):
     if fitted is not None:
         return sum(fitted[0:degree])
     else:
-        raise RuntimeError ('Missing fitted in tns')
+        return None
+        #raise RuntimeError ('Missing fitted in tns')
         #return float(degree+1)**(1./3) + (log10 (cluster_size) if cluster_size is not None else 0.)
         
 #-------------------------------------------------------------------------------		
@@ -565,10 +559,10 @@ def main():
     
         sys.exit(0)
 
-    network.drop_singleton_nodes ()
+    #network.drop_singleton_nodes ()
     network.compute_clusters()
     clusters = network.retrieve_clusters()
-    print ("Found %d clusters" % len(clusters), file = sys.stderr)
+    print ("Found %d clusters" % (len(clusters) - (1 if None in clusters else 0)), file = sys.stderr)
     print ("Maximum cluster size = %d nodes" % max ([len (clusters[c]) for c in clusters if c is not None]), file = sys.stderr)
 
     print ("Fitting the degree distribution to various densities", file = sys.stderr)
@@ -576,7 +570,7 @@ def main():
     distro_fit = network.fit_degree_distribution ()
     print ("Best distribution is '%s' with rho = %g" % (distro_fit['Best'], distro_fit['rho'][distro_fit['Best']]))
 
-    print_tns (network, 0.8)
+    print_tns (clusters, network, 0.8)
     #network.apply_date_filter( date_range[0], True, True)
     #network.apply_date_filter( date_range[1], False, False)
     #network.generate_dot (network, settings().dot, tns = precomputed_tns)
