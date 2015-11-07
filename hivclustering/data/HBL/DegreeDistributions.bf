@@ -220,11 +220,9 @@ function _THyPhyAskFor(key)
     {
     	bestBIC = 1e100;
     	bestDistro = "";
-        for (k = 0; k < Abs (_degree_fit_results); k += 1)
-        {
+        for (k = 0; k < Abs (_degree_fit_results); k += 1) {
         	key = _degree_fit_results["INDEXORDER"][k];
-        	if ((_degree_fit_results[key])["BIC"] < bestBIC)
-        	{
+        	if ((_degree_fit_results[key])["BIC"] < bestBIC) {
         		bestBIC = (_degree_fit_results[key])["BIC"];
         		bestDistro = key;
         	}

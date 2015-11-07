@@ -132,6 +132,7 @@ def _test_edge_support(triangles, sequence_file_name, hy_instance, p_value_cutof
     for k, t in enumerate(triangles):
         return_object.append((t, hy_instance.getvar(str(k), hy.HyphyInterface.MATRIX)))
 
+    #print (return_object)
     return return_object
 
 #[node.sequence,sim_matrix,hy_instance,index_to_node_id]
@@ -190,7 +191,7 @@ class edge:
             self.date1 = date2
 
         if self.p1.id == self.p2.id:
-            raise BaseException("Trying to draw an edge between the same patient")
+            raise BaseException("Can't create loop nodes (x->x)")
         self.visible = visible
         self.attribute = set()
         if attribute is not None:
@@ -503,6 +504,9 @@ class patient:
 
         if complete:
             return min(self.dates)
+        
+        #print (self.dates)    
+            
         return min([k.tm_year for k in self.dates if k is not None])
 
     def get_latest_date(self, complete=False):
@@ -539,7 +543,7 @@ class patient:
 
         shape = 'ellipse'
         color = 'white'
-        label = str(self.get_vl()) if self.get_vl() is not None else ""
+        label = str(self.id)
 
         edi_info = self.get_treatment_since_edi()
 
@@ -778,7 +782,7 @@ class transmission_network:
                 self.add_an_edge(str(node_id), str(k), 1, header_parser=parsePlain)
             attach_to.extend([k, node_id])
 
-        print(max(dates_by_chain))
+        print(max(dates_by_chain), file = sys.stderr)
         return simulation_start
 
     def dump_as_fasta(self, fh, add_dates=False, filter_on_set=None):
@@ -810,7 +814,7 @@ class transmission_network:
         beta = 0.1
         beta_mean = alpha / (alpha + beta)
 
-        delay_dates = []
+        #delay_dates = []
 
         for node in self.nodes:
             try:
@@ -822,8 +826,8 @@ class transmission_network:
 
                 delay_date = 1 / beta_mean * sampling_delay * \
                     random.betavariate(alpha, beta) if sampling_delay is not None else 0.0
-                node.dates.append(delay_date)
-                delay_dates.append(delay_date)
+                #node.dates.append(delay_date)
+                #delay_dates.append(delay_date)
 
                 sim_matrix = [[1, -1, 0, delay_date / 365 * rate_per_year]]
 
@@ -838,8 +842,8 @@ class transmission_network:
 
                     delay_date = 1 / beta_mean * sampling_delay * \
                         random.betavariate(alpha, beta) if sampling_delay is not None else 0.0
-                    delay_dates.append(delay_date)
-                    pair[1].dates.append(delay_date)
+                    #delay_dates.append(delay_date)
+                    #pair[1].dates.append(delay_date)
                     sim_matrix.append([node_id_to_index[pair[1].id], node_id_to_index[pair[0].id], abs(tm_to_datetime(
                         pair[1].dates[0]) - tm_to_datetime(pair[0].dates[0])).days * rate_per_year / 365, delay_date / 365 * rate_per_year])
 
@@ -1670,25 +1674,25 @@ class transmission_network:
 
         return counter
 
-    def generate_dot(self, file, year_vis=None, reduce_edges=True):
+    def generate_dot(self, file, year_vis=None, reduce_edges=True, attribute_color=None):
 
         if self.adjacency_list is None:
             self.compute_adjacency()
 
         file.write('digraph G { overlap="voronoi";\n outputorder = edgesfirst;\nnode[style=filled];\n')
-        nodes_drawn = {}
+        nodes_drawn = set ()
 
         directed = {'undirected': 0, 'directed': 0}
-
+        
         for edge in self.edge_iterator() if reduce_edges == False else self.reduce_edge_set():
             if edge.visible:
                 distance = self.distances[edge]
 
                 if edge.p1 not in nodes_drawn:
-                    nodes_drawn[edge.p1] = edge.p1.get_baseline_date()
+                    nodes_drawn.add (edge.p1)
                     file.write(edge.p1.get_dot_string(year_vis))
                 if edge.p2 not in nodes_drawn:
-                    nodes_drawn[edge.p2] = edge.p2.get_baseline_date()
+                    nodes_drawn.add (edge.p2)
                     file.write(edge.p2.get_dot_string(year_vis))
 
                 if isinstance(edge.compute_direction(), type(None)):
@@ -1700,6 +1704,13 @@ class transmission_network:
                 if year_vis is not None:
                     if edge.check_date(year_vis) == False:
                         file.write('%s [style="invis" arrowhead = "%s"];\n' % (edge_attr[0], edge_attr[1]))
+                        continue
+                        
+                if attribute_color is not None:
+                    color = attribute_color (edge)
+                    if color is not None:
+                        file.write('%s [style="bold" label = "%s" arrowhead = "%s" color = "%s"];\n' %
+                           (edge_attr[0], edge.label(), edge_attr[1], color))
                         continue
 
                 file.write('%s [style="bold" label = "%s" arrowhead = "%s"];\n' %
@@ -2029,6 +2040,7 @@ class transmission_network:
         for t, p_values in processed_objects:
             seq_id = t[:3]
             #edges = [None,None,None]
+            if min (p_values) == 0.5: continue
             for pair_index, pair in enumerate(((0, 1), (0, 2), (1, 2))):
                 this_edge = None
                 for seq_tag in [(seq_id[pair[0]], seq_id[pair[1]]), (seq_id[pair[1]], seq_id[pair[0]])]:
@@ -2040,6 +2052,7 @@ class transmission_network:
                     this_edge.edge_reject_p = max(p_values[2 - pair_index], this_edge.edge_reject_p)
                     if this_edge.edge_reject_p > p_value_cutoff:
                         if this_edge not in unsupported_edges:
+                            #print (this_edge,   this_edge.edge_reject_p, seq_id)
                             unsupported_edges.add(this_edge)
                             stats['unsupported edges'] += 1
 
