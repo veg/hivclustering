@@ -22,13 +22,13 @@ setup(name='hivclustering',
         'scripts/hivnetworkcsv',
         'scripts/TNS'
     ],
-    dependency_links = ['git+git://github.com/veg/hyphy-python.git@0.1.1#egg=HyPhy-0.1.1',
+    dependency_links = ['git+git://github.com/veg/hyphy-python.git@0.1.1#egg=HyPhy-0.1.2',
                         'git+git://github.com/veg/BioExt.git@0.17.2#egg=BioExt-0.17.3',
                         'git+git://github.com/veg/hppy.git@0.9.6#egg=hppy-0.9.6'
                        ],
     install_requires=[
         'BioExt >= 0.17.2',
-        'HyPhy >= 0.1.1',
+        'HyPhy >= 0.1.2',
         'hppy >= 0.9.6',
         ],
      )
