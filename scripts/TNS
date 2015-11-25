@@ -4,6 +4,8 @@ import csv, argparse, operator, sys, datetime, time, random, os.path, json, hppy
 from math import log10
 #from scipy import stats
 from hivclustering import *
+from hivclustering.networkbuild import *
+
 from datetime import date 
 
 date_range = [1996,date.today().year]
@@ -481,8 +483,6 @@ def compute_tns (network, year_from, year_to, distance = 0.015, fitted = None, o
     return by_id
                
 #-------------------------------------------------------------------------------		
-
-from networkbuild import *
 
 def main(): 
     network = build_a_network ()

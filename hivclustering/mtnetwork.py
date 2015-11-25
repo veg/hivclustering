@@ -378,7 +378,7 @@ class patient:
         self.id = id  # a unique patient ID
         self.dates = []  # date objects
         self.edi = None  # estimated date of infection
-        self.stage = 'Chronic'  # disease stage
+        self.stage = "Unknown"  # disease stage
         self.treatment_date = None  # the date treatment started
         self.vl = None  # viral load at baseline
         self.degree = 0
@@ -908,15 +908,20 @@ class transmission_network:
             if p in self.nodes:
                 node = self.nodes[p]
                 edi_record = edi[pid]
-                if 'Stage' in edi_record:
-                    node.add_stage(edi_record['Stage'])
-                if 'EDI' in edi_record:
-                    node.add_edi(edi_record['EDI'])
-                if 'VL' in edi_record:
-                    for vl_record in edi_record['VL']:
-                        node.add_vl(vl_record[1], vl_record[0])
-                if 'ARV' in edi_record:
-                    node.add_treatment(edi_record['ARV'])
+                for k,v in edi_record.items():
+                    if k == 'Stage':
+                        node.add_stage(v)
+                    elif k == 'EDI':
+                        node.add_edi (v)
+                    elif k == 'ARV':
+                        node.add_treatment (v)
+                    elif k == 'VL':
+                        for vl_record in v:
+                            node.add_vl(vl_record[1], vl_record[0])
+                    else:
+                        node.add_attribute (v)
+                        
+                    
 
     def clustering_coefficients(self, node_list=None):
         clustering_coefficiencts = {}
@@ -1067,6 +1072,15 @@ class transmission_network:
                 return new_edge
 
         return None
+        
+    def sequence_set_for_edge_filtering (self):
+        ''' return the set of all sequences necessary to perform edge filtering 
+        '''
+        sequence_set = set ()
+        for an_edge in self.edge_iterator ():
+            if an_edge.sequences:
+                sequence_set.update (an_edge.sequences)
+        return sequence_set
 
     def compute_adjacency(self, edges=False, edge_set=None, both=False, storage=None):
         if storage is None:
@@ -1356,7 +1370,10 @@ class transmission_network:
 
                 edge_set.add((edge.p1, edge.p2))
 
-        return {'edges': len(edge_set), 'nodes': len(vis_nodes), 'total_edges': edge_count, 'multiple_dates': [[k[0], k[1].days] for k in multiple_samples], 'total_sequences': len(vis_nodes) + sum([k[0] for k in multiple_samples]) - len(multiple_samples), 'stages': nodes_by_stage, 'edge-stages': edges_by_stage}
+        return {'edges': len(edge_set), 'nodes': len(vis_nodes), 'total_edges': edge_count, 
+                'multiple_dates': [[k[0], k[1].days] for k in multiple_samples], 
+                'total_sequences': len(vis_nodes) + sum([k[0] for k in multiple_samples]) - len(multiple_samples), 
+                'stages': nodes_by_stage, 'edge-stages': edges_by_stage}
 
     def clear_adjacency(self, clear_filter=True):
         if self.adjacency_list is not None:

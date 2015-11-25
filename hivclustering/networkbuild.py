@@ -106,35 +106,15 @@ def describe_network(network, json_output=False, keep_singletons=False):
         print("Maximum cluster size = %d nodes" % max([len(clusters[c])
                                                        for c in clusters if c is not None]), file=sys.stderr)
 
-    map = {'E-2.0': 'E-2',
-           'E-2.0B': 'E-2',
-           'E-3.0': 'E-3',
-           'A-2.0': 'A-2',
-           'A-1.0': 'A-1',
-           '-4': 'A-1',
-           'Chronic': 'Chronic',
-           'E-1.0A': 'E-1',
-           'E-2.0A': 'E-2',
-           'E-1.0C': 'E-1',
-           'E-1.0B': 'E-1',
-           'A-3.0': 'A-3',
-           'A-3.1': 'A-3',
-           'E-0.0': 'E-1'}
-
     if json_output:
         return_json['HIV Stages'] = {}
-        return_json['Edge Stages'] = {}
 
-    for key in set(map.values()):
-        total = 0
-        for k in network_stats['stages']:
-            if map[k] == key:
-                total += network_stats['stages'][k]
-        if json_output:
-            return_json['HIV Stages'][key] = total
-        else:
-            print("%s : %d" % (key, total), file=sys.stderr)
-
+    if json_output:
+        return_json['HIV Stages'] = network_stats['stages']
+    else:
+        for k in sorted (network_stats['stages'].keys()):
+            print("%s : %d" % (k, network_stats['stages'][k]), file=sys.stderr)
+    
     directed = 0
     reasons = {}
     for an_edge in network.reduce_edge_set():
@@ -171,9 +151,9 @@ def describe_network(network, json_output=False, keep_singletons=False):
             ci = distro_fit['rho_ci'][distro_fit['Best']]
             rho = distro_fit['rho'][distro_fit['Best']]
             print("Best distribution is '%s' with rho = %g %s" %
-                  (distro_fit['Best'], rho, ("[%g - %g]" % (ci[0], ci[1]))))
+                  (distro_fit['Best'], rho, ("[%g - %g]" % (ci[0], ci[1]))), file=sys.stderr)
         else:
-            print("Best distribution is '%s'" % (distro_fit['Best']))
+            print("Best distribution is '%s'" % (distro_fit['Best']), file=sys.stderr)
 
     # find diffs in directed edges
     '''for anEdge in network.edges:
@@ -294,15 +274,15 @@ def import_edi_json(file):
 
 def get_sequence_ids(fn):
     '''Expects newline separated file of node ids'''
+    filter_list = set()
     with open(fn, 'r') as filter_file:
         reader = csv.reader(filter_file)
-        filter_list = set()
         for row in reader:
             filter_list.add(row[0])
         if not len(filter_list):
             pass
             #raise Exception('Empty file list')
-        return filter_list
+    return filter_list
 
 
 #-------------------------------------------------------------------------------
@@ -440,16 +420,17 @@ def build_a_network():
     if run_settings.uds:
         uds_settings = network.read_from_csv_file(run_settings.uds, formatter, run_settings.threshold, 'UDS')
 
-    network_stats = network.get_edge_node_count()
-    sys.setrecursionlimit(max(sys.getrecursionlimit(), network_stats['nodes']))
+    sys.setrecursionlimit(max(sys.getrecursionlimit(), len (network.nodes)))
 
     if edi is not None:
         if old_edi:
             network.add_edi(edi)
         else:
             network.add_edi_json(edi)
-        print("Added edi information to %d nodes" %
-              len([k for k in network.nodes if k.edi is not None]), file=sys.stderr)
+        print("Added edi information to %d (of %d) nodes" %
+              (len([k for k in network.nodes if k.edi is not None]), len (network.nodes)), file=sys.stderr)
+        print("Added stage information to %d (of %d) nodes" %
+              (len([k for k in network.nodes if k.stage is not None]), len (network.nodes)), file=sys.stderr)
 
     if run_settings.attributes is not None:
         import_attributes(run_settings.attributes, network)
@@ -476,8 +457,10 @@ def build_a_network():
     if run_settings.sequences and run_settings.edge_filtering:
 
         # Check that all sequences defined in distance file occur in source fasta file
-        distance_ids = network.sequence_ids.keys()
+        distance_ids = network.sequence_set_for_edge_filtering()
         source_fasta_ids = [id for id in get_fasta_ids(run_settings.sequences)]
+        
+        #print (distance_ids)
 
         if any(x not in source_fasta_ids for x in distance_ids):
             missing_ids = [x for x in distance_ids if x not in source_fasta_ids]
