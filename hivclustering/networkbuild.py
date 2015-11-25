@@ -300,7 +300,8 @@ def get_sequence_ids(fn):
         for row in reader:
             filter_list.add(row[0])
         if not len(filter_list):
-            raise Exception('Empty file list')
+            pass
+            #raise Exception('Empty file list')
         return filter_list
 
 
@@ -453,11 +454,6 @@ def build_a_network():
     if run_settings.attributes is not None:
         import_attributes(run_settings.attributes, network)
 
-    if run_settings.filter:
-        run_settings.filter = get_sequence_ids(run_settings.filter)
-        print("Included %d edges after applying node list filtering" %
-              network.apply_cluster_membership_filter(run_settings.filter), file=sys.stderr)
-
     if run_settings.contaminant_file:
         run_settings.contaminant_file = get_sequence_ids(run_settings.contaminant_file)
         network.apply_cluster_membership_filter(run_settings.contaminant_file,
@@ -469,6 +465,11 @@ def build_a_network():
         if run_settings.contaminants == 'remove':
             print("Contaminant linkage filtering removed %d edges" % network.conditional_prune_edges(
                 condition=lambda x: x.p1.has_attribute('problematic') or x.p2.has_attribute('problematic')), file=sys.stderr)
+
+    if run_settings.filter:
+        run_settings.filter = get_sequence_ids(run_settings.filter)
+        print("Included %d edges after applying node list filtering" %
+              network.apply_cluster_membership_filter(run_settings.filter), file=sys.stderr)
 
     edge_visibility = network.get_edge_visibility()
 
