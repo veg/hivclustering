@@ -259,7 +259,7 @@ def import_edi(file):
 def import_edi_json(file):
     edi_by_id = json.load(file)
     for pid in edi_by_id:
-        for key, value in edi_by_id[pid]:
+        for key, value in edi_by_id[pid].items():
             if key == 'EDI':
                 edi_by_id[pid]['EDI'] = time.strptime(edi_by_id[pid]['EDI'], '%Y-%m-%d')
             elif key == 'VL':
@@ -268,7 +268,7 @@ def import_edi_json(file):
             elif key == 'ARV':
                 edi_by_id[pid]['ARV'] = time.strptime(edi_by_id[pid]['ARV'], '%Y-%m-%d')
             else:
-                
+                edi_by_id[pid][key] = value
                 
     return edi_by_id
 
