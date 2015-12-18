@@ -259,14 +259,17 @@ def import_edi(file):
 def import_edi_json(file):
     edi_by_id = json.load(file)
     for pid in edi_by_id:
-        if 'EDI' in edi_by_id[pid]:
-            edi_by_id[pid]['EDI'] = time.strptime(edi_by_id[pid]['EDI'], '%Y-%m-%d')
-        if 'VL' in edi_by_id[pid]:
-            for k in range(len(edi_by_id[pid]['VL'])):
-                edi_by_id[pid]['VL'][k][0] = tm_to_datetime(time.strptime(edi_by_id[pid]['VL'][k][0], '%Y-%m-%d'))
-        if 'ARV' in edi_by_id[pid]:
-            edi_by_id[pid]['ARV'] = time.strptime(edi_by_id[pid]['ARV'], '%Y-%m-%d')
-
+        for key, value in edi_by_id[pid]:
+            if key == 'EDI':
+                edi_by_id[pid]['EDI'] = time.strptime(edi_by_id[pid]['EDI'], '%Y-%m-%d')
+            elif key == 'VL':
+                for k in range(len(edi_by_id[pid]['VL'])):
+                    edi_by_id[pid]['VL'][k][0] = tm_to_datetime(time.strptime(edi_by_id[pid]['VL'][k][0], '%Y-%m-%d'))
+            elif key == 'ARV':
+                edi_by_id[pid]['ARV'] = time.strptime(edi_by_id[pid]['ARV'], '%Y-%m-%d')
+            else:
+                
+                
     return edi_by_id
 
 #-------------------------------------------------------------------------------

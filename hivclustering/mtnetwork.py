@@ -385,6 +385,7 @@ class patient:
         self.cluster_id = None
         self.naive = None
         self.attributes = set()
+        self.named_attributes = {}
         self.label = None
         self.sequence = None
 
@@ -426,6 +427,13 @@ class patient:
     def add_attribute(self, attrib):
         if attrib is not None:
             self.attributes.add(attrib)
+
+    def add_named_attribute (self, key, value):
+        if value is not None:
+            self.named_attributes [key] = value
+        else:
+            if key in self.named_attributes:
+                del self.named_attributes[key]
 
     def remove_attribute(self, attrib):
         self.attributes.discard(attrib)
@@ -919,7 +927,7 @@ class transmission_network:
                         for vl_record in v:
                             node.add_vl(vl_record[1], vl_record[0])
                     else:
-                        node.add_attribute (v)
+                        node.add_named_attribute (k, v)
                         
                     
 
