@@ -385,6 +385,7 @@ class patient:
         self.cluster_id = None
         self.naive = None
         self.attributes = set()
+        self.named_attributes = {}
         self.label = None
         self.sequence = None
 
@@ -426,6 +427,13 @@ class patient:
     def add_attribute(self, attrib):
         if attrib is not None:
             self.attributes.add(attrib)
+
+    def add_named_attribute (self, key, value):
+        if value is not None:
+            self.named_attributes [key] = value
+        else:
+            if key in self.named_attributes:
+                del self.named_attributes[key]
 
     def remove_attribute(self, attrib):
         self.attributes.discard(attrib)
@@ -919,7 +927,7 @@ class transmission_network:
                         for vl_record in v:
                             node.add_vl(vl_record[1], vl_record[0])
                     else:
-                        node.add_attribute (v)
+                        node.add_named_attribute (k, v)
                         
                     
 
@@ -1084,9 +1092,7 @@ class transmission_network:
 
     def compute_adjacency(self, edges=False, edge_set=None, both=False, storage=None):
         if storage is None:
-            if self.adjacency_list is None:
-                self.adjacency_list = {}
-
+            self.adjacency_list = {}
             self.compute_adjacency(edges, edge_set, both, self.adjacency_list)
         else:
             for anEdge in (edge_set if edge_set is not None else self.edge_iterator()):
@@ -2188,6 +2194,9 @@ class transmission_network:
         if 'indegree' in kwargs:
             indegree = bool(kwargs['indegree'])
 
+        if 'undirected' in kwargs:
+            undirected = bool(kwargs['undirected'])
+
         per_year_fu = None
         if 'peryear' in kwargs:
             per_year_fu = int(kwargs['peryear'])
@@ -2197,13 +2206,15 @@ class transmission_network:
             per_node = kwargs['storenodes']
 
         if self.adjacency_list == None or ((directed or outdegree or indegree) and self.type_of_adjacency_list() == 'patient') or (not (directed or outdegree or indegree) and self.type_of_adjacency_list() == 'edge'):
-            # print 'Redo'
             self.compute_adjacency(directed or outdegree or indegree)
 
         max_diff = None
         if 'max_diff' in kwargs and 'directed':
             if isinstance(kwargs['max_diff'], int):
                 max_diff = datetime.timedelta(days=int(kwargs['max_diff']))
+
+        if outdegree or indegree:
+            directed = False
 
         for node in self.adjacency_list:
             if subset and node not in subset:
@@ -2214,13 +2225,17 @@ class transmission_network:
                 for an_edge in self.adjacency_list[node]:
                     dir = an_edge.compute_direction()
 
+
                     connect_me = False
+                    
                     if outdegree:
                         connect_me = dir is not None and dir == node
-                    elif indegree:
+                    if indegree:
                         connect_me = dir is not None and dir != node
-                    else:
-                        connect_me = dir is not None and dir == node
+                    if undirected:
+                        connect_me = dir is None
+                    if directed:
+                        connect_me = dir is not None
 
                     if connect_me:
                         if max_diff:
