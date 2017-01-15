@@ -29,18 +29,31 @@ def make_hiv_network():
                                         }
 
 
+
         nodes = []
 
         cluster_info = network.retrieve_clusters()
 
         node_idx = {}
 
+        list_named_attributes = set ()
+
         for idx, cluster in cluster_info.items():
             for n in cluster:
                 if idx is not None:
+
+
                     nodes.append({'id': n.id, 'cluster': idx, 'attributes': list(n.attributes),
-                                  'edi': n.get_edi(), 'baseline': n.get_baseline_date(True)})
+                                  'edi': n.get_edi(), 'baseline': n.get_baseline_date(True), 'patient_attributes' : n.named_attributes})
+
+                    list_named_attributes.update (n.named_attributes.keys())
+
                 node_idx[n] = len(nodes) - 1
+
+        if len (list_named_attributes):
+            network_info ['patient_attribute_schema'] = {}
+            for attr_name in list_named_attributes:
+                network_info ['patient_attribute_schema'][attr_name] = {'type' : 'String', 'label' : attr_name}
 
         edges = []
         for e in network.reduce_edge_set():
