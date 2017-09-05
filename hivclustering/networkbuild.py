@@ -114,7 +114,7 @@ def describe_network(network, json_output=False, keep_singletons=False):
     else:
         for k in sorted (network_stats['stages'].keys()):
             print("%s : %d" % (k, network_stats['stages'][k]), file=sys.stderr)
-    
+
     directed = 0
     reasons = {}
     for an_edge in network.reduce_edge_set():
@@ -269,7 +269,7 @@ def import_edi_json(file):
                 edi_by_id[pid]['ARV'] = time.strptime(edi_by_id[pid]['ARV'], '%Y-%m-%d')
             else:
                 edi_by_id[pid][key] = value
-                
+
     return edi_by_id
 
 #-------------------------------------------------------------------------------
@@ -322,6 +322,7 @@ def build_a_network():
     arguments.add_argument('-s', '--sequences', help='Provide the MSA with sequences which were used to make the distance file. ', required=False)
     arguments.add_argument('-n', '--edge-filtering', dest='edge_filtering', choices=['remove', 'report'], help='Compute edge support and mark edges for removal using sequence-based triangle tests (requires the -s argument) and either only report them or remove the edges before doing other analyses ', required=False)
     arguments.add_argument('-y', '--centralities', help='Output a CSV file with node centralities')
+    arguments.add_argument('-g', '--triangles', help='Maximum number of triangles to consider in each filtering pass', type = int, default = 2**16)
     arguments.add_argument('-C', '--contaminants', help='Screen for contaminants by marking or removing sequences that cluster with any of the contaminant IDs (-F option) [default is not to screen]', choices=['report', 'remove'])
     arguments.add_argument('-F', '--contaminant-file', dest='contaminant_file',help='IDs of contaminant sequences', type=str)
     arguments.add_argument('-M', '--multiple-edges', dest='multiple_edges',help='Permit multiple edges (e.g. different dates) to link the same pair of nodes in the network [default is to choose the one with the shortest distance]', default=False, action='store_true')
@@ -462,7 +463,7 @@ def build_a_network():
         # Check that all sequences defined in distance file occur in source fasta file
         distance_ids = network.sequence_set_for_edge_filtering()
         source_fasta_ids = [id for id in get_fasta_ids(run_settings.sequences)]
-        
+
         #print (distance_ids)
 
         if any(x not in source_fasta_ids for x in distance_ids):
@@ -473,8 +474,22 @@ def build_a_network():
         if run_settings.filter:
             network.apply_id_filter(list=run_settings.filter, do_clear=False)
 
-        edge_stats = network.test_edge_support(os.path.abspath(
-            run_settings.sequences), *network.find_all_triangles(network.reduce_edge_set()))
+        current_edge_set = network.reduce_edge_set()
+
+        maximum_number = run_settings.triangles
+
+        for filtering_pass in range (64):
+            edge_stats = network.test_edge_support(os.path.abspath(
+                run_settings.sequences), *network.find_all_triangles(current_edge_set, maximum_number = maximum_number))
+            if not edge_stats or edge_stats['removed edges'] == 0:
+                break
+            else:
+                print("Edge filtering pass % d examined %d triangles, found %d poorly supported edges, and marked %d edges for removal" % (
+                    filtering_pass, edge_stats['triangles'], edge_stats['unsupported edges'], edge_stats['removed edges']), file=sys.stderr)
+
+                maximum_number += run_settings.triangles
+                current_edge_set = current_edge_set.difference (set ([edge for edge in current_edge_set if not edge.has_support()]))
+
         network.set_edge_visibility(edge_visibility)
 
         if edge_stats:
@@ -488,7 +503,6 @@ def build_a_network():
             #print (len ([e for e in network.edge_iterator() if not e.has_support()]))
             print("Edge filtering removed %d edges" % network.conditional_prune_edges(), file=sys.stderr)
             # network.find_all_bridges()
-
     return network
 
 
