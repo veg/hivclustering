@@ -8,7 +8,7 @@ from setuptools import setup
 sys.path.insert(0, join(split(abspath(__file__))[0], 'lib'))
 
 setup(name='hivclustering',
-      version="1.2.6",
+      version="1.2.7",
       description='HIV molecular clustering tools',
       author='Sergei Kosakovsky Pond',
       author_email='spond@ucsd.edu',
@@ -24,7 +24,7 @@ setup(name='hivclustering',
     ],
     install_requires=[
         'biopython-extensions >= 0.18.0',
-        'hyphy-python >= 0.1.3',
+        'hyphy-python >= 0.1.7',
         'hyphy-helper >= 0.9.6',
         ],
      )
