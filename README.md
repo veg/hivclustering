@@ -4,23 +4,13 @@ HIVClustering
 A Python 3 library that makes inferences on HIV-1 transmission networks.
 To install
 
-    sudo python3 setup.py install
-
 Dependencies
 ------------
 
-HIVClustering can be installed in two easy steps.  Prior to installation, please
+HIVClustering can be installed in one easy step.  Prior to installation, please
 ensure that you python 3 installed. 
 
-1) Clone the HyPhy repo <git://github.com/veg/hyphy.git>. This is the low level
-HyPhy Python library. 
-
-    cd [hyphy]/src/lib
-    python3 setup.py install
-
-2) Install all dependent python packages by running the included install.sh script
-    
-
+`pip3 install hivclustering`
     
 USAGE
 -----
