@@ -80,9 +80,15 @@ map = {triangle_count, 3};
 
 //fprintf (stdout, "Loading...\n");
 
-file_count = Rows(_py_sequence_file) * Columns (_py_sequence_file);
+if (Type (_py_sequence_file) == "Matrix") {
+    file_count = Rows(_py_sequence_file)*Columns (_py_sequence_file);
+
+} else {
+    file_count = Abs(_py_sequence_file);
+}
 
 DataSet       ds           = ReadDataFile (_py_sequence_file[0]);
+
 
 for (k = 1; k < file_count; k += 1) {
     DataSet read_more = ReadDataFile (_py_sequence_file[k]);
