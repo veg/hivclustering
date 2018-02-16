@@ -42,17 +42,17 @@ def parseAEH(str):
 
 def parseRegExp(regexp):
     def parseHeader(str):
-        try:
+         patient_description = {}
+         patient_description['date'] = None
+         patient_description['rawid'] = str
+         try:
             bits = regexp.search(str.rstrip())
-            patient_description = {}
             patient_description['id'] = bits.group(1)
-            patient_description['date'] = None
-            patient_description['rawid'] = str
-        except:
-            print("Could not parse the following ID as the reg.exp. header: %s" % str)
-            raise
+         except:
+            print("Warning: could not parse the following ID as the reg.exp. header: %s" % str, file = sys.stderr)
+            patient_description['id'] = str
 
-        return patient_description, ('|'.join(bits[2:]) if len(bits.groups()) > 2 else None)
+         return patient_description, ('|'.join(bits[2:]) if bits is not None and len(bits.groups()) > 2 else None)
     return parseHeader
 
 
@@ -544,6 +544,15 @@ class patient:
             d1 = tm_to_datetime(self.treatment_date)
             d2 = tm_to_datetime(self.edi)
             return d1 - d2
+        return None
+
+
+    def get_time_of_infection (self):  
+        b = self.get_baseline_date (True)
+        if self.edi != None and b != None:
+            d1 = tm_to_datetime(b)
+            d2 = tm_to_datetime(self.edi)
+            return (d1 - d2).days
         return None
 
     def get_dot_string(self, year_vis=None):

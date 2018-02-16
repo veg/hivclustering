@@ -440,6 +440,20 @@ def build_a_network():
             network.add_edi_json(edi)
         print("Added edi information to %d (of %d) nodes" %
               (len([k for k in network.nodes if k.edi is not None]), len (network.nodes)), file=sys.stderr)
+        
+        tabulate_edi = {}
+        since_edi = [n.get_time_of_infection () for n in network.nodes]
+        since_edi = ["Missing" if n is None else "Acute (<=90 days)" if n <= 90 else "Early (91-180 days)" if n <= 180 else "Chronic (>180 days)" for n in since_edi]
+        for k in since_edi:
+            if k not in tabulate_edi:
+                tabulate_edi [k] = 1
+            else:  
+                tabulate_edi [k] += 1
+                
+        for k in sorted (tabulate_edi.keys()):
+            print("%s : %d" % (k, tabulate_edi[k]), file=sys.stderr)
+            
+        
         print("Added stage information to %d (of %d) nodes" %
               (len([k for k in network.nodes if k.stage is not None]), len (network.nodes)), file=sys.stderr)
 
