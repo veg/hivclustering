@@ -300,7 +300,7 @@ def get_fasta_ids(fn):
 
 
 #-------------------------------------------------------------------------------
-def build_a_network():
+def build_a_network(extra_arguments = None):
 
     random.seed()
     arguments = argparse.ArgumentParser(description='Read filenames.')
@@ -328,6 +328,11 @@ def build_a_network():
     arguments.add_argument('-F', '--contaminant-file', dest='contaminant_file',help='IDs of contaminant sequences', type=str)
     arguments.add_argument('-M', '--multiple-edges', dest='multiple_edges',help='Permit multiple edges (e.g. different dates) to link the same pair of nodes in the network [default is to choose the one with the shortest distance]', default=False, action='store_true')
 
+
+    if extra_arguments:
+        for a in extra_arguments:
+            arguments.add_argument (*a.arg, **a.kwarg)
+    
     global run_settings
 
     run_settings = arguments.parse_args()

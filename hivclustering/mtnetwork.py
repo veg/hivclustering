@@ -34,7 +34,7 @@ def parseAEH(str):
         patient_description['date'] = time.strptime(bits[1], '%m%d%Y')
         patient_description['rawid'] = str
     except:
-        print("Could not parse the following ID as an AEH header: %s" % str)
+        print("Could not parse the following ID as an AEH header: %s" % str, file = sys.stderr)
         raise
 
     return patient_description, ('|'.join(bits[2:]) if len(bits) > 2 else None)
@@ -516,7 +516,7 @@ class patient:
             return None
 
         if complete:
-            return min(self.dates)
+            return min([k for k in self.dates if k is not None])
 
         #print (self.dates)
 
@@ -524,7 +524,7 @@ class patient:
 
     def get_latest_date(self, complete=False):
         if complete:
-            return max(self.dates)
+            return max([k for k in self.dates if k is not None])
         return max([k.tm_year for k in self.dates if k is not None])
 
     def get_sample_count(self):
@@ -2083,21 +2083,36 @@ class transmission_network:
         for t, p_values in processed_objects:
             seq_id = t[:3]
             #edges = [None,None,None]
-            if min (p_values) == 0.5: continue
-            for pair_index, pair in enumerate(((0, 1), (0, 2), (1, 2))):
-                this_edge = None
-                for seq_tag in [(seq_id[pair[0]], seq_id[pair[1]]), (seq_id[pair[1]], seq_id[pair[0]])]:
-                    if seq_tag in seqs_to_edge:
-                        this_edge = seqs_to_edge[seq_tag]
-                        break
-
+            # if there are two or more edges that are unsupported at the same level
+            # then keep them all, and mark them as bridges 
+            # resolving them would introduce false signal
+            
+            max_p = max (p_values)
+            
+            if len([k for k in p_values if k == max_p ]) > 1: 
+                for pair_index, pair in enumerate(((0, 1), (0, 2), (1, 2))):
+                    this_edge = None
+                    for seq_tag in [(seq_id[pair[0]], seq_id[pair[1]]), (seq_id[pair[1]], seq_id[pair[0]])]:
+                        if seq_tag in seqs_to_edge:
+                            this_edge = seqs_to_edge[seq_tag]
+                            break   
                 if this_edge:
-                    this_edge.edge_reject_p = max(p_values[2 - pair_index], this_edge.edge_reject_p)
-                    if this_edge.edge_reject_p > p_value_cutoff:
-                        if this_edge not in unsupported_edges:
-                            #print (this_edge,   this_edge.edge_reject_p, seq_id)
-                            unsupported_edges.add(this_edge)
-                            stats['unsupported edges'] += 1
+                   bridges.add(this_edge)          
+            else:
+                for pair_index, pair in enumerate(((0, 1), (0, 2), (1, 2))):
+                    this_edge = None
+                    for seq_tag in [(seq_id[pair[0]], seq_id[pair[1]]), (seq_id[pair[1]], seq_id[pair[0]])]:
+                        if seq_tag in seqs_to_edge:
+                            this_edge = seqs_to_edge[seq_tag]
+                            break
+
+                    if this_edge:
+                        this_edge.edge_reject_p = max(p_values[2 - pair_index], this_edge.edge_reject_p)
+                        if this_edge.edge_reject_p > p_value_cutoff:
+                            if this_edge not in unsupported_edges:
+                                #print (this_edge,   this_edge.edge_reject_p, seq_id)
+                                unsupported_edges.add(this_edge)
+                                stats['unsupported edges'] += 1
 
         unsupported_edges = sorted(list(unsupported_edges), key=lambda x: x.edge_reject_p, reverse=True)
 
