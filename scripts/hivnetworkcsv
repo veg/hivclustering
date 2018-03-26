@@ -61,7 +61,7 @@ def make_hiv_network():
                              e], 'support': e.edge_reject_p, 'removed': not e.has_support(), 'sequences': e.sequences, 'attributes': list(e.attribute)})
 
         network_info['Nodes'] = sorted(nodes, key=lambda node: node['id'])
-        network_info['Edges'] = sorted(edges, key=lambda edge: ''.join([sequence for sequence in edge['sequences']])
+        network_info['Edges'] = sorted(edges, key=lambda edge: ''.join([sequence for sequence in edge['sequences']]))
 
         print(json.dumps(network_info, indent=4, sort_keys=True))
 
