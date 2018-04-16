@@ -291,10 +291,11 @@ def get_sequence_ids(fn):
 #-------------------------------------------------------------------------------
 
 def get_fasta_ids(fn):
-    fh = open(fn)
-    for line in fh:
-        if line[0] == '>':
-            yield line[1:].strip()
+    for f in fn:
+        fh = open(f)
+        for line in fh:
+            if line[0] == '>':
+                yield line[1:].strip()
 
 
 
@@ -304,22 +305,22 @@ def build_a_network():
     random.seed()
     arguments = argparse.ArgumentParser(description='Read filenames.')
 
-    arguments.add_argument('-i', '--input',   help='Input CSV file with inferred genetic links (or stdin if omitted). Must be a CSV file with three columns: ID1,ID2,distance.')
+    arguments.add_argument('-i', '--input',   help='Input CSV file with inferred genetic links (or stdin if omitted). Can be specified multiple times for multiple input files (e.g. to include a reference database). Must be a CSV file with three columns: ID1,ID2,distance.', action = 'append')
     arguments.add_argument('-u', '--uds',   help='Input CSV file with UDS data. Must be a CSV file with three columns: ID1,ID2,distance.')
     arguments.add_argument('-d', '--dot',   help='Output DOT file for GraphViz (or stdout if omitted)')
     arguments.add_argument('-c', '--cluster', help='Output a CSV file with cluster assignments for each sequence')
     arguments.add_argument('-t', '--threshold', help='Only count edges where the distance is less than this threshold')
     arguments.add_argument('-e', '--edi',   help='A .json file with clinical information')
     arguments.add_argument('-z', '--old_edi',   help='A .csv file with legacy EDI dates')
-    arguments.add_argument('-f', '--format',   help='Sequence ID format. One of AEH (ID | sample_date | otherfiels default), LANL (e.g. B_HXB2_K03455_1983 : subtype_country_id_year -- could have more fields), regexp (match a regular expression, use the first group as the ID), or plain (treat as sequence ID only, no meta)')
+    arguments.add_argument('-f', '--format',   help='Sequence ID format. One of AEH (ID | sample_date | otherfiels default), LANL (e.g. B_HXB2_K03455_1983 : subtype_country_id_year -- could have more fields), regexp (match a regular expression, use the first group as the ID), or plain (treat as sequence ID only, no meta); one per input argument if specified', action = 'append')
     arguments.add_argument('-x', '--exclude',   help='Exclude any sequence which belongs to a cluster containing a "reference" strain, defined by the year of isolation. The value of this argument is an integer year (e.g. 1984) so that any sequence isolated in or before that year (e.g. <=1983) is considered to be a lab strain. This option makes sense for LANL or AEH data.')
     arguments.add_argument('-r', '--resistance',help='Load a JSON file with resistance annotation by sequence', type=argparse.FileType('r'))
-    arguments.add_argument('-p', '--parser', help='The reg.exp pattern to split up sequence ids; only used if format is regexp', required=False, type=str)
+    arguments.add_argument('-p', '--parser', help='The reg.exp pattern to split up sequence ids; only used if format is regexp (specify N times for N input files, even if empty)', required=False, type=str, action = 'append')
     arguments.add_argument('-a', '--attributes',help='Load a CSV file with optional node attributes', type=argparse.FileType('r'))
     arguments.add_argument('-j', '--json', help='Output the network report as a JSON object',required=False,  action='store_true', default=False)
     arguments.add_argument('-o', '--singletons', help='Include singletons in JSON output',required=False,  action='store_true', default=False)
     arguments.add_argument('-k', '--filter', help='Only return clusters with ids listed by a newline separated supplied file. ', required=False)
-    arguments.add_argument('-s', '--sequences', help='Provide the MSA with sequences which were used to make the distance file. ', required=False)
+    arguments.add_argument('-s', '--sequences', help='Provide the MSA with sequences which were used to make the distance file. Can be specified multiple times to include mutliple MSA files', required=False, action = 'append')
     arguments.add_argument('-n', '--edge-filtering', dest='edge_filtering', choices=['remove', 'report'], help='Compute edge support and mark edges for removal using sequence-based triangle tests (requires the -s argument) and either only report them or remove the edges before doing other analyses ', required=False)
     arguments.add_argument('-y', '--centralities', help='Output a CSV file with node centralities')
     arguments.add_argument('-g', '--triangles', help='Maximum number of triangles to consider in each filtering pass', type = int, default = 2**16)
@@ -332,10 +333,10 @@ def build_a_network():
     run_settings = arguments.parse_args()
 
     if run_settings.input == None:
-        run_settings.input = sys.stdin
+        run_settings.input = [sys.stdin]
     else:
         try:
-            run_settings.input = open(run_settings.input, 'r')
+            run_settings.input = [open(file, 'r') for file in run_settings.input]
         except IOError:
             print("Failed to open '%s' for reading" % (run_settings.input), file=sys.stderr)
             raise
@@ -381,17 +382,23 @@ def build_a_network():
             print("Failed to open '%s' for writing" % (run_settings.cluster), file=sys.stderr)
             raise
 
-    formatter = parseAEH
+    formatter = []
 
     if run_settings.format is not None:
-        formats = {"AEH": parseAEH, "LANL": parseLANL, "plain": parsePlain, "regexp": parseRegExp(
-            None if run_settings.parser is None else re.compile(run_settings.parser))}
-        try:
-            formatter = formats[run_settings.format]
-        except KeyError:
-            print("%s is not a valid setting for 'format' (must be in %s)" %
-                  (run_settings.format, str(list(formats.keys()))), file=sys.stderr)
-            raise
+        for index, format_k in enumerate (run_settings.format):
+            formats = {"AEH": parseAEH, "LANL": parseLANL, "plain": parsePlain, "regexp": parseRegExp(
+                None if run_settings.parser is None  or len(run_settings.parser) < index else re.compile(run_settings.parser[index]))}
+            try:
+                formatter.append (formats[format_k])
+            except KeyError:
+                print("%s is not a valid setting for 'format' (must be in %s)" %
+                      (run_settings.format, str(list(formats.keys()))), file=sys.stderr)
+                raise
+
+        if len (run_settings.format) != len (run_settings.input):
+            raise Exception ("Must specify as many formatters as there are input files when at least one formatter is specified explicitly")
+    else:
+        formatter = [parseAEH for k in run_settings.input]
 
     if run_settings.exclude is not None:
         try:
@@ -479,8 +486,8 @@ def build_a_network():
         maximum_number = run_settings.triangles
 
         for filtering_pass in range (64):
-            edge_stats = network.test_edge_support(os.path.abspath(
-                run_settings.sequences), *network.find_all_triangles(current_edge_set, maximum_number = maximum_number))
+            edge_stats = network.test_edge_support([os.path.abspath(
+                s) for s in run_settings.sequences], *network.find_all_triangles(current_edge_set, maximum_number = maximum_number))
             if not edge_stats or edge_stats['removed edges'] == 0:
                 break
             else:

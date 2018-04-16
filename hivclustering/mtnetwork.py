@@ -84,6 +84,11 @@ def parsePlain(str):
     return patient_description, None
 
 
+def _ensure_list (arg):
+    if type (arg) is list:
+        return arg
+    return [arg]
+
 def tm_to_datetime(tm_object):
     if tm_object is None:
         return None
@@ -512,9 +517,9 @@ class patient:
 
         if complete:
             return min(self.dates)
-        
-        #print (self.dates)    
-            
+
+        #print (self.dates)
+
         return min([k.tm_year for k in self.dates if k is not None])
 
     def get_latest_date(self, complete=False):
@@ -586,25 +591,31 @@ class transmission_network:
         self.sequence_ids = {}  # this will store unique sequence ids keyed by edge information (pid and date)
 
     def read_from_csv_file(self, file_name, formatter=None, distance_cut=None, default_attribute=None, bootstrap_mode=False):
-        if formatter is None:
-            formatter = parseAEH
-        edgeReader = csv.reader(file_name)
-        header = next(edgeReader)
-        edgeAnnotations = {}
-        if len(header) < 3:
-            raise IOError('transmission_network.read_from_csv_file() : Expected a .csv file with at least 3 columns as input')
 
+        file_names = _ensure_list(file_name)
+
+        if formatter is None:
+            formatter = [parseAEH for f in file_names]
+
+        edgeAnnotations = {}
         handled_ids = set()
 
-        for line in edgeReader:
-            distance = float(line[2])
-            if distance_cut is not None and distance > distance_cut:
-                self.ensure_node_is_added(line[0], formatter, default_attribute, bootstrap_mode, handled_ids)
-                self.ensure_node_is_added(line[1], formatter, default_attribute, bootstrap_mode, handled_ids)
-                continue
-            edge = self.add_an_edge(line[0], line[1], distance, formatter, default_attribute, bootstrap_mode)
-            if edge is not None and len(line) > 3:
-                edgeAnnotations[edge] = line[2:]
+        for index, file_object in enumerate (file_names):
+            edgeReader = csv.reader(file_object)
+            header = next(edgeReader)
+            if len(header) < 3:
+                raise IOError('transmission_network.read_from_csv_file() : Expected a .csv file with at least 3 columns as input (file %s)' % file_object.name)
+
+
+            for line in edgeReader:
+                distance = float(line[2])
+                if distance_cut is not None and distance > distance_cut:
+                    self.ensure_node_is_added(line[0], formatter[index], default_attribute, bootstrap_mode, handled_ids)
+                    self.ensure_node_is_added(line[1], formatter[index], default_attribute, bootstrap_mode, handled_ids)
+                    continue
+                edge = self.add_an_edge(line[0], line[1], distance, formatter[index], default_attribute, bootstrap_mode)
+                if edge is not None and len(line) > 3:
+                    edgeAnnotations[edge] = line[2:]
 
         return edgeAnnotations
 
@@ -928,8 +939,8 @@ class transmission_network:
                             node.add_vl(vl_record[1], vl_record[0])
                     else:
                         node.add_named_attribute (k, v)
-                        
-                    
+
+
 
     def clustering_coefficients(self, node_list=None):
         clustering_coefficiencts = {}
@@ -1080,9 +1091,9 @@ class transmission_network:
                 return new_edge
 
         return None
-        
+
     def sequence_set_for_edge_filtering (self):
-        ''' return the set of all sequences necessary to perform edge filtering 
+        ''' return the set of all sequences necessary to perform edge filtering
         '''
         sequence_set = set ()
         for an_edge in self.edge_iterator ():
@@ -1376,9 +1387,9 @@ class transmission_network:
 
                 edge_set.add((edge.p1, edge.p2))
 
-        return {'edges': len(edge_set), 'nodes': len(vis_nodes), 'total_edges': edge_count, 
-                'multiple_dates': [[k[0], k[1].days] for k in multiple_samples], 
-                'total_sequences': len(vis_nodes) + sum([k[0] for k in multiple_samples]) - len(multiple_samples), 
+        return {'edges': len(edge_set), 'nodes': len(vis_nodes), 'total_edges': edge_count,
+                'multiple_dates': [[k[0], k[1].days] for k in multiple_samples],
+                'total_sequences': len(vis_nodes) + sum([k[0] for k in multiple_samples]) - len(multiple_samples),
                 'stages': nodes_by_stage, 'edge-stages': edges_by_stage}
 
     def clear_adjacency(self, clear_filter=True):
@@ -1706,7 +1717,7 @@ class transmission_network:
         nodes_drawn = set ()
 
         directed = {'undirected': 0, 'directed': 0}
-        
+
         for edge in self.edge_iterator() if reduce_edges == False else self.reduce_edge_set():
             if edge.visible:
                 distance = self.distances[edge]
@@ -1728,7 +1739,7 @@ class transmission_network:
                     if edge.check_date(year_vis) == False:
                         file.write('%s [style="invis" arrowhead = "%s"];\n' % (edge_attr[0], edge_attr[1]))
                         continue
-                        
+
                 if attribute_color is not None:
                     color = attribute_color (edge)
                     if color is not None:
@@ -2227,7 +2238,7 @@ class transmission_network:
 
 
                     connect_me = False
-                    
+
                     if outdegree:
                         connect_me = dir is not None and dir == node
                     if indegree:
