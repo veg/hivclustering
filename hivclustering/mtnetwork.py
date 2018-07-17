@@ -547,7 +547,7 @@ class patient:
         return None
 
 
-    def get_time_of_infection (self):  
+    def get_time_of_infection (self):
         b = self.get_baseline_date (True)
         if self.edi != None and b != None:
             d1 = tm_to_datetime(b)
@@ -2084,20 +2084,20 @@ class transmission_network:
             seq_id = t[:3]
             #edges = [None,None,None]
             # if there are two or more edges that are unsupported at the same level
-            # then keep them all, and mark them as bridges 
+            # then keep them all, and mark them as bridges
             # resolving them would introduce false signal
-            
+
             max_p = max (p_values)
-            
-            if len([k for k in p_values if k == max_p ]) > 1: 
+
+            if len([k for k in p_values if k == max_p ]) > 1:
                 for pair_index, pair in enumerate(((0, 1), (0, 2), (1, 2))):
                     this_edge = None
                     for seq_tag in [(seq_id[pair[0]], seq_id[pair[1]]), (seq_id[pair[1]], seq_id[pair[0]])]:
                         if seq_tag in seqs_to_edge:
                             this_edge = seqs_to_edge[seq_tag]
-                            break   
+                            break
                 if this_edge:
-                   bridges.add(this_edge)          
+                   bridges.add(this_edge)
             else:
                 for pair_index, pair in enumerate(((0, 1), (0, 2), (1, 2))):
                     this_edge = None
