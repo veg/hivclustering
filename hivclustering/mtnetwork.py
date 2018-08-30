@@ -107,23 +107,24 @@ def describe_vector(vector):
     return {'count': l, 'min': vector[0], 'max': vector[-1], 'mean': sum(vector) / l, 'median':  vector[l // 2] if l % 2 == 1 else 0.5 * (vector[l // 2 - 1] + vector[l // 2]), "IQR": [vector[l // 4], vector[(3 * l) // 4]]}
 
 
-def _test_edge_support(triangles, sequence_file_name, hy_instance, p_value_cutoff):
+def _test_edge_support(triangles, sequence_records, hy_instance, p_value_cutoff):
     if hy_instance is None:
         hy_instance = hy.HyphyInterface()
     script_path = os.path.realpath(__file__)
-    hbl_path = os.path.join(os.path.dirname(script_path), "data", "HBL", "TriangleSupport.bf")
-
-    hy_instance.queuevar('_py_sequence_file', sequence_file_name)
-
-    #print (sequence_file_name)
-
+    
     triangle_spec = []
-
-    #print ("%d triangles" % len (triangles))
+    referenced_sequences = set ()
 
     for k in triangles:
         for i in k[:3]:
             triangle_spec.append(i)
+            referenced_sequences.add (i)
+
+            
+    seq_dump = '\n'.join (['>%s\n%s' % (id, sequence_records[id]) for id in referenced_sequences])
+    hbl_path = os.path.join(os.path.dirname(script_path), "data", "HBL", "TriangleSupport.bf")
+
+    hy_instance.queuevar('_py_sequence_dump', seq_dump)
 
     hy_instance.queuevar('_py_triangle_sequences', triangle_spec)
     #print (triangle_spec)
@@ -631,8 +632,11 @@ class transmission_network:
     def make_network_edge(self, *args, **kwargs):
         return edge(*args, date_aware=self.multiple_edges, **kwargs)
 
-    def edge_iterator(self):
+    def edge_iterator(self, edge_set = None):
+        if edge_set is not None:
+            return edge_set
         return self.edges.values()
+
 
     def ensure_node_is_added(self, id1, header_parser, default_attribute, bootstrap_mode, cache):
         if id1 not in cache:
@@ -1665,10 +1669,10 @@ class transmission_network:
 
         return centralities
 
-    def reduce_edge_set(self, attribute_merge=True):
+    def reduce_edge_set(self, attribute_merge=True, edge_set=None):
         if self.multiple_edges:
             byPairs = {}
-            for anEdge in self.edge_iterator():
+            for anEdge in self.edge_iterator(edge_set):
                 if anEdge.visible:
                     patient_pair = (anEdge.p1, anEdge.p2)
                     if patient_pair in byPairs:
@@ -1689,7 +1693,7 @@ class transmission_network:
                 edge_set.add(representative_edge)
             return edge_set
         else:
-            return set([edge for edge in self.edge_iterator() if edge.visible])
+            return set([edge for edge in self.edge_iterator(edge_set) if edge.visible])
 
     def conditional_prune_edges(self, clear_filters=False, condition=lambda x: not x.has_support()):
         byPairs = {}
@@ -2036,19 +2040,19 @@ class transmission_network:
         helper(cluster[0])
         return len(visited) != len(cluster)
 
-    def test_edge_support(self, sequence_file_name, triangles, adjacency_set, hy_instance=None, p_value_cutoff=0.05):
+    def test_edge_support(self, sequence_records, triangles, adjacency_set, hy_instance=None, p_value_cutoff=0.05):
 
         if len(triangles) == 0:
             return None
 
-        evaluator = partial(_test_edge_support, sequence_file_name=sequence_file_name,
+        evaluator = partial(_test_edge_support, sequence_records=sequence_records,
                             hy_instance=hy_instance, p_value_cutoff=p_value_cutoff)
         #processed_objects = evaluator (triangles)
 
         chunk = 2**(max(floor(log(len(triangles) / multiprocessing.cpu_count(), 2)), 8))
 
         blocked = [triangles[k: k + chunk] for k in range(0, len(triangles), chunk)]
-
+        
         pool = multiprocessing.Pool()
         #print ()
         processed_objects = pool.map(evaluator, blocked)
