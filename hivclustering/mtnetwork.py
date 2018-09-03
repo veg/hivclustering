@@ -814,7 +814,7 @@ class transmission_network:
                 self.add_an_edge(str(node_id), str(k), 1, header_parser=parsePlain)
             attach_to.extend([k, node_id])
 
-        print(max(dates_by_chain), file = sys.stderr)
+        #print(max(dates_by_chain), file = sys.stderr)
         return simulation_start
 
     def dump_as_fasta(self, fh, add_dates=False, filter_on_set=None):
@@ -1898,7 +1898,7 @@ class transmission_network:
                 return 'edge'
         return None
 
-    def find_all_triangles(self, edge_set, maximum_number=2**18):
+    def find_all_triangles(self, edge_set, maximum_number=2**18, ignore_this_set = None):
         triangles = set()
         #sequences_involved_in_links =  set ()
         #sequence_pairs              =  set ()
@@ -1946,7 +1946,9 @@ class transmission_network:
                             if node in adjacency_map[node3]:
                                 triad = sorted([node, node2, node3])
                                 triad = (triad[0], triad[1], triad[2])
-
+                                
+                                #print (ignore_this_set)
+ 
                                 if triad not in triangle_nodes:
                                     sequence_set = set()
                                     for triangle_edge in [adjacency_map[triad[0]][triad[1]], adjacency_map[triad[0]][triad[2]], adjacency_map[triad[1]][triad[2]]]:
@@ -1955,7 +1957,11 @@ class transmission_network:
                                     if len(sequence_set) == 3:
                                         triangle_nodes.add(triad)
                                         sequence_set = sorted(list(sequence_set))
-                                        sequence_set = (sequence_set[0], sequence_set[1], sequence_set[2])
+                                        sequence_set = (sequence_set[0], sequence_set[1], sequence_set[2])                               
+                                        if ignore_this_set and sequence_set in ignore_this_set:
+                                            #print ("Already checked")
+                                            continue
+
                                         triangles.add(sequence_set)
                                         for s in sequence_set:
                                             if s not in count_by_sequence:
@@ -2040,7 +2046,7 @@ class transmission_network:
         helper(cluster[0])
         return len(visited) != len(cluster)
 
-    def test_edge_support(self, sequence_records, triangles, adjacency_set, hy_instance=None, p_value_cutoff=0.05):
+    def test_edge_support(self, sequence_records, triangles, adjacency_set, hy_instance=None, p_value_cutoff=0.05, edge_subset = None, supported_triangles = None):
 
         if len(triangles) == 0:
             return None
@@ -2060,7 +2066,7 @@ class transmission_network:
         pool.join()
 
         seqs_to_edge = {}
-        for e in self.edge_iterator():
+        for e in self.edge_iterator(edge_subset):
             if e.sequences:
                 seqs_to_edge[e.sequences] = e
 
@@ -2068,7 +2074,7 @@ class transmission_network:
 
         edges_removed = set()
         must_keep = set()
-
+        
         reduced_set = {}
         for n, k in adjacency_set.items():
             reduced_set[n] = set([p[0] for p in k])
@@ -2103,6 +2109,8 @@ class transmission_network:
                 if this_edge:
                    bridges.add(this_edge)
             else:
+                potential_removals = 0
+            
                 for pair_index, pair in enumerate(((0, 1), (0, 2), (1, 2))):
                     this_edge = None
                     for seq_tag in [(seq_id[pair[0]], seq_id[pair[1]]), (seq_id[pair[1]], seq_id[pair[0]])]:
@@ -2117,6 +2125,12 @@ class transmission_network:
                                 #print (this_edge,   this_edge.edge_reject_p, seq_id)
                                 unsupported_edges.add(this_edge)
                                 stats['unsupported edges'] += 1
+                                potential_removals += 1
+                
+                if supported_triangles is not None:
+                    if potential_removals == 0:
+                        supported_triangles.add (seq_id)
+                    #supported_triangles.add ()
 
         unsupported_edges = sorted(list(unsupported_edges), key=lambda x: x.edge_reject_p, reverse=True)
 

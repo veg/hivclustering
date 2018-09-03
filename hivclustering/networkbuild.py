@@ -520,7 +520,6 @@ def build_a_network(extra_arguments = None):
         edges_by_clusters.sort (key = lambda x : len (x)) # smallest first
         
         
-        
         # load sequence data
         
         hy_instance = hy.HyphyInterface()
@@ -552,8 +551,10 @@ def build_a_network(extra_arguments = None):
             my_edge_set = edge_set
             maximum_number = run_settings.triangles
 
+            supported_triangles = set ()
+    
             for filtering_pass in range (8):
-                edge_stats = network.test_edge_support(referenced_sequence_data, *network.find_all_triangles(my_edge_set, maximum_number = maximum_number))
+                edge_stats = network.test_edge_support(referenced_sequence_data, *network.find_all_triangles(my_edge_set, maximum_number = maximum_number, ignore_this_set = supported_triangles), supported_triangles = supported_triangles)
                 if not edge_stats:
                     break
                 else:
@@ -591,12 +592,14 @@ def build_a_network(extra_arguments = None):
         current_edge_set = set ()
         #require a minimim of X edges
         
-        cluster_count = 0
+        cluster_count    = 0
+        max_edges_in_set = 0
                 
         for edge_set in edges_by_clusters:
             current_edge_set.update (edge_set)
+            max_edges_in_set = max (max_edges_in_set, len(edge_set))
             cluster_count += 1
-            if len (current_edge_set) >= 64:
+            if max_edges_in_set >= 64:
                 total_removed += handle_a_cluster (current_edge_set, cluster_count, len (edges_by_clusters))
                 current_edge_set = set ()
             
