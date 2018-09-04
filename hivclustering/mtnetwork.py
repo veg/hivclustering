@@ -111,7 +111,7 @@ def _test_edge_support(triangles, sequence_records, hy_instance, p_value_cutoff)
     if hy_instance is None:
         hy_instance = hy.HyphyInterface()
     script_path = os.path.realpath(__file__)
-    
+
     triangle_spec = []
     referenced_sequences = set ()
 
@@ -120,7 +120,7 @@ def _test_edge_support(triangles, sequence_records, hy_instance, p_value_cutoff)
             triangle_spec.append(i)
             referenced_sequences.add (i)
 
-            
+
     seq_dump = '\n'.join (['>%s\n%s' % (id, sequence_records[id]) for id in referenced_sequences])
     hbl_path = os.path.join(os.path.dirname(script_path), "data", "HBL", "TriangleSupport.bf")
 
@@ -1946,9 +1946,9 @@ class transmission_network:
                             if node in adjacency_map[node3]:
                                 triad = sorted([node, node2, node3])
                                 triad = (triad[0], triad[1], triad[2])
-                                
+
                                 #print (ignore_this_set)
- 
+
                                 if triad not in triangle_nodes:
                                     sequence_set = set()
                                     for triangle_edge in [adjacency_map[triad[0]][triad[1]], adjacency_map[triad[0]][triad[2]], adjacency_map[triad[1]][triad[2]]]:
@@ -1957,7 +1957,7 @@ class transmission_network:
                                     if len(sequence_set) == 3:
                                         triangle_nodes.add(triad)
                                         sequence_set = sorted(list(sequence_set))
-                                        sequence_set = (sequence_set[0], sequence_set[1], sequence_set[2])                               
+                                        sequence_set = (sequence_set[0], sequence_set[1], sequence_set[2])
                                         if ignore_this_set and sequence_set in ignore_this_set:
                                             #print ("Already checked")
                                             continue
@@ -1975,7 +1975,7 @@ class transmission_network:
                                     triangle_nodes_all.add(triad)
                                     if len(triangle_nodes) >= maximum_number:
                                         raise UserWarning(
-                                            'Too many triangles to attempt full filtering; stopped at %d' % maximum_number)
+                                            '\nToo many triangles to attempt full filtering; stopped at %d' % maximum_number)
         except UserWarning as e:
             print(e, file=sys.stderr)
 
@@ -2058,7 +2058,7 @@ class transmission_network:
         chunk = 2**(max(floor(log(len(triangles) / multiprocessing.cpu_count(), 2)), 8))
 
         blocked = [triangles[k: k + chunk] for k in range(0, len(triangles), chunk)]
-        
+
         pool = multiprocessing.Pool()
         #print ()
         processed_objects = pool.map(evaluator, blocked)
@@ -2074,7 +2074,7 @@ class transmission_network:
 
         edges_removed = set()
         must_keep = set()
-        
+
         reduced_set = {}
         for n, k in adjacency_set.items():
             reduced_set[n] = set([p[0] for p in k])
@@ -2110,7 +2110,7 @@ class transmission_network:
                    bridges.add(this_edge)
             else:
                 potential_removals = 0
-            
+
                 for pair_index, pair in enumerate(((0, 1), (0, 2), (1, 2))):
                     this_edge = None
                     for seq_tag in [(seq_id[pair[0]], seq_id[pair[1]]), (seq_id[pair[1]], seq_id[pair[0]])]:
@@ -2126,7 +2126,7 @@ class transmission_network:
                                 unsupported_edges.add(this_edge)
                                 stats['unsupported edges'] += 1
                                 potential_removals += 1
-                
+
                 if supported_triangles is not None:
                     if potential_removals == 0:
                         supported_triangles.add (seq_id)

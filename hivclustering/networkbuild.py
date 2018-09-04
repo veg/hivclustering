@@ -325,7 +325,7 @@ def build_a_network(extra_arguments = None):
     arguments.add_argument('-s', '--sequences', help='Provide the MSA with sequences which were used to make the distance file. Can be specified multiple times to include mutliple MSA files', required=False, action = 'append')
     arguments.add_argument('-n', '--edge-filtering', dest='edge_filtering', choices=['remove', 'report'], help='Compute edge support and mark edges for removal using sequence-based triangle tests (requires the -s argument) and either only report them or remove the edges before doing other analyses ', required=False)
     arguments.add_argument('-y', '--centralities', help='Output a CSV file with node centralities')
-    arguments.add_argument('-g', '--triangles', help='Maximum number of triangles to consider in each filtering pass', type = int, default = 2**18)
+    arguments.add_argument('-g', '--triangles', help='Maximum number of triangles to consider in each filtering pass', type = int, default = 2**15)
     arguments.add_argument('-C', '--contaminants', help='Screen for contaminants by marking or removing sequences that cluster with any of the contaminant IDs (-F option) [default is not to screen]', choices=['report', 'remove'])
     arguments.add_argument('-F', '--contaminant-file', dest='contaminant_file',help='IDs of contaminant sequences', type=str)
     arguments.add_argument('-M', '--multiple-edges', dest='multiple_edges',help='Permit multiple edges (e.g. different dates) to link the same pair of nodes in the network [default is to choose the one with the shortest distance]', default=False, action='store_true')
@@ -499,13 +499,15 @@ def build_a_network(extra_arguments = None):
             print ("Warning: Sequence ids referenced in input do not appear in source FASTA ids. Edge filtering will not be applied to all triangles.\n Missing ids in FASTA file: %s " %  ', '.join(missing_ids), file = sys.stderr)
 
         network.apply_attribute_filter('problematic', filter_out=True, do_clear=False)
-        if run_settings.filter:
-            network.apply_id_filter(list=run_settings.filter, do_clear=False)
+        #if run_settings.filter:
+        #    network.apply_id_filter(list=run_settings.filter, do_clear=False)
 
         individual_clusters = network.compute_clusters () # this allocates nodes to clusters
         edges_by_clusters = {}
 
         current_edge_set = network.reduce_edge_set()
+
+        #print (len (current_edge_set), file = sys.stderr)
 
         for e in current_edge_set:
             cluster_id = e.p1.cluster_id
@@ -513,7 +515,6 @@ def build_a_network(extra_arguments = None):
                 edges_by_clusters[cluster_id] = [e]
             else:
                 edges_by_clusters[cluster_id].append (e)
-
 
 
         edges_by_clusters = [set(v) for c,v in edges_by_clusters.items() if len (v) >= 3]
