@@ -1934,7 +1934,7 @@ class transmission_network:
             adjacency_map[node] = node_neighborhood
 
         triangle_nodes = set()
-        triangle_nodes_all = set()
+        #triangle_nodes_all = set()
 
         count_by_sequence = {}
 
@@ -1955,13 +1955,13 @@ class transmission_network:
                                         sequence_set.update(triangle_edge.sequences)
 
                                     if len(sequence_set) == 3:
-                                        triangle_nodes.add(triad)
                                         sequence_set = sorted(list(sequence_set))
                                         sequence_set = (sequence_set[0], sequence_set[1], sequence_set[2])
                                         if ignore_this_set and sequence_set in ignore_this_set:
                                             #print ("Already checked")
                                             continue
 
+                                        triangle_nodes.add(triad)
                                         triangles.add(sequence_set)
                                         for s in sequence_set:
                                             if s not in count_by_sequence:
@@ -1972,7 +1972,7 @@ class transmission_network:
                                         pass
                                         #print (sequence_set)
 
-                                    triangle_nodes_all.add(triad)
+                                    #triangle_nodes_all.add(triad)
                                     if len(triangle_nodes) >= maximum_number:
                                         raise UserWarning(
                                             '\nToo many triangles to attempt full filtering; stopped at %d' % maximum_number)
