@@ -501,58 +501,58 @@ def build_a_network(extra_arguments = None):
         network.apply_attribute_filter('problematic', filter_out=True, do_clear=False)
         if run_settings.filter:
             network.apply_id_filter(list=run_settings.filter, do_clear=False)
-            
-        individual_clusters = network.compute_clusters () # this allocates nodes to clusters   
+
+        individual_clusters = network.compute_clusters () # this allocates nodes to clusters
         edges_by_clusters = {}
-        
+
         current_edge_set = network.reduce_edge_set()
-        
+
         for e in current_edge_set:
             cluster_id = e.p1.cluster_id
             if cluster_id not in edges_by_clusters:
                 edges_by_clusters[cluster_id] = [e]
             else:
                 edges_by_clusters[cluster_id].append (e)
-                
-        
-        
+
+
+
         edges_by_clusters = [set(v) for c,v in edges_by_clusters.items() if len (v) >= 3]
         edges_by_clusters.sort (key = lambda x : len (x)) # smallest first
-        
-        
+
+
         # load sequence data
-        
+
         hy_instance = hy.HyphyInterface()
         script_path = os.path.realpath(__file__)
         hbl_path = os.path.join(os.path.dirname(script_path), "data", "HBL", "ExtractSequences.bf")
         hy_instance.queuevar('_py_sequence_file', [os.path.abspath(s) for s in run_settings.sequences])
         hy_instance.runqueue(batchfile=hbl_path)
-        
+
         all_referenced_sequences = set ()
-        
+
         for cluster in edges_by_clusters:
             for e in cluster:
                 all_referenced_sequences.update (e.sequences)
-            
+
         referenced_sequence_data = {}
-        
+
         for seq_id in all_referenced_sequences:
             referenced_sequence_data[seq_id] = hy_instance.getvar(seq_id, hy.HyphyInterface.STRING)
-                    
+
         # partition edges into clusters
-            
+
         def handle_a_cluster (edge_set, cluster_count, total_count):
-        
+
             sys.stderr.write ('\r')
             sys.stderr.write ("Filtering a set of %d edges (%d/%d clusters) %s" % (len (edge_set), cluster_count, total_count, ' '*80))
             sys.stderr.flush ()
-            
+
             edges_removed = 0
             my_edge_set = edge_set
             maximum_number = run_settings.triangles
 
             supported_triangles = set ()
-    
+
             for filtering_pass in range (8):
                 edge_stats = network.test_edge_support(referenced_sequence_data, *network.find_all_triangles(my_edge_set, maximum_number = maximum_number, ignore_this_set = supported_triangles), supported_triangles = supported_triangles)
                 if not edge_stats:
@@ -570,7 +570,7 @@ def build_a_network(extra_arguments = None):
                         break
 
                     maximum_number += run_settings.triangles
-                    my_edge_set = my_edge_set.difference (set ([edge for edge in my_edge_set if not edge.has_support()]))            
+                    my_edge_set = my_edge_set.difference (set ([edge for edge in my_edge_set if not edge.has_support()]))
 
             '''
             if edge_stats:
@@ -581,20 +581,20 @@ def build_a_network(extra_arguments = None):
                 print("\tEdge filtering examined %d triangles, found %d poorly supported edges, and marked %d edges for removal" % (
                     0, 0, 0), file=sys.stderr)
             '''
-                    
+
             return edges_removed
 
 
-        print ("Running edge filtering on %d clusters with 3 or more edges" % len (edges_by_clusters))
-        
+        print ("Running edge filtering on %d clusters with 3 or more edges" % len (edges_by_clusters), file = sys.stderr)
+
         total_removed    = 0
-        
+
         current_edge_set = set ()
         #require a minimim of X edges
-        
+
         cluster_count    = 0
         max_edges_in_set = 0
-                
+
         for edge_set in edges_by_clusters:
             current_edge_set.update (edge_set)
             max_edges_in_set = max (max_edges_in_set, len(edge_set))
@@ -602,15 +602,15 @@ def build_a_network(extra_arguments = None):
             if max_edges_in_set >= 64:
                 total_removed += handle_a_cluster (current_edge_set, cluster_count, len (edges_by_clusters))
                 current_edge_set = set ()
-            
-        
-        
+
+
+
         if len (current_edge_set) > 0:
             total_removed += handle_a_cluster (current_edge_set)
 
 
-        
-        print ("\nEdge filtering idenfitied %d edges for removal" % total_removed, file = sys.stderr)
+
+        print ("\nEdge filtering identified %d edges for removal" % total_removed, file = sys.stderr)
 
         network.set_edge_visibility(edge_visibility) # restore edge visibility
         '''
