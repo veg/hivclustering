@@ -1977,7 +1977,8 @@ class transmission_network:
                                         raise UserWarning(
                                             '\nToo many triangles to attempt full filtering; stopped at %d' % maximum_number)
         except UserWarning as e:
-            print(e, file=sys.stderr)
+            pass
+            #print(e, file=sys.stderr)
 
         # self.find_all_bridges()
 
