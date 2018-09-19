@@ -329,6 +329,7 @@ def build_a_network(extra_arguments = None):
     arguments.add_argument('-C', '--contaminants', help='Screen for contaminants by marking or removing sequences that cluster with any of the contaminant IDs (-F option) [default is not to screen]', choices=['report', 'remove'])
     arguments.add_argument('-F', '--contaminant-file', dest='contaminant_file',help='IDs of contaminant sequences', type=str)
     arguments.add_argument('-M', '--multiple-edges', dest='multiple_edges',help='Permit multiple edges (e.g. different dates) to link the same pair of nodes in the network [default is to choose the one with the shortest distance]', default=False, action='store_true')
+    arguments.add_argument('-B', '--bridges',help='Report all bridges (edges whose removal would cause the graph to disconnect)', default=False, action='store_true')
 
 
     if extra_arguments:
