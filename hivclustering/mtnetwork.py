@@ -34,7 +34,7 @@ def parseAEH(str):
         patient_description['date'] = time.strptime(bits[1], '%m%d%Y')
         patient_description['rawid'] = str
     except:
-        print("Could not parse the following ID as an AEH header: %s" % str)
+        print("Could not parse the following ID as an AEH header: %s" % str, file = sys.stderr)
         raise
 
     return patient_description, ('|'.join(bits[2:]) if len(bits) > 2 else None)
@@ -42,17 +42,17 @@ def parseAEH(str):
 
 def parseRegExp(regexp):
     def parseHeader(str):
-        try:
+         patient_description = {}
+         patient_description['date'] = None
+         patient_description['rawid'] = str
+         try:
             bits = regexp.search(str.rstrip())
-            patient_description = {}
             patient_description['id'] = bits.group(1)
-            patient_description['date'] = None
-            patient_description['rawid'] = str
-        except:
-            print("Could not parse the following ID as the reg.exp. header: %s" % str)
-            raise
+         except:
+            print("Warning: could not parse the following ID as the reg.exp. header: %s" % str, file = sys.stderr)
+            patient_description['id'] = str
 
-        return patient_description, ('|'.join(bits[2:]) if len(bits.groups()) > 2 else None)
+         return patient_description, ('|'.join(bits[2:]) if bits is not None and len(bits.groups()) > 2 else None)
     return parseHeader
 
 
@@ -107,23 +107,24 @@ def describe_vector(vector):
     return {'count': l, 'min': vector[0], 'max': vector[-1], 'mean': sum(vector) / l, 'median':  vector[l // 2] if l % 2 == 1 else 0.5 * (vector[l // 2 - 1] + vector[l // 2]), "IQR": [vector[l // 4], vector[(3 * l) // 4]]}
 
 
-def _test_edge_support(triangles, sequence_file_name, hy_instance, p_value_cutoff):
+def _test_edge_support(triangles, sequence_records, hy_instance, p_value_cutoff):
     if hy_instance is None:
         hy_instance = hy.HyphyInterface()
     script_path = os.path.realpath(__file__)
-    hbl_path = os.path.join(os.path.dirname(script_path), "data", "HBL", "TriangleSupport.bf")
-
-    hy_instance.queuevar('_py_sequence_file', sequence_file_name)
-
-    #print (sequence_file_name)
 
     triangle_spec = []
-
-    #print ("%d triangles" % len (triangles))
+    referenced_sequences = set ()
 
     for k in triangles:
         for i in k[:3]:
             triangle_spec.append(i)
+            referenced_sequences.add (i)
+
+
+    seq_dump = '\n'.join (['>%s\n%s' % (id, sequence_records[id]) for id in referenced_sequences])
+    hbl_path = os.path.join(os.path.dirname(script_path), "data", "HBL", "TriangleSupport.bf")
+
+    hy_instance.queuevar('_py_sequence_dump', seq_dump)
 
     hy_instance.queuevar('_py_triangle_sequences', triangle_spec)
     #print (triangle_spec)
@@ -516,7 +517,7 @@ class patient:
             return None
 
         if complete:
-            return min(self.dates)
+            return min([k for k in self.dates if k is not None])
 
         #print (self.dates)
 
@@ -524,7 +525,7 @@ class patient:
 
     def get_latest_date(self, complete=False):
         if complete:
-            return max(self.dates)
+            return max([k for k in self.dates if k is not None])
         return max([k.tm_year for k in self.dates if k is not None])
 
     def get_sample_count(self):
@@ -544,6 +545,15 @@ class patient:
             d1 = tm_to_datetime(self.treatment_date)
             d2 = tm_to_datetime(self.edi)
             return d1 - d2
+        return None
+
+
+    def get_time_of_infection (self):
+        b = self.get_baseline_date (True)
+        if self.edi != None and b != None:
+            d1 = tm_to_datetime(b)
+            d2 = tm_to_datetime(self.edi)
+            return (d1 - d2).days
         return None
 
     def get_dot_string(self, year_vis=None):
@@ -622,8 +632,11 @@ class transmission_network:
     def make_network_edge(self, *args, **kwargs):
         return edge(*args, date_aware=self.multiple_edges, **kwargs)
 
-    def edge_iterator(self):
+    def edge_iterator(self, edge_set = None):
+        if edge_set is not None:
+            return edge_set
         return self.edges.values()
+
 
     def ensure_node_is_added(self, id1, header_parser, default_attribute, bootstrap_mode, cache):
         if id1 not in cache:
@@ -801,7 +814,7 @@ class transmission_network:
                 self.add_an_edge(str(node_id), str(k), 1, header_parser=parsePlain)
             attach_to.extend([k, node_id])
 
-        print(max(dates_by_chain), file = sys.stderr)
+        #print(max(dates_by_chain), file = sys.stderr)
         return simulation_start
 
     def dump_as_fasta(self, fh, add_dates=False, filter_on_set=None):
@@ -1656,10 +1669,10 @@ class transmission_network:
 
         return centralities
 
-    def reduce_edge_set(self, attribute_merge=True):
+    def reduce_edge_set(self, attribute_merge=True, edge_set=None):
         if self.multiple_edges:
             byPairs = {}
-            for anEdge in self.edge_iterator():
+            for anEdge in self.edge_iterator(edge_set):
                 if anEdge.visible:
                     patient_pair = (anEdge.p1, anEdge.p2)
                     if patient_pair in byPairs:
@@ -1680,7 +1693,7 @@ class transmission_network:
                 edge_set.add(representative_edge)
             return edge_set
         else:
-            return set([edge for edge in self.edge_iterator() if edge.visible])
+            return set([edge for edge in self.edge_iterator(edge_set) if edge.visible])
 
     def conditional_prune_edges(self, clear_filters=False, condition=lambda x: not x.has_support()):
         byPairs = {}
@@ -1885,7 +1898,7 @@ class transmission_network:
                 return 'edge'
         return None
 
-    def find_all_triangles(self, edge_set, maximum_number=2**18):
+    def find_all_triangles(self, edge_set, maximum_number=2**18, ignore_this_set = None):
         triangles = set()
         #sequences_involved_in_links =  set ()
         #sequence_pairs              =  set ()
@@ -1921,7 +1934,7 @@ class transmission_network:
             adjacency_map[node] = node_neighborhood
 
         triangle_nodes = set()
-        triangle_nodes_all = set()
+        #triangle_nodes_all = set()
 
         count_by_sequence = {}
 
@@ -1934,15 +1947,21 @@ class transmission_network:
                                 triad = sorted([node, node2, node3])
                                 triad = (triad[0], triad[1], triad[2])
 
+                                #print (ignore_this_set)
+
                                 if triad not in triangle_nodes:
                                     sequence_set = set()
                                     for triangle_edge in [adjacency_map[triad[0]][triad[1]], adjacency_map[triad[0]][triad[2]], adjacency_map[triad[1]][triad[2]]]:
                                         sequence_set.update(triangle_edge.sequences)
 
                                     if len(sequence_set) == 3:
-                                        triangle_nodes.add(triad)
                                         sequence_set = sorted(list(sequence_set))
                                         sequence_set = (sequence_set[0], sequence_set[1], sequence_set[2])
+                                        if ignore_this_set and sequence_set in ignore_this_set:
+                                            #print ("Already checked")
+                                            continue
+
+                                        triangle_nodes.add(triad)
                                         triangles.add(sequence_set)
                                         for s in sequence_set:
                                             if s not in count_by_sequence:
@@ -1953,12 +1972,13 @@ class transmission_network:
                                         pass
                                         #print (sequence_set)
 
-                                    triangle_nodes_all.add(triad)
+                                    #triangle_nodes_all.add(triad)
                                     if len(triangle_nodes) >= maximum_number:
                                         raise UserWarning(
-                                            'Too many triangles to attempt full filtering; stopped at %d' % maximum_number)
+                                            '\nToo many triangles to attempt full filtering; stopped at %d' % maximum_number)
         except UserWarning as e:
-            print(e, file=sys.stderr)
+            pass
+            #print(e, file=sys.stderr)
 
         # self.find_all_bridges()
 
@@ -2027,12 +2047,12 @@ class transmission_network:
         helper(cluster[0])
         return len(visited) != len(cluster)
 
-    def test_edge_support(self, sequence_file_name, triangles, adjacency_set, hy_instance=None, p_value_cutoff=0.05):
+    def test_edge_support(self, sequence_records, triangles, adjacency_set, hy_instance=None, p_value_cutoff=0.05, edge_subset = None, supported_triangles = None):
 
         if len(triangles) == 0:
             return None
 
-        evaluator = partial(_test_edge_support, sequence_file_name=sequence_file_name,
+        evaluator = partial(_test_edge_support, sequence_records=sequence_records,
                             hy_instance=hy_instance, p_value_cutoff=p_value_cutoff)
         #processed_objects = evaluator (triangles)
 
@@ -2047,7 +2067,7 @@ class transmission_network:
         pool.join()
 
         seqs_to_edge = {}
-        for e in self.edge_iterator():
+        for e in self.edge_iterator(edge_subset):
             if e.sequences:
                 seqs_to_edge[e.sequences] = e
 
@@ -2074,21 +2094,44 @@ class transmission_network:
         for t, p_values in processed_objects:
             seq_id = t[:3]
             #edges = [None,None,None]
-            if min (p_values) == 0.5: continue
-            for pair_index, pair in enumerate(((0, 1), (0, 2), (1, 2))):
-                this_edge = None
-                for seq_tag in [(seq_id[pair[0]], seq_id[pair[1]]), (seq_id[pair[1]], seq_id[pair[0]])]:
-                    if seq_tag in seqs_to_edge:
-                        this_edge = seqs_to_edge[seq_tag]
-                        break
+            # if there are two or more edges that are unsupported at the same level
+            # then keep them all, and mark them as bridges
+            # resolving them would introduce false signal
 
+            max_p = max (p_values)
+
+            if len([k for k in p_values if k == max_p ]) > 1:
+                for pair_index, pair in enumerate(((0, 1), (0, 2), (1, 2))):
+                    this_edge = None
+                    for seq_tag in [(seq_id[pair[0]], seq_id[pair[1]]), (seq_id[pair[1]], seq_id[pair[0]])]:
+                        if seq_tag in seqs_to_edge:
+                            this_edge = seqs_to_edge[seq_tag]
+                            break
                 if this_edge:
-                    this_edge.edge_reject_p = max(p_values[2 - pair_index], this_edge.edge_reject_p)
-                    if this_edge.edge_reject_p > p_value_cutoff:
-                        if this_edge not in unsupported_edges:
-                            #print (this_edge,   this_edge.edge_reject_p, seq_id)
-                            unsupported_edges.add(this_edge)
-                            stats['unsupported edges'] += 1
+                   bridges.add(this_edge)
+            else:
+                potential_removals = 0
+
+                for pair_index, pair in enumerate(((0, 1), (0, 2), (1, 2))):
+                    this_edge = None
+                    for seq_tag in [(seq_id[pair[0]], seq_id[pair[1]]), (seq_id[pair[1]], seq_id[pair[0]])]:
+                        if seq_tag in seqs_to_edge:
+                            this_edge = seqs_to_edge[seq_tag]
+                            break
+
+                    if this_edge:
+                        this_edge.edge_reject_p = max(p_values[2 - pair_index], this_edge.edge_reject_p)
+                        if this_edge.edge_reject_p > p_value_cutoff:
+                            if this_edge not in unsupported_edges:
+                                #print (this_edge,   this_edge.edge_reject_p, seq_id)
+                                unsupported_edges.add(this_edge)
+                                stats['unsupported edges'] += 1
+                                potential_removals += 1
+
+                if supported_triangles is not None:
+                    if potential_removals == 0:
+                        supported_triangles.add (seq_id)
+                    #supported_triangles.add ()
 
         unsupported_edges = sorted(list(unsupported_edges), key=lambda x: x.edge_reject_p, reverse=True)
 

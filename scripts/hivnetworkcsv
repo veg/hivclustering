@@ -77,6 +77,27 @@ def make_hiv_network():
     if settings().centralities:
         network.write_centralities(settings().centralities)
 
+    if settings().bridges:
+        print ("Finding all non-trivial (not ending in a terminal node) bridges in the network", file = sys.stderr)
+        network.find_all_bridges (attr = "bridge") ## this will labels the nodes with "bridge" attribute
+
+        bin_by_node = {}
+
+        for e in network.reduce_edge_set():
+            if e.has_attribute ("bridge") and e.p1.degree != 1 and e.p2.degree != 1 :
+                print ("%s [degree %d] -- %s [degree %d]" % (e.p1.id, e.p1.degree, e.p2.id, e.p2.degree))
+                for n in [e.p1, e.p2]:
+                    if n not in bin_by_node:
+                        bin_by_node[n] = 1
+                    else:
+                        bin_by_node[n] += 1
+
+        if len (bin_by_node):
+            for n, d in bin_by_node.items():
+                print ("Node %s (degree %d) is involved in %d bridges" % (n.id, n.degree, d))
+        else:
+            print ("No non-trivial bridges found", file = sys.stderr)
+
     return network
 
 if __name__ == '__main__':
