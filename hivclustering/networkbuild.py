@@ -431,7 +431,7 @@ def build_a_network(extra_arguments = None):
     if len([k for k in [run_settings.edge_filtering, run_settings.sequences] if k is None]) == 1:
         raise ValueError('Two arguments (-n and -s) are needed for edge filtering options')
 
-    network = transmission_network(multiple_edges=run_settings.multiple_edges)
+    network = transmission_network(multiple_edges=run_settings.multiple_edges)    
     network.read_from_csv_file(run_settings.input, formatter, run_settings.threshold, 'BULK')
 
     uds_settings = None
@@ -608,8 +608,7 @@ def build_a_network(extra_arguments = None):
 
 
         if len (current_edge_set) > 0:
-            total_removed += handle_a_cluster (current_edge_set)
-
+            total_removed += handle_a_cluster (current_edge_set, cluster_count, len (edges_by_clusters))
 
 
         print ("\nEdge filtering identified %d edges for removal" % total_removed, file = sys.stderr)
