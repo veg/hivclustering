@@ -47,7 +47,15 @@ def parseRegExp(regexp):
          patient_description['rawid'] = str
          try:
             bits = regexp.search(str.rstrip())
-            patient_description['id'] = bits.group(1)
+            groups = bits.groups ()
+            patient_description['id'] = groups[0]
+            if len (groups) > 1 and groups[1]: # try matching a date
+                for pattern in ["%m%d%Y", "%m/%d/%y", "%Y%m%d", "%m_%d_%y", "%m-%d-%y"]:
+                    try:
+                        patient_description['date'] = time.strptime(groups[1], pattern)
+                    except ValueError:
+                        continue 
+        
          except:
             print("Warning: could not parse the following ID as the reg.exp. header: %s" % str, file = sys.stderr)
             patient_description['id'] = str
