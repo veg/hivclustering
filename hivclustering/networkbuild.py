@@ -136,26 +136,33 @@ def describe_network(network, json_output=False, keep_singletons=False):
         print("%d directed edges" % directed, file=sys.stderr)
         print(reasons, file=sys.stderr)
 
-    print("Fitting the degree distribution to various densities", file=sys.stderr)
-    distro_fit = network.fit_degree_distribution()
-    ci = distro_fit['rho_ci'][distro_fit['Best']]
-    rho = distro_fit['rho'][distro_fit['Best']]
-    rho = rho if rho is not None else 0.
-    ci = ci if ci is not None else [0., 0.]
-    if json_output:
-        return_json['Degrees'] = {'Distribution': distro_fit['degrees'],
-                                  'Model': distro_fit['Best'],
-                                  'rho': rho,
-                                  'rho CI': ci,
-                                  'fitted': distro_fit['fitted'][distro_fit['Best']]}
-    else:
-        if (distro_fit['Best'] != "Negative Binomial"):
-            ci = distro_fit['rho_ci'][distro_fit['Best']]
-            rho = distro_fit['rho'][distro_fit['Best']]
-            print("Best distribution is '%s' with rho = %g %s" %
-                  (distro_fit['Best'], rho, ("[%g - %g]" % (ci[0], ci[1]))), file=sys.stderr)
+    if not settings().skip_degrees:
+        print("Fitting the degree distribution to various densities", file=sys.stderr)    
+        distro_fit = network.fit_degree_distribution()
+        ci = distro_fit['rho_ci'][distro_fit['Best']]
+        rho = distro_fit['rho'][distro_fit['Best']]
+        rho = rho if rho is not None else 0.
+        ci = ci if ci is not None else [0., 0.]
+        if json_output:
+            return_json['Degrees'] = {'Distribution': distro_fit['degrees'],
+                                      'Model': distro_fit['Best'],
+                                      'rho': rho,
+                                      'rho CI': ci,
+                                      'fitted': distro_fit['fitted'][distro_fit['Best']]}
         else:
-            print("Best distribution is '%s'" % (distro_fit['Best']), file=sys.stderr)
+            if (distro_fit['Best'] != "Negative Binomial"):
+                ci = distro_fit['rho_ci'][distro_fit['Best']]
+                rho = distro_fit['rho'][distro_fit['Best']]
+                print("Best distribution is '%s' with rho = %g %s" %
+                      (distro_fit['Best'], rho, ("[%g - %g]" % (ci[0], ci[1]))), file=sys.stderr)
+            else:
+                print("Best distribution is '%s'" % (distro_fit['Best']), file=sys.stderr)
+    else:
+        distro_fit = {'degrees' : network.get_degree_distribution()}
+        
+        if json_output:
+            return_json['Degrees'] = distro_fit['degrees']
+        
 
     # find diffs in directed edges
     '''for anEdge in network.edges:
@@ -330,6 +337,7 @@ def build_a_network(extra_arguments = None):
     arguments.add_argument('-F', '--contaminant-file', dest='contaminant_file',help='IDs of contaminant sequences', type=str)
     arguments.add_argument('-M', '--multiple-edges', dest='multiple_edges',help='Permit multiple edges (e.g. different dates) to link the same pair of nodes in the network [default is to choose the one with the shortest distance]', default=False, action='store_true')
     arguments.add_argument('-B', '--bridges',help='Report all bridges (edges whose removal would cause the graph to disconnect)', default=False, action='store_true')
+    arguments.add_argument('--no-degree-fit', dest = "skip_degrees", help='Do not perform degree distribution fitting', default=False, action='store_true')
 
 
     if extra_arguments:
