@@ -137,7 +137,7 @@ def describe_network(network, json_output=False, keep_singletons=False):
         print(reasons, file=sys.stderr)
 
     if not settings().skip_degrees:
-        print("Fitting the degree distribution to various densities", file=sys.stderr)    
+        print("Fitting the degree distribution to various densities", file=sys.stderr)
         distro_fit = network.fit_degree_distribution()
         ci = distro_fit['rho_ci'][distro_fit['Best']]
         rho = distro_fit['rho'][distro_fit['Best']]
@@ -159,10 +159,10 @@ def describe_network(network, json_output=False, keep_singletons=False):
                 print("Best distribution is '%s'" % (distro_fit['Best']), file=sys.stderr)
     else:
         distro_fit = {'degrees' : network.get_degree_distribution()}
-        
+
         if json_output:
             return_json['Degrees'] = distro_fit['degrees']
-        
+
 
     # find diffs in directed edges
     '''for anEdge in network.edges:
@@ -333,6 +333,7 @@ def build_a_network(extra_arguments = None):
     arguments.add_argument('-n', '--edge-filtering', dest='edge_filtering', choices=['remove', 'report'], help='Compute edge support and mark edges for removal using sequence-based triangle tests (requires the -s argument) and either only report them or remove the edges before doing other analyses ', required=False)
     arguments.add_argument('-y', '--centralities', help='Output a CSV file with node centralities')
     arguments.add_argument('-l', '--edge-filter-cycles', dest = 'filter_cycles', help='Filter edges that are in cycles other than triangles', action='store_true')
+    arguments.add_argument('--cycle-report-file', dest = 'cycle_report_filename', help='Prints cycle report to specified file', default = sys.stdout, type = argparse.FileType('w'), required=False)
     arguments.add_argument('-g', '--triangles', help='Maximum number of triangles to consider in each filtering pass', type = int, default = 2**15)
     arguments.add_argument('-C', '--contaminants', help='Screen for contaminants by marking or removing sequences that cluster with any of the contaminant IDs (-F option) [default is not to screen]', choices=['report', 'remove'])
     arguments.add_argument('-F', '--contaminant-file', dest='contaminant_file',help='IDs of contaminant sequences', type=str)
@@ -442,7 +443,11 @@ def build_a_network(extra_arguments = None):
     if len([k for k in [run_settings.edge_filtering, run_settings.sequences] if k is None]) == 1:
         raise ValueError('Two arguments (-n and -s) are needed for edge filtering options')
 
-    network = transmission_network(multiple_edges=run_settings.multiple_edges)    
+    if not run_settings.filter_cycles and run_settings.cycle_report_filename:
+        raise ValueError('-l option is necessary to report cycles')
+
+
+    network = transmission_network(multiple_edges=run_settings.multiple_edges)
     network.read_from_csv_file(run_settings.input, formatter, run_settings.threshold, 'BULK')
 
     uds_settings = None
@@ -515,7 +520,7 @@ def build_a_network(extra_arguments = None):
         #    network.apply_id_filter(list=run_settings.filter, do_clear=False)
 
         network.compute_clusters () # this allocates nodes to clusters
-        
+
         def generate_edges_by_cluster () :
             edges_by_clusters = {}
             current_edge_set = network.reduce_edge_set()
@@ -528,9 +533,9 @@ def build_a_network(extra_arguments = None):
             edges_by_clusters = [set(v) for c,v in edges_by_clusters.items() if len (v) >= 3]
             edges_by_clusters.sort (key = lambda x : len (x)) # smallest first
             return edges_by_clusters
-       
+
         edges_by_clusters = generate_edges_by_cluster()
-        
+
 
         # load sequence data
 
@@ -550,14 +555,14 @@ def build_a_network(extra_arguments = None):
 
         for seq_id in all_referenced_sequences:
             referenced_sequence_data[seq_id] = hy_instance.getvar(seq_id, hy.HyphyInterface.STRING)
-            
+
         if run_settings.extract is not None:
             sequence_set = set ()
             for anEdge in edges_by_clusters[run_settings.extract]:
                 sequence_set.update (anEdge.sequences)
             for s in sequence_set:
                 print (">%s\n%s\n" % (s, referenced_sequence_data[s]), file = run_settings.output)
-            
+
 
 
         # partition edges into clusters
@@ -591,13 +596,20 @@ def build_a_network(extra_arguments = None):
 
                     maximum_number += run_settings.triangles
                     edge_set.difference_update (set ([edge for edge in edge_set if not edge.has_support()]))
-                    
+
             if run_settings.filter_cycles:
                 maximum_number = run_settings.triangles
                 supported_quads = set ()
-                
+
                 for filtering_pass in range (8):
-                    edge_stats = network.test_edge_support(referenced_sequence_data, *network.find_all_simple_cycles(edge_set, maximum_number = maximum_number, ignore_this_set = supported_quads, do_quads = True), supported_cycles = supported_quads, test_quads = True)
+                    simple_cycles = network.find_all_simple_cycles(edge_set, maximum_number = maximum_number, ignore_this_set = supported_quads, do_quads = True)
+
+                    # If reporting cycle option set, pickle output to file
+                    if run_settings.cycle_report_filename:
+                        print(json.dumps({"cycles" : simple_cycles[0]}), file=run_settings.cycle_report_filename)
+
+                    edge_stats = network.test_edge_support(referenced_sequence_data, *simple_cycles, supported_cycles = supported_quads, test_quads = True)
+
                     if not edge_stats:
                         break
                     else:
@@ -641,13 +653,13 @@ def build_a_network(extra_arguments = None):
             total_removed += handle_a_cluster (current_edge_set, cluster_count, len (edges_by_clusters))
 
         print ("\nEdge filtering identified %d edges for removal" % total_removed, file = sys.stderr)
-        
+
         network.set_edge_visibility(edge_visibility) # restore edge visibility
 
         if run_settings.edge_filtering == 'remove':
             print("Edge filtering removed %d edges" % network.conditional_prune_edges(), file=sys.stderr)
-            
-    
+
+
     return network
 
 

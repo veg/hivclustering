@@ -56,8 +56,8 @@ def parseRegExp(regexp):
                     try:
                         patient_description['date'] = time.strptime(groups[1], pattern)
                     except ValueError:
-                        continue 
-        
+                        continue
+
          except:
             print("Warning: could not parse the following ID as the reg.exp. header: %s" % str, file = sys.stderr)
             patient_description['id'] = str
@@ -207,7 +207,7 @@ class edge:
             self.p1 = patient2
             self.date2 = date1
             self.date1 = date2
-            if sequence_ids is not None:    
+            if sequence_ids is not None:
                 self.sequences = list(self.sequences)
                 self.sequences.reverse()
                 self.sequences = tuple (self.sequences)
@@ -830,7 +830,7 @@ class transmission_network:
 
         #print(max(dates_by_chain), file = sys.stderr)
         return simulation_start
-       
+
 
     def construct_cluster_representation(self, root_node, already_simulated, the_cluster):
         if root_node in self.adjacency_list:
@@ -1912,7 +1912,7 @@ class transmission_network:
             will store cycles of length `cycle_length`, as lists of nodes, with the convention that
             the cycle 'starts' with the node that has the lowest sort order (lexicographically)
         '''
-        
+
         def handle_a_cycle (node_list):
            node_list.rotate(-node_list.index (min (node_list, key = lambda x : x[0].id)))
            # also orient the cycles so x1->x2->x3->...-x_N has x_2 <= x_N
@@ -1920,19 +1920,19 @@ class transmission_network:
            if node_list[1][0].id > node_list[-1][0].id:
                 node_list.rotate (-1)
                 node_list.reverse()
-                
+
            #extract sequences that correspond to individual nodes in the cycles
-           
+
            sequences = []
            sequence_set = set ()
-           
-           
-           # iterate over the list of sequence IDs and check that the sequences used to make 
+
+
+           # iterate over the list of sequence IDs and check that the sequences used to make
            # the same sequences were used to make each of the links, i.e. that
            # if there is an N1--N2--N3 chain, and N2 has two sequences associated with it, say N2-1 and N2-2
            # then it is not the case that N1 is linked to N2 via N2-1 and N3 is linked to N2 via N2-2
-           
-           for n, s in node_list:   
+
+           for n, s in node_list:
                 #my_seq = [seq for seq in s.sequences if seq in self.sequence_ids[n.id]]
                 my_seq = None
                 sequence_set.add (s.sequences)
@@ -1941,32 +1941,32 @@ class transmission_network:
                     if nd == n:
                         my_seq = s.sequences[i]
                         break
-                        
+
                 if not my_seq:
                     return None
                 sequences.append (my_seq)
 
            if len (sequence_set) != len (node_list):
                 return None
-           
+
            cycles.add (tuple(sequences))
-                    
-                
+
+
            #print ([n[1].sequences for n in node_list], file = sys.stderr)
            #cycles.add (tuple(sorted (node_list, key = lambda x : x.id)))
-        
+
         if (cycle_length >= 4):
             node_and_edge_am = {}
             self.compute_adjacency(both=True, edge_set=edge_set, storage=node_and_edge_am)
-            
-            #perform depth wise-traversal 
+
+            #perform depth wise-traversal
             visited = set ()
-            
+
             def DFS (current_node, current_edge, current_node_chain):
                 visited.add (current_node)
                 current_node_chain.append ([current_node, current_edge])
-                
-                
+
+
                 for neighbor, edge in node_and_edge_am[current_node]:
                     if neighbor not in visited:
                         current_node_chain[len(current_node_chain)-1][1] = edge
@@ -1975,24 +1975,24 @@ class transmission_network:
                         if len (current_node_chain) == cycle_length and neighbor == current_node_chain[0][0]:
                             current_node_chain [-1][1] = edge
                             handle_a_cycle (current_node_chain)
-                            
+
                 current_node_chain.pop()
-                
+
             for n in node_and_edge_am:
-                if n not in visited:   
+                if n not in visited:
                     chain = collections.deque ()
                     DFS (n, None, chain)
-                
-            
+
+
         else:
             raise UserWarning('Will only count cycles of length 4 or greater')
-        
+
         print ("\n", cycles, file = sys.stderr)
         return cycles
 
     def find_all_simple_cycles (self, edge_set, maximum_number=2**18, ignore_this_set = None, do_quads = False):
         # if do_quads is set, then look for simple cycles of length 4, otherwise look for triangles
-        
+
         cycles = set()
         #sequences_involved_in_links =  set ()
         #sequence_pairs              =  set ()
@@ -2002,7 +2002,7 @@ class transmission_network:
 
         #print ("Locating triangles in the network", file = sys.stderr)
 
- 
+
         # create a list of the form
         # node[id] = list of
         #   [node_id] = edge_id
@@ -2030,17 +2030,17 @@ class transmission_network:
                                         nodes = [node,  node2, node3, node4]
                                         if len (set (nodes)) < 4:
                                             continue
-                                            
+
                                         quad = collections.deque (nodes)
                                         quad.rotate(-quad.index (min (quad, key = lambda x : x.id)))
                                         if quad[1].id > quad[-1].id:
                                             quad.rotate (-1)
                                             quad.reverse()
-                                        
+
                                         sequences = []
                                         sequence_set = set ()
                                         quad = tuple (quad)
-                                        
+
                                         if quad not in cycle_nodes:
                                            for n, quad_edge in enumerate ([adjacency_map[quad[0]][quad[1]], adjacency_map[quad[1]][quad[2]], adjacency_map[quad[2]][quad[3]], adjacency_map[quad[3]][quad[0]]]):
                                                 my_seq = None
@@ -2050,22 +2050,22 @@ class transmission_network:
                                                     if nd == quad[n]:
                                                         my_seq = quad_edge.sequences[i]
                                                         break
-                    
+
                                                 if my_seq:
-                                                    sequences.append (my_seq) 
+                                                    sequences.append (my_seq)
                                                 if len (sequence_set) == 4 and len (sequences) == 4:
                                                     sequence_set = tuple (sequences)
                                                     if ignore_this_set and sequence_set in ignore_this_set:
                                                         continue
-                            
+
                                                     cycle_nodes.add(quad)
                                                     cycles.add(sequence_set)
                                                     for s in sequence_set:
                                                         if s not in count_by_sequence:
                                                             count_by_sequence[s] = 1
                                                         else:
-                                                            count_by_sequence[s] += 1   
-                                                
+                                                            count_by_sequence[s] += 1
+
                                            '''
                                             sequence_set = set()
                                             for quad_edge [adjacency_map[triad[0]][triad[1]], adjacency_map[triad[0]][triad[2]], adjacency_map[triad[1]][triad[2]]]:
@@ -2084,9 +2084,9 @@ class transmission_network:
                                                     if s not in count_by_sequence:
                                                         count_by_sequence[s] = 1
                                                     else:
-                                                        count_by_sequence[s] += 1   
-                                            '''                                        
-                                
+                                                        count_by_sequence[s] += 1
+                                            '''
+
                             else:
                                 if node in adjacency_map[node3]:
                                     triad = sorted([node, node2, node3])
@@ -2118,7 +2118,7 @@ class transmission_network:
                                             #print (sequence_set)
 
                                         #triangle_nodes_all.add(triad)
-                                        
+
                             if len(cycle_nodes) >= maximum_number:
                                 raise UserWarning(
                                     '\nToo many cycles to attempt full filtering; stopped at %d' % maximum_number)
@@ -2131,7 +2131,7 @@ class transmission_network:
         if do_quads:
             sorted_result = sorted([(t[0], t[1], t[2], t[3], sum([count_by_sequence[k] for k in t]))
                                     for t in cycles], key=lambda x: (x[4], x[0], x[1], x[2], x[3]), reverse=True)
-        
+
         else:
             sorted_result = sorted([(t[0], t[1], t[2], sum([count_by_sequence[k] for k in t]))
                                     for t in cycles], key=lambda x: (x[3], x[0], x[1], x[2]), reverse=True)
@@ -2202,7 +2202,7 @@ class transmission_network:
 
         if len(cycles) == 0:
             return None
-            
+
         evaluator = partial(_test_edge_support, sequence_records=sequence_records,
                             hy_instance=hy_instance, p_value_cutoff=p_value_cutoff, test_quads = test_quads)
         #processed_objects = evaluator (cycles)
@@ -2224,7 +2224,7 @@ class transmission_network:
 
         upper_bound = 4 if test_quads else 3
         processed_objects = sorted([k for p in processed_objects for k in p], key=lambda x: x[0][upper_bound])
-        
+
         edges_removed = set()
         must_keep = set()
 
@@ -2242,7 +2242,7 @@ class transmission_network:
         unsupported_edges = set()
         removed_edges = set()
         bridges = set()
-        
+
         edge_enumerator = ((0, 1), (1, 2), (2, 3), (3, 0)) if test_quads else ((0, 1), (0, 2), (1, 2))
 
         for t, p_values in processed_objects:
@@ -2278,7 +2278,7 @@ class transmission_network:
                             this_edge.edge_reject_p = max(p_values[pair_index], this_edge.edge_reject_p)
                         else:
                             this_edge.edge_reject_p = max(p_values[2 - pair_index], this_edge.edge_reject_p)
-                            
+
                         if this_edge.edge_reject_p > p_value_cutoff:
                             if this_edge not in unsupported_edges:
                                 #print (this_edge,   this_edge.edge_reject_p, seq_id)
