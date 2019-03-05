@@ -332,12 +332,15 @@ def build_a_network(extra_arguments = None):
     arguments.add_argument('-s', '--sequences', help='Provide the MSA with sequences which were used to make the distance file. Can be specified multiple times to include mutliple MSA files', required=False, action = 'append')
     arguments.add_argument('-n', '--edge-filtering', dest='edge_filtering', choices=['remove', 'report'], help='Compute edge support and mark edges for removal using sequence-based triangle tests (requires the -s argument) and either only report them or remove the edges before doing other analyses ', required=False)
     arguments.add_argument('-y', '--centralities', help='Output a CSV file with node centralities')
+    arguments.add_argument('-l', '--edge-filter-cycles', dest = 'filter_cycles', help='Filter edges that are in cycles other than triangles', action='store_true')
     arguments.add_argument('-g', '--triangles', help='Maximum number of triangles to consider in each filtering pass', type = int, default = 2**15)
     arguments.add_argument('-C', '--contaminants', help='Screen for contaminants by marking or removing sequences that cluster with any of the contaminant IDs (-F option) [default is not to screen]', choices=['report', 'remove'])
     arguments.add_argument('-F', '--contaminant-file', dest='contaminant_file',help='IDs of contaminant sequences', type=str)
     arguments.add_argument('-M', '--multiple-edges', dest='multiple_edges',help='Permit multiple edges (e.g. different dates) to link the same pair of nodes in the network [default is to choose the one with the shortest distance]', default=False, action='store_true')
     arguments.add_argument('-B', '--bridges',help='Report all bridges (edges whose removal would cause the graph to disconnect)', default=False, action='store_true')
     arguments.add_argument('--no-degree-fit', dest = "skip_degrees", help='Do not perform degree distribution fitting', default=False, action='store_true')
+    arguments.add_argument('-X', '--extract',help='If provided, extract all the sequences ', type = int)
+    arguments.add_argument('-O', '--output',help='Write the output file to', default = sys.stdout, type = argparse.FileType('w'))
 
 
     if extra_arguments:
@@ -511,24 +514,23 @@ def build_a_network(extra_arguments = None):
         #if run_settings.filter:
         #    network.apply_id_filter(list=run_settings.filter, do_clear=False)
 
-        individual_clusters = network.compute_clusters () # this allocates nodes to clusters
-        edges_by_clusters = {}
-
-        current_edge_set = network.reduce_edge_set()
-
-        #print (len (current_edge_set), file = sys.stderr)
-
-        for e in current_edge_set:
-            cluster_id = e.p1.cluster_id
-            if cluster_id not in edges_by_clusters:
-                edges_by_clusters[cluster_id] = [e]
-            else:
-                edges_by_clusters[cluster_id].append (e)
-
-
-        edges_by_clusters = [set(v) for c,v in edges_by_clusters.items() if len (v) >= 3]
-        edges_by_clusters.sort (key = lambda x : len (x)) # smallest first
-
+        network.compute_clusters () # this allocates nodes to clusters
+        
+        def generate_edges_by_cluster () :
+            edges_by_clusters = {}
+            current_edge_set = network.reduce_edge_set()
+            for e in current_edge_set:
+                cluster_id = e.p1.cluster_id
+                if cluster_id not in edges_by_clusters:
+                    edges_by_clusters[cluster_id] = [e]
+                else:
+                    edges_by_clusters[cluster_id].append (e)
+            edges_by_clusters = [set(v) for c,v in edges_by_clusters.items() if len (v) >= 3]
+            edges_by_clusters.sort (key = lambda x : len (x)) # smallest first
+            return edges_by_clusters
+       
+        edges_by_clusters = generate_edges_by_cluster()
+        
 
         # load sequence data
 
@@ -548,6 +550,15 @@ def build_a_network(extra_arguments = None):
 
         for seq_id in all_referenced_sequences:
             referenced_sequence_data[seq_id] = hy_instance.getvar(seq_id, hy.HyphyInterface.STRING)
+            
+        if run_settings.extract is not None:
+            sequence_set = set ()
+            for anEdge in edges_by_clusters[run_settings.extract]:
+                sequence_set.update (anEdge.sequences)
+            for s in sequence_set:
+                print (">%s\n%s\n" % (s, referenced_sequence_data[s]), file = run_settings.output)
+            
+
 
         # partition edges into clusters
 
@@ -558,13 +569,13 @@ def build_a_network(extra_arguments = None):
             sys.stderr.flush ()
 
             edges_removed = 0
-            my_edge_set = edge_set
+            #my_edge_set = edge_set
             maximum_number = run_settings.triangles
 
             supported_triangles = set ()
 
             for filtering_pass in range (8):
-                edge_stats = network.test_edge_support(referenced_sequence_data, *network.find_all_triangles(my_edge_set, maximum_number = maximum_number, ignore_this_set = supported_triangles), supported_triangles = supported_triangles)
+                edge_stats = network.test_edge_support(referenced_sequence_data, *network.find_all_simple_cycles(edge_set, maximum_number = maximum_number, ignore_this_set = supported_triangles), supported_cycles = supported_triangles)
                 if not edge_stats:
                     break
                 else:
@@ -573,24 +584,36 @@ def build_a_network(extra_arguments = None):
                     #    filtering_pass, edge_stats['triangles'], edge_stats['unsupported edges'], edge_stats['removed edges']), file=sys.stderr)
 
                     sys.stderr.write ('\r')
-                    sys.stderr.write ("Filtering a set of %d edges (%d/%d clusters). Pass %d, %d triangles, %d filtered edges" % (len (edge_set), cluster_count, total_count, filtering_pass, edge_stats['triangles'], edge_stats['removed edges']))
+                    sys.stderr.write ("Filtering a set of %d edges (%d/%d clusters). Pass %d, %d triangles, %d filtered edges" % (len (edge_set), cluster_count, total_count, filtering_pass, edge_stats['cycles'], edge_stats['removed edges']))
                     sys.stderr.flush ()
-
                     if edge_stats ['removed edges'] == 0:
                         break
 
                     maximum_number += run_settings.triangles
-                    my_edge_set = my_edge_set.difference (set ([edge for edge in my_edge_set if not edge.has_support()]))
+                    edge_set.difference_update (set ([edge for edge in edge_set if not edge.has_support()]))
+                    
+            if run_settings.filter_cycles:
+                maximum_number = run_settings.triangles
+                supported_quads = set ()
+                
+                for filtering_pass in range (8):
+                    edge_stats = network.test_edge_support(referenced_sequence_data, *network.find_all_simple_cycles(edge_set, maximum_number = maximum_number, ignore_this_set = supported_quads, do_quads = True), supported_cycles = supported_quads, test_quads = True)
+                    if not edge_stats:
+                        break
+                    else:
+                        edges_removed += edge_stats['removed edges']
+                        #print("\tEdge filtering pass % d examined %d triangles, found %d poorly supported edges, and marked %d edges for removal" % (
+                        #    filtering_pass, edge_stats['triangles'], edge_stats['unsupported edges'], edge_stats['removed edges']), file=sys.stderr)
 
-            '''
-            if edge_stats:
-                print("\tEdge filtering examined %d triangles, found %d poorly supported edges, and marked %d edges for removal" % (
-                    edge_stats['triangles'], edge_stats['unsupported edges'], edge_stats['removed edges']), file=sys.stderr)
-                edges_removed += edge_stats['removed edges']
-            else:
-                print("\tEdge filtering examined %d triangles, found %d poorly supported edges, and marked %d edges for removal" % (
-                    0, 0, 0), file=sys.stderr)
-            '''
+                        sys.stderr.write ('\r')
+                        sys.stderr.write ("4-cycle filtering a set of %d edges (%d/%d clusters). Pass %d, %d 4-cycles, %d filtered edges" % (len (edge_set), cluster_count, total_count, filtering_pass, edge_stats['cycles'], edge_stats['removed edges']))
+                        sys.stderr.flush ()
+
+                        if edge_stats ['removed edges'] == 0:
+                            break
+
+                        maximum_number += run_settings.triangles
+                        edge_set.difference_update (set ([edge for edge in edge_set if not edge.has_support()]))
 
             return edges_removed
 
@@ -614,27 +637,17 @@ def build_a_network(extra_arguments = None):
                 current_edge_set = set ()
 
 
-
         if len (current_edge_set) > 0:
             total_removed += handle_a_cluster (current_edge_set, cluster_count, len (edges_by_clusters))
 
-
         print ("\nEdge filtering identified %d edges for removal" % total_removed, file = sys.stderr)
-
+        
         network.set_edge_visibility(edge_visibility) # restore edge visibility
-        '''
-        if edge_stats:
-            print("Edge filtering examined %d triangles, found %d poorly supported edges, and marked %d edges for removal" % (
-                edge_stats['triangles'], edge_stats['unsupported edges'], edge_stats['removed edges']), file=sys.stderr)
-        else:
-            print("Edge filtering examined %d triangles, found %d poorly supported edges, and marked %d edges for removal" % (
-                0, 0, 0), file=sys.stderr)
-        '''
 
         if run_settings.edge_filtering == 'remove':
-            #print (len ([e for e in network.edge_iterator() if not e.has_support()]))
             print("Edge filtering removed %d edges" % network.conditional_prune_edges(), file=sys.stderr)
-            # network.find_all_bridges()
+            
+    
     return network
 
 

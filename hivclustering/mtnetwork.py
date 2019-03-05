@@ -15,6 +15,8 @@ import hppy as hy
 import os
 import csv
 import multiprocessing
+import collections
+
 from functools import partial, lru_cache
 
 __all__ = ['edge', 'patient', 'transmission_network', 'parseAEH', 'parseLANL',
@@ -115,26 +117,27 @@ def describe_vector(vector):
     return {'count': l, 'min': vector[0], 'max': vector[-1], 'mean': sum(vector) / l, 'median':  vector[l // 2] if l % 2 == 1 else 0.5 * (vector[l // 2 - 1] + vector[l // 2]), "IQR": [vector[l // 4], vector[(3 * l) // 4]]}
 
 
-def _test_edge_support(triangles, sequence_records, hy_instance, p_value_cutoff):
+def _test_edge_support(cycles, sequence_records, hy_instance, p_value_cutoff, test_quads):
     if hy_instance is None:
         hy_instance = hy.HyphyInterface()
     script_path = os.path.realpath(__file__)
 
-    triangle_spec = []
+    cycle_spec = []
     referenced_sequences = set ()
+    cut_here = 4 if test_quads else 3
 
-    for k in triangles:
-        for i in k[:3]:
-            triangle_spec.append(i)
+    for k in cycles:
+        for i in k[:cut_here]:
+            cycle_spec.append(i)
             referenced_sequences.add (i)
 
 
     seq_dump = '\n'.join (['>%s\n%s' % (id, sequence_records[id]) for id in referenced_sequences])
-    hbl_path = os.path.join(os.path.dirname(script_path), "data", "HBL", "TriangleSupport.bf")
+    hbl_path = os.path.join(os.path.dirname(script_path), "data", "HBL", "CycleSupport.bf" if test_quads else "TriangleSupport.bf")
 
     hy_instance.queuevar('_py_sequence_dump', seq_dump)
 
-    hy_instance.queuevar('_py_triangle_sequences', triangle_spec)
+    hy_instance.queuevar('_py_triangle_sequences', cycle_spec)
     #print (triangle_spec)
 
     hy_instance.runqueue(batchfile=hbl_path)
@@ -143,7 +146,7 @@ def _test_edge_support(triangles, sequence_records, hy_instance, p_value_cutoff)
 
     return_object = []  # ((triangle), (p-values))
 
-    for k, t in enumerate(triangles):
+    for k, t in enumerate(cycles):
         return_object.append((t, hy_instance.getvar(str(k), hy.HyphyInterface.MATRIX)))
 
     #print (return_object)
@@ -193,6 +196,7 @@ def _simulate_HIV_sequences(sequence, tree_matrix, hy_instance):
 class edge:
 
     def __init__(self, patient1, patient2, date1, date2, visible, attribute=None, sequence_ids=None, date_aware=True):
+        self.sequences = sequence_ids
         if patient1 < patient2:
             self.p1 = patient1
             self.p2 = patient2
@@ -203,6 +207,10 @@ class edge:
             self.p1 = patient2
             self.date2 = date1
             self.date1 = date2
+            if sequence_ids is not None:    
+                self.sequences = list(self.sequences)
+                self.sequences.reverse()
+                self.sequences = tuple (self.sequences)
 
         if self.p1.id == self.p2.id:
             raise BaseException("Can't create loop nodes (x->x)")
@@ -210,7 +218,6 @@ class edge:
         self.attribute = set()
         if attribute is not None:
             self.attribute.add(attribute)
-        self.sequences = sequence_ids
         self.edge_reject_p = 0.
         self.is_unsupported = False
         self.date_aware = date_aware
@@ -401,7 +408,6 @@ class patient:
         self.attributes = set()
         self.named_attributes = {}
         self.label = None
-        self.sequence = None
 
     def __hash__(self):
         return hash(self.id)
@@ -824,13 +830,7 @@ class transmission_network:
 
         #print(max(dates_by_chain), file = sys.stderr)
         return simulation_start
-
-    def dump_as_fasta(self, fh, add_dates=False, filter_on_set=None):
-        for n in self.nodes:
-            if filter_on_set is not None and n not in filter_on_set:
-                continue
-            print(">%s%s\n%s" % (n.id, '' if add_dates == False else "|" +
-                                 time.strftime("%m%d%Y", n.dates[0]) + "|" + str(n.dates[1]), n.sequence), file=fh)
+       
 
     def construct_cluster_representation(self, root_node, already_simulated, the_cluster):
         if root_node in self.adjacency_list:
@@ -1906,8 +1906,94 @@ class transmission_network:
                 return 'edge'
         return None
 
-    def find_all_triangles(self, edge_set, maximum_number=2**18, ignore_this_set = None):
-        triangles = set()
+    def find_all_cycles_old (self, edge_set, cycle_length, maximum_number=2**18, ignore_this_set = None):
+        cycles = set ()
+        '''
+            will store cycles of length `cycle_length`, as lists of nodes, with the convention that
+            the cycle 'starts' with the node that has the lowest sort order (lexicographically)
+        '''
+        
+        def handle_a_cycle (node_list):
+           node_list.rotate(-node_list.index (min (node_list, key = lambda x : x[0].id)))
+           # also orient the cycles so x1->x2->x3->...-x_N has x_2 <= x_N
+           # i.e. 1-2-3-4 is chosen instead of 1-4-3-2
+           if node_list[1][0].id > node_list[-1][0].id:
+                node_list.rotate (-1)
+                node_list.reverse()
+                
+           #extract sequences that correspond to individual nodes in the cycles
+           
+           sequences = []
+           sequence_set = set ()
+           
+           
+           # iterate over the list of sequence IDs and check that the sequences used to make 
+           # the same sequences were used to make each of the links, i.e. that
+           # if there is an N1--N2--N3 chain, and N2 has two sequences associated with it, say N2-1 and N2-2
+           # then it is not the case that N1 is linked to N2 via N2-1 and N3 is linked to N2 via N2-2
+           
+           for n, s in node_list:   
+                #my_seq = [seq for seq in s.sequences if seq in self.sequence_ids[n.id]]
+                my_seq = None
+                sequence_set.add (s.sequences)
+                #print ("\n", n, s.p1, s.p2, s.sequences, file = sys.stderr)
+                for i, nd in enumerate ([s.p1,s.p2]):
+                    if nd == n:
+                        my_seq = s.sequences[i]
+                        break
+                        
+                if not my_seq:
+                    return None
+                sequences.append (my_seq)
+
+           if len (sequence_set) != len (node_list):
+                return None
+           
+           cycles.add (tuple(sequences))
+                    
+                
+           #print ([n[1].sequences for n in node_list], file = sys.stderr)
+           #cycles.add (tuple(sorted (node_list, key = lambda x : x.id)))
+        
+        if (cycle_length >= 4):
+            node_and_edge_am = {}
+            self.compute_adjacency(both=True, edge_set=edge_set, storage=node_and_edge_am)
+            
+            #perform depth wise-traversal 
+            visited = set ()
+            
+            def DFS (current_node, current_edge, current_node_chain):
+                visited.add (current_node)
+                current_node_chain.append ([current_node, current_edge])
+                
+                
+                for neighbor, edge in node_and_edge_am[current_node]:
+                    if neighbor not in visited:
+                        current_node_chain[len(current_node_chain)-1][1] = edge
+                        DFS (neighbor, None, current_node_chain)
+                    else: # check for cycle length
+                        if len (current_node_chain) == cycle_length and neighbor == current_node_chain[0][0]:
+                            current_node_chain [-1][1] = edge
+                            handle_a_cycle (current_node_chain)
+                            
+                current_node_chain.pop()
+                
+            for n in node_and_edge_am:
+                if n not in visited:   
+                    chain = collections.deque ()
+                    DFS (n, None, chain)
+                
+            
+        else:
+            raise UserWarning('Will only count cycles of length 4 or greater')
+        
+        print ("\n", cycles, file = sys.stderr)
+        return cycles
+
+    def find_all_simple_cycles (self, edge_set, maximum_number=2**18, ignore_this_set = None, do_quads = False):
+        # if do_quads is set, then look for simple cycles of length 4, otherwise look for triangles
+        
+        cycles = set()
         #sequences_involved_in_links =  set ()
         #sequence_pairs              =  set ()
 
@@ -1916,20 +2002,7 @@ class transmission_network:
 
         #print ("Locating triangles in the network", file = sys.stderr)
 
-        '''
-        for an_edge in edge_set:
-            if an_edge.sequences is not None:
-                sequence_pairs.add (an_edge.sequences)
-                for seq in an_edge.sequences:
-                    sequences_involved_in_links.add (seq)
-
-        for this_pair in sequence_pairs:
-            for third_apex in sequences_involved_in_links:
-                if (((third_apex, this_pair[0]) in sequence_pairs or (this_pair[0],third_apex) in sequence_pairs)
-                    and ((third_apex, this_pair[1]) in sequence_pairs or (this_pair[1],third_apex) in sequence_pairs)):
-                    triangles.add ((this_pair[0], this_pair[1], third_apex))
-        '''
-
+ 
         # create a list of the form
         # node[id] = list of
         #   [node_id] = edge_id
@@ -1941,7 +2014,7 @@ class transmission_network:
                 node_neighborhood[n] = e
             adjacency_map[node] = node_neighborhood
 
-        triangle_nodes = set()
+        cycle_nodes = set()
         #triangle_nodes_all = set()
 
         count_by_sequence = {}
@@ -1951,47 +2024,117 @@ class transmission_network:
                 if len(neighbors) > 1:  # something to do
                     for node2 in neighbors:
                         for node3 in adjacency_map[node2]:
-                            if node in adjacency_map[node3]:
-                                triad = sorted([node, node2, node3])
-                                triad = (triad[0], triad[1], triad[2])
-
-                                #print (ignore_this_set)
-
-                                if triad not in triangle_nodes:
-                                    sequence_set = set()
-                                    for triangle_edge in [adjacency_map[triad[0]][triad[1]], adjacency_map[triad[0]][triad[2]], adjacency_map[triad[1]][triad[2]]]:
-                                        sequence_set.update(triangle_edge.sequences)
-
-                                    if len(sequence_set) == 3:
-                                        sequence_set = sorted(list(sequence_set))
-                                        sequence_set = (sequence_set[0], sequence_set[1], sequence_set[2])
-                                        if ignore_this_set and sequence_set in ignore_this_set:
-                                            #print ("Already checked")
+                            if do_quads:
+                                for node4 in adjacency_map [node3]:
+                                    if node in adjacency_map[node4]:
+                                        nodes = [node,  node2, node3, node4]
+                                        if len (set (nodes)) < 4:
                                             continue
+                                            
+                                        quad = collections.deque (nodes)
+                                        quad.rotate(-quad.index (min (quad, key = lambda x : x.id)))
+                                        if quad[1].id > quad[-1].id:
+                                            quad.rotate (-1)
+                                            quad.reverse()
+                                        
+                                        sequences = []
+                                        sequence_set = set ()
+                                        quad = tuple (quad)
+                                        
+                                        if quad not in cycle_nodes:
+                                           for n, quad_edge in enumerate ([adjacency_map[quad[0]][quad[1]], adjacency_map[quad[1]][quad[2]], adjacency_map[quad[2]][quad[3]], adjacency_map[quad[3]][quad[0]]]):
+                                                my_seq = None
+                                                sequence_set.add (quad_edge.sequences)
+                                                #print ("\n", n, s.p1, s.p2, s.sequences, file = sys.stderr)
+                                                for i, nd in enumerate ([quad_edge.p1,quad_edge.p2]):
+                                                    if nd == quad[n]:
+                                                        my_seq = quad_edge.sequences[i]
+                                                        break
+                    
+                                                if my_seq:
+                                                    sequences.append (my_seq) 
+                                                if len (sequence_set) == 4 and len (sequences) == 4:
+                                                    sequence_set = tuple (sequences)
+                                                    if ignore_this_set and sequence_set in ignore_this_set:
+                                                        continue
+                            
+                                                    cycle_nodes.add(quad)
+                                                    cycles.add(sequence_set)
+                                                    for s in sequence_set:
+                                                        if s not in count_by_sequence:
+                                                            count_by_sequence[s] = 1
+                                                        else:
+                                                            count_by_sequence[s] += 1   
+                                                
+                                           '''
+                                            sequence_set = set()
+                                            for quad_edge [adjacency_map[triad[0]][triad[1]], adjacency_map[triad[0]][triad[2]], adjacency_map[triad[1]][triad[2]]]:
+                                                sequence_set.update(triangle_edge.sequences)
 
-                                        triangle_nodes.add(triad)
-                                        triangles.add(sequence_set)
-                                        for s in sequence_set:
-                                            if s not in count_by_sequence:
-                                                count_by_sequence[s] = 1
-                                            else:
-                                                count_by_sequence[s] += 1
-                                    else:
-                                        pass
-                                        #print (sequence_set)
+                                            if len(sequence_set) == 4:
+                                                sequence_set = sorted(list(sequence_set))
+                                                sequence_set = (sequence_set[0], sequence_set[1], sequence_set[2])
+                                                if ignore_this_set and sequence_set in ignore_this_set:
+                                                    #print ("Already checked")
+                                                    continue
 
-                                    #triangle_nodes_all.add(triad)
-                                    if len(triangle_nodes) >= maximum_number:
-                                        raise UserWarning(
-                                            '\nToo many triangles to attempt full filtering; stopped at %d' % maximum_number)
+                                                cycle_nodes.add(triad)
+                                                cycles.add(sequence_set)
+                                                for s in sequence_set:
+                                                    if s not in count_by_sequence:
+                                                        count_by_sequence[s] = 1
+                                                    else:
+                                                        count_by_sequence[s] += 1   
+                                            '''                                        
+                                
+                            else:
+                                if node in adjacency_map[node3]:
+                                    triad = sorted([node, node2, node3])
+                                    triad = (triad[0], triad[1], triad[2])
+
+                                    #print (ignore_this_set)
+
+                                    if triad not in cycle_nodes:
+                                        sequence_set = set()
+                                        for triangle_edge in [adjacency_map[triad[0]][triad[1]], adjacency_map[triad[0]][triad[2]], adjacency_map[triad[1]][triad[2]]]:
+                                            sequence_set.update(triangle_edge.sequences)
+
+                                        if len(sequence_set) == 3:
+                                            sequence_set = sorted(list(sequence_set))
+                                            sequence_set = (sequence_set[0], sequence_set[1], sequence_set[2])
+                                            if ignore_this_set and sequence_set in ignore_this_set:
+                                                #print ("Already checked")
+                                                continue
+
+                                            cycle_nodes.add(triad)
+                                            cycles.add(sequence_set)
+                                            for s in sequence_set:
+                                                if s not in count_by_sequence:
+                                                    count_by_sequence[s] = 1
+                                                else:
+                                                    count_by_sequence[s] += 1
+                                        else:
+                                            pass
+                                            #print (sequence_set)
+
+                                        #triangle_nodes_all.add(triad)
+                                        
+                            if len(cycle_nodes) >= maximum_number:
+                                raise UserWarning(
+                                    '\nToo many cycles to attempt full filtering; stopped at %d' % maximum_number)
         except UserWarning as e:
             pass
             #print(e, file=sys.stderr)
 
         # self.find_all_bridges()
 
-        sorted_result = sorted([(t[0], t[1], t[2], sum([count_by_sequence[k] for k in t]))
-                                for t in triangles], key=lambda x: (x[3], x[0], x[1], x[2]), reverse=True)
+        if do_quads:
+            sorted_result = sorted([(t[0], t[1], t[2], t[3], sum([count_by_sequence[k] for k in t]))
+                                    for t in cycles], key=lambda x: (x[4], x[0], x[1], x[2], x[3]), reverse=True)
+        
+        else:
+            sorted_result = sorted([(t[0], t[1], t[2], sum([count_by_sequence[k] for k in t]))
+                                    for t in cycles], key=lambda x: (x[3], x[0], x[1], x[2]), reverse=True)
 
         #del node_and_edge_am
         #print ("Found %d triangles with sequences (total triangles %d) in the network" % (len (triangles), len (triangle_nodes_all)), file = sys.stderr)
@@ -2055,18 +2198,18 @@ class transmission_network:
         helper(cluster[0])
         return len(visited) != len(cluster)
 
-    def test_edge_support(self, sequence_records, triangles, adjacency_set, hy_instance=None, p_value_cutoff=0.05, edge_subset = None, supported_triangles = None):
+    def test_edge_support(self, sequence_records, cycles, adjacency_set, hy_instance=None, p_value_cutoff=0.05, edge_subset = None, supported_cycles = None, test_quads = False):
 
-        if len(triangles) == 0:
+        if len(cycles) == 0:
             return None
-
+            
         evaluator = partial(_test_edge_support, sequence_records=sequence_records,
-                            hy_instance=hy_instance, p_value_cutoff=p_value_cutoff)
-        #processed_objects = evaluator (triangles)
+                            hy_instance=hy_instance, p_value_cutoff=p_value_cutoff, test_quads = test_quads)
+        #processed_objects = evaluator (cycles)
 
-        chunk = 2**(max(floor(log(len(triangles) / multiprocessing.cpu_count(), 2)), 8))
+        chunk = 2**(max(floor(log(len(cycles) / multiprocessing.cpu_count(), 2)), 8))
 
-        blocked = [triangles[k: k + chunk] for k in range(0, len(triangles), chunk)]
+        blocked = [cycles[k: k + chunk] for k in range(0, len(cycles), chunk)]
 
         pool = multiprocessing.Pool()
         #print ()
@@ -2079,8 +2222,9 @@ class transmission_network:
             if e.sequences:
                 seqs_to_edge[e.sequences] = e
 
-        processed_objects = sorted([k for p in processed_objects for k in p], key=lambda x: x[0][3])
-
+        upper_bound = 4 if test_quads else 3
+        processed_objects = sorted([k for p in processed_objects for k in p], key=lambda x: x[0][upper_bound])
+        
         edges_removed = set()
         must_keep = set()
 
@@ -2093,14 +2237,16 @@ class transmission_network:
 
         #self.find_all_bridges (adjacency_list = adjacency_set)
 
-        stats = {'triangles': len(processed_objects), 'unsupported edges': 0, 'removed edges': 0}
+        stats = {'cycles': len(processed_objects), 'unsupported edges': 0, 'removed edges': 0}
 
         unsupported_edges = set()
         removed_edges = set()
         bridges = set()
+        
+        edge_enumerator = ((0, 1), (1, 2), (2, 3), (3, 0)) if test_quads else ((0, 1), (0, 2), (1, 2))
 
         for t, p_values in processed_objects:
-            seq_id = t[:3]
+            seq_id = t[:upper_bound]
             #edges = [None,None,None]
             # if there are two or more edges that are unsupported at the same level
             # then keep them all, and mark them as bridges
@@ -2109,7 +2255,7 @@ class transmission_network:
             max_p = max (p_values)
 
             if len([k for k in p_values if k == max_p ]) > 1:
-                for pair_index, pair in enumerate(((0, 1), (0, 2), (1, 2))):
+                for pair_index, pair in enumerate(edge_enumerator):
                     this_edge = None
                     for seq_tag in [(seq_id[pair[0]], seq_id[pair[1]]), (seq_id[pair[1]], seq_id[pair[0]])]:
                         if seq_tag in seqs_to_edge:
@@ -2120,7 +2266,7 @@ class transmission_network:
             else:
                 potential_removals = 0
 
-                for pair_index, pair in enumerate(((0, 1), (0, 2), (1, 2))):
+                for pair_index, pair in enumerate(edge_enumerator):
                     this_edge = None
                     for seq_tag in [(seq_id[pair[0]], seq_id[pair[1]]), (seq_id[pair[1]], seq_id[pair[0]])]:
                         if seq_tag in seqs_to_edge:
@@ -2128,17 +2274,22 @@ class transmission_network:
                             break
 
                     if this_edge:
-                        this_edge.edge_reject_p = max(p_values[2 - pair_index], this_edge.edge_reject_p)
+                        if test_quads:
+                            this_edge.edge_reject_p = max(p_values[pair_index], this_edge.edge_reject_p)
+                        else:
+                            this_edge.edge_reject_p = max(p_values[2 - pair_index], this_edge.edge_reject_p)
+                            
                         if this_edge.edge_reject_p > p_value_cutoff:
                             if this_edge not in unsupported_edges:
                                 #print (this_edge,   this_edge.edge_reject_p, seq_id)
                                 unsupported_edges.add(this_edge)
                                 stats['unsupported edges'] += 1
                                 potential_removals += 1
+                                #print ('Removing ', seq_id, file = sys.stderr)
 
-                if supported_triangles is not None:
+                if supported_cycles is not None:
                     if potential_removals == 0:
-                        supported_triangles.add (seq_id)
+                        supported_cycles.add (seq_id)
                     #supported_triangles.add ()
 
         unsupported_edges = sorted(list(unsupported_edges), key=lambda x: x.edge_reject_p, reverse=True)
