@@ -333,7 +333,7 @@ def build_a_network(extra_arguments = None):
     arguments.add_argument('-n', '--edge-filtering', dest='edge_filtering', choices=['remove', 'report'], help='Compute edge support and mark edges for removal using sequence-based triangle tests (requires the -s argument) and either only report them or remove the edges before doing other analyses ', required=False)
     arguments.add_argument('-y', '--centralities', help='Output a CSV file with node centralities')
     arguments.add_argument('-l', '--edge-filter-cycles', dest = 'filter_cycles', help='Filter edges that are in cycles other than triangles', action='store_true')
-    arguments.add_argument('--cycle-report-file', dest = 'cycle_report_filename', help='Prints cycle report to specified file', default = sys.stdout, type = argparse.FileType('w'), required=False)
+    arguments.add_argument('--cycle-report-file', dest = 'cycle_report_filename', help='Prints cycle report to specified file', default = None, type = argparse.FileType('w'), required=False)
     arguments.add_argument('-g', '--triangles', help='Maximum number of triangles to consider in each filtering pass', type = int, default = 2**15)
     arguments.add_argument('-C', '--contaminants', help='Screen for contaminants by marking or removing sequences that cluster with any of the contaminant IDs (-F option) [default is not to screen]', choices=['report', 'remove'])
     arguments.add_argument('-F', '--contaminant-file', dest='contaminant_file',help='IDs of contaminant sequences', type=str)
@@ -445,7 +445,6 @@ def build_a_network(extra_arguments = None):
 
     if not run_settings.filter_cycles and run_settings.cycle_report_filename:
         raise ValueError('-l option is necessary to report cycles')
-
 
     network = transmission_network(multiple_edges=run_settings.multiple_edges)
     network.read_from_csv_file(run_settings.input, formatter, run_settings.threshold, 'BULK')
