@@ -21,7 +21,6 @@ import hppy as hy
 run_settings = None
 uds_settings = None
 
-
 def settings():
     return run_settings
 
@@ -141,6 +140,7 @@ def describe_network(network, json_output=False, keep_singletons=False):
         distro_fit = network.fit_degree_distribution()
         ci = distro_fit['rho_ci'][distro_fit['Best']]
         rho = distro_fit['rho'][distro_fit['Best']]
+        bic = distro_fit['BIC'][distro_fit['Best']]
         rho = rho if rho is not None else 0.
         ci = ci if ci is not None else [0., 0.]
         if json_output:
@@ -148,6 +148,7 @@ def describe_network(network, json_output=False, keep_singletons=False):
                                       'Model': distro_fit['Best'],
                                       'rho': rho,
                                       'rho CI': ci,
+                                      'BIC': bic,
                                       'fitted': distro_fit['fitted'][distro_fit['Best']]}
         else:
             if (distro_fit['Best'] != "Negative Binomial"):
@@ -162,7 +163,6 @@ def describe_network(network, json_output=False, keep_singletons=False):
 
         if json_output:
             return_json['Degrees'] = distro_fit['degrees']
-
 
     # find diffs in directed edges
     '''for anEdge in network.edges:

@@ -23,7 +23,6 @@ __all__ = ['edge', 'patient', 'transmission_network', 'parseAEH', 'parseLANL',
            'parsePlain', 'parseRegExp', 'describe_vector', 'tm_to_datetime', 'datetime_to_tm', ]
 #-------------------------------------------------------------------------------
 
-
 def parseAEH(str):
     try:
         bits = str.rstrip().split('|')
@@ -135,10 +134,10 @@ def _test_edge_support(cycles, sequence_records, hy_instance, p_value_cutoff, te
     seq_dump = '\n'.join (['>%s\n%s' % (id, sequence_records[id]) for id in referenced_sequences])
     hbl_path = os.path.join(os.path.dirname(script_path), "data", "HBL", "CycleSupport.bf" if test_quads else "TriangleSupport.bf")
 
+
     hy_instance.queuevar('_py_sequence_dump', seq_dump)
 
     hy_instance.queuevar('_py_triangle_sequences', cycle_spec)
-    #print (triangle_spec)
 
     hy_instance.runqueue(batchfile=hbl_path)
     if len(hy_instance.stderr):
