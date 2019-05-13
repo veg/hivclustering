@@ -312,7 +312,7 @@ def get_fasta_ids(fn):
 def build_a_network(extra_arguments = None):
 
     random.seed()
-    arguments = argparse.ArgumentParser(description='Read filenames.')
+    arguments = argparse.ArgumentParser(description='Construct a molecular transmission network.')
 
     arguments.add_argument('-i', '--input',   help='Input CSV file with inferred genetic links (or stdin if omitted). Can be specified multiple times for multiple input files (e.g. to include a reference database). Must be a CSV file with three columns: ID1,ID2,distance.', action = 'append')
     arguments.add_argument('-u', '--uds',   help='Input CSV file with UDS data. Must be a CSV file with three columns: ID1,ID2,distance.')
@@ -324,7 +324,7 @@ def build_a_network(extra_arguments = None):
     arguments.add_argument('-f', '--format',   help='Sequence ID format. One of AEH (ID | sample_date | otherfiels default), LANL (e.g. B_HXB2_K03455_1983 : subtype_country_id_year -- could have more fields), regexp (match a regular expression, use the first group as the ID), or plain (treat as sequence ID only, no meta); one per input argument if specified', action = 'append')
     arguments.add_argument('-x', '--exclude',   help='Exclude any sequence which belongs to a cluster containing a "reference" strain, defined by the year of isolation. The value of this argument is an integer year (e.g. 1984) so that any sequence isolated in or before that year (e.g. <=1983) is considered to be a lab strain. This option makes sense for LANL or AEH data.')
     arguments.add_argument('-r', '--resistance',help='Load a JSON file with resistance annotation by sequence', type=argparse.FileType('r'))
-    arguments.add_argument('-p', '--parser', help='The reg.exp pattern to split up sequence ids; only used if format is regexp (specify N times for N input files, even if empty)', required=False, type=str, action = 'append')
+    arguments.add_argument('-p', '--parser', help='The reg.exp pattern to split up sequence ids; only used if format is regexp; format is INDEX EXPRESSION (consumes two arguments)', required=False, type=str, action = 'append', nargs = 2)
     arguments.add_argument('-a', '--attributes',help='Load a CSV file with optional node attributes', type=argparse.FileType('r'))
     arguments.add_argument('-j', '--json', help='Output the network report as a JSON object',required=False,  action='store_true', default=False)
     arguments.add_argument('-o', '--singletons', help='Include singletons in JSON output',required=False,  action='store_true', default=False)
@@ -345,7 +345,7 @@ def build_a_network(extra_arguments = None):
 
     if extra_arguments:
         for a in extra_arguments:
-            arguments.add_argument (*a.arg, **a.kwarg)
+            arguments.add_argument (*a["arg"], **a["kwarg"])
 
     global run_settings
 
@@ -402,11 +402,23 @@ def build_a_network(extra_arguments = None):
             raise
 
     formatter = []
+    
+
 
     if run_settings.format is not None:
+        regExpByIndex = {}
+        
+        if run_settings.parser is not None:
+            for patterns in run_settings.parser :
+                idx = int (patterns[0])
+                if not idx in regExpByIndex:
+                    regExpByIndex[idx] = []
+                regExpByIndex[idx].append (patterns[1])
+                
+    
         for index, format_k in enumerate (run_settings.format):
             formats = {"AEH": parseAEH, "LANL": parseLANL, "plain": parsePlain, "regexp": parseRegExp(
-                None if run_settings.parser is None  or len(run_settings.parser) < index else re.compile(run_settings.parser[index]))}
+                None if run_settings.parser is None  or index not in regExpByIndex else [re.compile (r) for r in regExpByIndex[index]])}
             try:
                 formatter.append (formats[format_k])
             except KeyError:

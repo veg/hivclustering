@@ -24,7 +24,7 @@ __all__ = ['edge', 'patient', 'transmission_network', 'parseAEH', 'parseLANL',
 #-------------------------------------------------------------------------------
 
 
-def parseAEH(str):
+def parseAEH(str, position = None):
     try:
         bits = str.rstrip().split('|')
         if len(bits) < 2:
@@ -43,30 +43,39 @@ def parseAEH(str):
 
 
 def parseRegExp(regexp):
-    def parseHeader(str):
-         patient_description = {}
-         patient_description['date'] = None
-         patient_description['rawid'] = str
-         try:
-            bits = regexp.search(str.rstrip())
-            groups = bits.groups ()
-            patient_description['id'] = groups[0]
-            if len (groups) > 1 and groups[1]: # try matching a date
-                for pattern in ["%m%d%Y", "%m/%d/%y", "%Y%m%d", "%m_%d_%y", "%m-%d-%y"]:
-                    try:
-                        patient_description['date'] = time.strptime(groups[1], pattern)
-                    except ValueError:
-                        continue 
+    def parseHeader(str, position = None):
+        patient_description = {}
+ 
+        for r in [regexp[position]] if position is not None else regexp:        
+            try:
+                patient_description['date'] = None
+                patient_description['rawid'] = str
+                parseSuccess = False
+
+                bits = r.search(str.rstrip())
+                groups = bits.groups ()
+                patient_description['id'] = groups[0]
+                if len (groups) > 1 and groups[1]: # try matching a date
+                    for pattern in ["%m%d%Y", "%m/%d/%y", "%Y%m%d", "%m_%d_%y", "%m-%d-%y"]:
+                        try:
+                            patient_description['date'] = time.strptime(groups[1], pattern)
+                        except ValueError:
+                            continue 
+                parseSuccess = True
+                break
+                
+            except:
+                pass
         
-         except:
+        if not parseSuccess:
             print("Warning: could not parse the following ID as the reg.exp. header: %s" % str, file = sys.stderr)
             patient_description['id'] = str
 
-         return patient_description, ('|'.join(bits[2:]) if bits is not None and len(bits.groups()) > 2 else None)
+        return patient_description, ('|'.join(bits[2:]) if bits is not None and len(bits.groups()) > 2 else None)
     return parseHeader
 
 
-def parseLANL(str):
+def parseLANL(str, position = None):
     try:
         bits = str.rstrip().split('_')
         if len(bits) < 4:
@@ -84,7 +93,7 @@ def parseLANL(str):
     return patient_description, ('_'.join(bits[4:]) if len(bits) > 4 else None)
 
 
-def parsePlain(str):
+def parsePlain(str, position = None):
 
     patient_description = {}
     patient_description['id'] = str
@@ -634,8 +643,8 @@ class transmission_network:
             for line in edgeReader:
                 distance = float(line[2])
                 if distance_cut is not None and distance > distance_cut:
-                    self.ensure_node_is_added(line[0], formatter[index], default_attribute, bootstrap_mode, handled_ids)
-                    self.ensure_node_is_added(line[1], formatter[index], default_attribute, bootstrap_mode, handled_ids)
+                    self.ensure_node_is_added(line[0], formatter[index], default_attribute, bootstrap_mode, handled_ids, 0)
+                    self.ensure_node_is_added(line[1], formatter[index], default_attribute, bootstrap_mode, handled_ids, 1)
                     continue
                 edge = self.add_an_edge(line[0], line[1], distance, formatter[index], default_attribute, bootstrap_mode)
                 if edge is not None and len(line) > 3:
@@ -652,13 +661,13 @@ class transmission_network:
         return self.edges.values()
 
 
-    def ensure_node_is_added(self, id1, header_parser, default_attribute, bootstrap_mode, cache):
+    def ensure_node_is_added(self, id1, header_parser, default_attribute, bootstrap_mode, cache, position = None):
         if id1 not in cache:
             cache.add(id1)
             if header_parser == None:
                 header_parser = parseAEH
 
-            patient1, attrib = header_parser(id1)
+            patient1, attrib = header_parser(id1, position)
             self.insert_patient(patient1['id'], patient1['date'], False, attrib)
 
     def sample_from_network(self, how_many_nodes=100, how_many_edges=None, node_sampling_bias=0.0):
@@ -1074,8 +1083,8 @@ class transmission_network:
         if header_parser == None:
             header_parser = parseAEH
 
-        patient1, attrib = header_parser(id1)
-        patient2, attrib = header_parser(id2)
+        patient1, attrib = header_parser(id1, 0)
+        patient2, attrib = header_parser(id2, 1)
 
         loop = patient1['id'] == patient2['id']
 
