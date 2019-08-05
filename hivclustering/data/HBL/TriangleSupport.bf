@@ -78,17 +78,7 @@ function _testNetworkTriangle (filter, efv, seq1, seq2, seq3) {
 
 map = {triangle_count, 3};
 
-//fprintf (stdout, "Loading...\n");
-
-file_count = Rows(_py_sequence_file) * Columns (_py_sequence_file);
-
-DataSet       ds           = ReadDataFile (_py_sequence_file[0]);
-
-for (k = 1; k < file_count; k += 1) {
-    DataSet read_more = ReadDataFile (_py_sequence_file[k]);
-    DataSet ds = Combine (ds, read_more);
-}
-
+DataSet       ds           = ReadFromString (_py_sequence_dump);
 DataSetFilter filteredData = CreateFilter (ds,1);
 
 nameToIndex = {};
