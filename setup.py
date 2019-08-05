@@ -23,7 +23,7 @@ setup(name='hivclustering',
         'scripts/TNS'
     ],
     install_requires=[
-        'biopython-extensions >= 0.18.0',
+        'bioext >= 0.19.0',
         'hyphy-python >= 0.1.8',
         'hyphy-helper >= 0.9.6',
         ],
