@@ -1611,20 +1611,22 @@ class transmission_network:
 
         clusters = self.retrieve_clusters (singletons = singletons)
 
-        if singletons:
+        if singletons and None in clusters:
             stash_singletons = clusters.pop(None, None)
-
+        else:
+            stash_singletons = None
 
         if filter is not None:
             stashed_unfiltered = {}
-            stashed_filtered = {}
+            stashed_filtered   = []
             for cid, cdata in clusters.items():
                 if filter (cid, cdata):
-                    stashed_filtered [cid] = cdata
+                    stashed_filtered.append (cdata)
                 else:
                     stashed_unfiltered [cid] = cdata
+                    
 
-            clusters = sorted (stashed_filtered.values(), key = cmp_to_key (cmp_clusters))
+            clusters = sorted (stashed_filtered, key = cmp_to_key (cmp_clusters))
         else:
             clusters = sorted (clusters.values(), key = cmp_to_key (cmp_clusters))
 
@@ -1633,15 +1635,16 @@ class transmission_network:
             #print (c_id, len (c_nodes))
             new_clusters [c_id + start_id] = c_nodes
             for node in c_nodes:
+                #print (node.id, node.cluster_id, c_id + start_id)
                 node.cluster_id = c_id + start_id
 
-        if singletons:
+        if stash_singletons is not None:
             new_clusters[None] = stash_singletons
         if filter:
             for cid, cdata in stashed_unfiltered.items():
+                #print (cid)
                 new_clusters[cid] = cdata
 
-        print (new_clusters)
         return new_clusters
 
 

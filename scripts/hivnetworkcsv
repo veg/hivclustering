@@ -57,13 +57,14 @@ def make_hiv_network():
                 for n in network.nodes:
                     if not n.cluster_id in cluster_map:
                         cluster_map[n.cluster_id] = set ()
-
+                        
                     if n.id in existing_nodes:
                         cluster_map[n.cluster_id].add (existing_nodes[n.id])
                     else:
                         cluster_map[n.cluster_id].add (None) # tag for a node not in previous clusters
 
                 mapped_to_existing_clusters = set ()
+                used_existing_clusters = set ()
 
                 cluster_remap = {}
 
@@ -75,41 +76,70 @@ def make_hiv_network():
                         if len (mapped_id) == 1:
                             if None in mapped_id: # new cluster
                                 pass
-                                #print ("%d is a new cluster" % c_id)
+                                print ("Cluster %d is a new cluster" % c_id,  file = sys.stderr)
                             else:
                                 cluster_remap[c_id] = list(mapped_id)[0]
-                                #print ("%d matches a previous cluster %d" % (c_id, cluster_remap[c_id])
+                                print ("Cluster %d matches a previous cluster %d" % (c_id, cluster_remap[c_id]),  file = sys.stderr)
+                                if cluster_remap[c_id] in used_existing_clusters:
+                                    raise Exception("Cluster %d from the existing network is mapped to multiple new clusters" % c_id)
+                                else:
+                                    used_existing_clusters.add (cluster_remap[c_id])
+                                
+                                     
                                 mapped_to_existing_clusters.add (c_id)
                         else:
                             if len (mapped_id) == 2 and None in mapped_id:
                                 mapped_id.remove (None)
                                 cluster_remap[c_id] = list(mapped_id)[0]
+                                print ("Cluster %d extends a previous cluster %d" % (c_id, list(mapped_id)[0]),  file = sys.stderr)
                                 mapped_to_existing_clusters.add (c_id)
-                                #print ("%d extends a previous cluster %d" % (c_id, list(mapped_id)[0]))
+                                if cluster_remap[c_id] in used_existing_clusters:
+                                    raise Exception("Cluster %d from the existing network is mapped to multiple new clusters" % c_id)
+                                else:
+                                    used_existing_clusters.add (cluster_remap[c_id])
                             else:
-                                #print ("%d MERGES %s" % (c_id, ", ".join ([str(k) for k in list(mapped_id)])))
+                                print ("Cluster %d MERGES %s" % (c_id, ", ".join ([str(k) for k in list(mapped_id)])), file = sys.stderr)
                                 if None in mapped_id:
                                     mapped_id.remove (None)
-                                mapped_to_existing_clusters.union (mapped_id)
+                                if not mapped_id.isdisjoint (used_existing_clusters):
+                                    raise Exception("Cluster %d from the existing network is mapped to multiple new clusters" % c_id)
+                                else:
+                                    used_existing_clusters.update (mapped_id)
+                                mapped_to_existing_clusters.add (c_id)
                                 mapped_id = sorted ([(k, cluster_sizes[k]) for k in mapped_id], key = lambda x: x[1], reverse = True)
                                 mapped_id = sorted ([k for k in mapped_id if k[1] == mapped_id[0][1]],  key = lambda x: x[0])
                                 cluster_remap[c_id] = mapped_id[0][0]
 
-                print (mapped_to_existing_clusters)
-                cluster_info = network.sort_clusters(filter = lambda x,y : not x in mapped_to_existing_clusters, start_id = max_id + 1)
+
+                
+                #validate = set (['WA00S000662580-1','WA00S000945841-5','WA00S000696923-1','WA00S000572828-4'])
+                for n in network.nodes:
+                    #if n.cluster_id == 145:
+                    #    print ("Node %s in cluster %d " % (n.id, n.cluster_id), file = sys.stderr)
+                    if n.cluster_id in cluster_remap:
+                        n.cluster_id  = cluster_remap [n.cluster_id]
+                    else:
+                        if n.cluster_id is not None:
+                            n.cluster_id  = -n.cluster_id
+                    #if n.cluster_id in [145]:
+                    #    print (" => cluster %d " % (n.cluster_id), file = sys.stderr)
+                
+                #print (mapped_to_existing_clusters, "\n\n", cluster_remap, file = sys.stderr)
+                cluster_info = network.sort_clusters(filter = lambda cluster_id ,cluster_data : cluster_id < 0, start_id = max_id + 1)
 
 
 
             except Exception as e:
-                print ("Error with prior network processing: %s", str (e))
+                print ("Error with prior network processing: %s" % str (e), file = sys.stderr)
                 sys.exit (1)
 
         else:
             cluster_info = network.sort_clusters()
 
         node_idx = {}
-
+        
         for idx, cluster in cluster_info.items():
+            #print (idx, cluster)
             for n in cluster:
                 if idx is not None:
                     nodes.append({'id': n.id, 'cluster': idx, 'attributes': list(n.attributes),
@@ -131,8 +161,10 @@ def make_hiv_network():
                 edges.append({'source': src, 'target': rcp, 'directed': directed, 'length': network.distances[
                              e], 'support': e.edge_reject_p, 'removed': not e.has_support(), 'sequences': e.sequences, 'attributes': list(e.attribute)})
 
-        network_info['Nodes'] = sorted(nodes, key=lambda node: node['id'])
-        network_info['Edges'] = sorted(edges, key=lambda edge: ''.join([sequence for sequence in edge['sequences']]))
+        network_info['Nodes'] = nodes 
+        # do NOT sort the nodes, otherwise referencing them by index from edges will be broken.
+        network_info['Edges'] = sorted(edges, key=lambda edge: ''.join([sequence for sequence in edge['sequences']])) 
+        # OK to sort edges, because their order is not used downstream
 
         print(json.dumps(network_info, indent=4, sort_keys=True))
 
