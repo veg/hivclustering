@@ -97,4 +97,9 @@ optional arguments:
   -M, --multiple-edges  Permit multiple edges (e.g. different dates) to link
                         the same pair of nodes in the network [default is to
                         choose the one with the shortest distance]
+ -P PRIOR, --prior PRIOR
+                        When running in JSON output mode, provide a JSON file
+                        storing a previous (subset) version of the network for
+                        consistent cluster naming
+
 ```
