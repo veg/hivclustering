@@ -16,8 +16,7 @@ import os
 import csv
 import multiprocessing
 import collections
-
-from functools import partial, lru_cache
+from functools import partial, lru_cache, cmp_to_key
 
 __all__ = ['edge', 'patient', 'transmission_network', 'parseAEH', 'parseLANL',
            'parsePlain', 'parseRegExp', 'describe_vector', 'tm_to_datetime', 'datetime_to_tm', ]
@@ -1585,6 +1584,85 @@ class transmission_network:
         if not singletons:
             clusters.pop(None, None)
         return clusters
+
+    def sort_clusters (self, singletons=True, filter = None, start_id = 1):
+        '''
+         Assuming that clusters have been built, sort them using the following rules
+
+         1. Cluster X < Cluster Y if X has MORE members than Y (lower cluster ID for larger clusters)
+         2. For clusters of the same size, use the following ordering rules
+            (a) If the dates are available, pick the cluster with older sequences to have
+                a lower cluster ID
+            (b) If the dates are not available or are all the same, pick the cluster with
+                alphanumerically lower patient IDs to have lower cluster ID
+
+         The result will be a dict with renamed cluster IDs, and node objects will also
+         receive updated node.cluster_id values
+
+        '''
+
+        def cmp_clusters (cluster1, cluster2):
+            if len (cluster1) == len (cluster2):
+                try:
+                    sorted_dates1 = sorted (cluster1, key = lambda x: x.get_baseline_date (True))
+                    sorted_dates2 = sorted (cluster2, key = lambda x: x.get_baseline_date (True))
+                    for i in range (len (cluster1)):
+                        if sorted_dates1[i] is not None and sorted_dates2[i] is not None:
+                            if sorted_dates1[i] < sorted_dates2[i]:
+                                return -1
+                            elif sorted_dates2[i] < sorted_dates1[i]:
+                                return 1
+                        else:
+                            break
+                except TypeError as e: # None types, i.e. missing dates
+                    pass
+
+                if min (cluster1, key = lambda x: x.id) < min (cluster2, key = lambda x: x.id):
+                    return -1
+                return 1
+
+
+            return len (cluster2) - len (cluster1)
+
+        clusters = self.retrieve_clusters (singletons = singletons)
+
+        if singletons and None in clusters:
+            stash_singletons = clusters.pop(None, None)
+        else:
+            stash_singletons = None
+
+        if filter is not None:
+            stashed_unfiltered = {}
+            stashed_filtered   = []
+            for cid, cdata in clusters.items():
+                if filter (cid, cdata):
+                    stashed_filtered.append (cdata)
+                else:
+                    stashed_unfiltered [cid] = cdata
+                    
+
+            clusters = sorted (stashed_filtered, key = cmp_to_key (cmp_clusters))
+        else:
+            clusters = sorted (clusters.values(), key = cmp_to_key (cmp_clusters))
+
+        new_clusters = {}
+        for c_id, c_nodes in enumerate (clusters):
+            #print (c_id, len (c_nodes))
+            new_clusters [c_id + start_id] = c_nodes
+            for node in c_nodes:
+                #print (node.id, node.cluster_id, c_id + start_id)
+                node.cluster_id = c_id + start_id
+
+        if stash_singletons is not None:
+            new_clusters[None] = stash_singletons
+        if filter:
+            for cid, cdata in stashed_unfiltered.items():
+                #print (cid)
+                new_clusters[cid] = cdata
+
+        return new_clusters
+
+
 
     def clear_filters(self):
         for edge in self.edge_iterator():
