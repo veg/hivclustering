@@ -38,7 +38,12 @@ def make_hiv_network():
         if settings().prior is not None:
             try:
                 existing_nodes      = {} # // node ID -> cluster ID
-                prior_network_nodes = json.load (settings().prior)["Nodes"]
+                prior_network = json.load (settings().prior)
+
+                if "trace_results" in prior_network.keys():
+                    prior_network_nodes = prior_network["trace_results"]["Nodes"]
+                else:
+                    prior_network_nodes = prior_network["Nodes"]
 
                 max_id = 0
                 cluster_sizes = {}
