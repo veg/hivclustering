@@ -167,7 +167,6 @@ def make_hiv_network():
                 edges.append({'source': src, 'target': rcp, 'directed': directed, 'length': network.distances[
                              e], 'support': e.edge_reject_p, 'removed': not e.has_support(), 'sequences': e.sequences, 'attributes': list(e.attribute)})
 
-
         network_info['Nodes'] = nodes 
         # do NOT sort the nodes, otherwise referencing them by index from edges will be broken.
         network_info['Edges'] = sorted(edges, key=lambda edge: ''.join([sequence for sequence in edge['sequences']])) 

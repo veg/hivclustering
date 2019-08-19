@@ -344,8 +344,6 @@ def build_a_network(extra_arguments = None):
     arguments.add_argument('-O', '--output',help='Write the output file to', default = sys.stdout, type = argparse.FileType('w'))
     arguments.add_argument('-P', '--prior',help='When running in JSON output mode, provide a JSON file storing a previous (subset) version of the network for consistent cluster naming', required=False, type=argparse.FileType('r'))
 
-
-
     if extra_arguments:
         for a in extra_arguments:
             arguments.add_argument (*a["arg"], **a["kwarg"])
