@@ -15,8 +15,8 @@ import hppy as hy
 import os
 import csv
 import multiprocessing
-import collections
 from functools import partial, lru_cache, cmp_to_key
+import collections
 
 __all__ = ['edge', 'patient', 'transmission_network', 'parseAEH', 'parseLANL',
            'parsePlain', 'parseRegExp', 'describe_vector', 'tm_to_datetime', 'datetime_to_tm', ]
