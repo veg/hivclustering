@@ -12,6 +12,9 @@ def make_hiv_network():
 
     network = build_a_network()
 
+    if settings().auto_prof:
+        return network
+
     if settings().json:
 
 

@@ -11,11 +11,13 @@ import os.path
 import json
 import hppy as hy
 import re
-from math import log10, floor
+from math import log10, floor, sqrt, exp, log
 from hivclustering import *
 from functools import partial
 import multiprocessing
 import hppy as hy
+from operator import itemgetter
+
 
 
 run_settings = None
@@ -27,6 +29,29 @@ def settings():
 
 def uds_attributes():
     return uds_settings
+
+# Print iterations progress
+def printProgressBar (iteration, total, prefix = '', suffix = '', decimals = 1, length = 100, fill = '█'):
+    """
+    Call in a loop to create terminal progress bar
+    @params:
+        iteration   - Required  : current iteration (Int)
+        total       - Required  : total iterations (Int)
+        prefix      - Optional  : prefix string (Str)
+        suffix      - Optional  : suffix string (Str)
+        decimals    - Optional  : positive number of decimals in percent complete (Int)
+        length      - Optional  : character length of bar (Int)
+        fill        - Optional  : bar fill character (Str)
+        
+    https://stackoverflow.com/questions/3173320/text-progress-bar-in-the-console
+    """
+    percent = ("{0:." + str(decimals) + "f}").format(100 * (iteration / float(total)))
+    filledLength = int(length * iteration // total)
+    bar = fill * filledLength + '-' * (length - filledLength)
+    print('\r%s |%s| %s%% %s' % (prefix, bar, percent, suffix), end = '\r', file = sys.stderr)
+    # Print New Line on Complete
+    if iteration == total: 
+        print(file = sys.stderr)
 
 #-------------------------------------------------------------------------------
 
@@ -104,8 +129,8 @@ def describe_network(network, json_output=False, keep_singletons=False):
         return_json['Cluster sizes'] = [len(clusters[c]) for c in clusters if c is not None]
     else:
         print("Found %d clusters" % len(clusters), file=sys.stderr)
-        print("Maximum cluster size = %d nodes" % max([len(clusters[c])
-                                                       for c in clusters if c is not None]), file=sys.stderr)
+        cluster_sizes = sorted ([len(clusters[c]) for c in clusters if c is not None])
+        print("Maximum cluster size = %d (second largest = %d) nodes" % (cluster_sizes[len(cluster_sizes)-1],cluster_sizes[len(cluster_sizes)-2]), file=sys.stderr)
 
     if json_output:
         return_json['HIV Stages'] = {}
@@ -306,6 +331,47 @@ def get_fasta_ids(fn):
             if line[0] == '>':
                 yield line[1:].strip()
 
+#-------------------------------------------------------------------------------
+
+def compute_threshold_scores (full_records):
+
+    def cluster_scaler (c):
+        x = (cluster_max-c) / (cluster_max - cluster_min)
+        return 1 - exp (- exp (-25*x + 3))
+
+    def zscores (vector):
+        mean = sum (vector) / len (vector)
+        sigma = sqrt (sum ([(v-mean)**2 for v in vector]) / (len (vector)-1))
+        zs = [(v-mean)/sigma for v in vector]
+        zm = max (zs)
+        return [z/zm for z in zs]
+
+    records = []
+
+    for line in full_records:
+        records.append ([len (records), line[0], line[3], line[4] / max (1, line[5])])
+
+    diffs  = []
+    length = min (min (max (3, len(records)//100), 30), len (records) // 20)
+    if length < 3:
+        raise Exception ("Too few distance threshold datapoints to perform automatic threshold tuning")
+    
+    cluster_min = min (records, key = lambda x: x[2])[2]
+    cluster_max = max (records, key = lambda x: x[2])[2]
+    
+    for i, v in enumerate (records):
+        if i >= length and i < len (records) - 1:
+            trailing = sum ([k[3] for k in records [i - length : i + 1]])
+            leading  = sum ([k[3] for k in records [i + 1: i + length + 1]])
+            diffs.append ([i, trailing, leading, leading / trailing])
+
+    diffs.sort (key = lambda r : r[3])
+    zs = zscores ([d[3] for d in diffs])
+
+    for i,d in enumerate(diffs):
+        cs = cluster_scaler (records[d[0]][2])
+        full_records[d[0]][6] = zs[i] + cs
+       
 
 
 #-------------------------------------------------------------------------------
@@ -343,6 +409,9 @@ def build_a_network(extra_arguments = None):
     arguments.add_argument('-X', '--extract',help='If provided, extract all the sequences ', type = int)
     arguments.add_argument('-O', '--output',help='Write the output file to', default = sys.stdout, type = argparse.FileType('w'))
     arguments.add_argument('-P', '--prior',help='When running in JSON output mode, provide a JSON file storing a previous (subset) version of the network for consistent cluster naming', required=False, type=argparse.FileType('r'))
+    arguments.add_argument('-A', '--auto-profile', dest = 'auto_prof', help='If provided supercedes most other output and inference settings; will add edges from shortest to longest and report network statistics as a function of distance cutoff ', type = float)
+
+
 
     if extra_arguments:
         for a in extra_arguments:
@@ -351,6 +420,7 @@ def build_a_network(extra_arguments = None):
     global run_settings
 
     run_settings = arguments.parse_args()
+
 
     if run_settings.input == None:
         run_settings.input = [sys.stdin]
@@ -416,7 +486,6 @@ def build_a_network(extra_arguments = None):
                     regExpByIndex[idx] = []
                 regExpByIndex[idx].append (patterns[1])
                 
-    
         for index, format_k in enumerate (run_settings.format):
             formats = {"AEH": parseAEH, "LANL": parseLANL, "plain": parsePlain, "regexp": parseRegExp(
                 None if run_settings.parser is None  or index not in regExpByIndex else [re.compile (r) for r in regExpByIndex[index]])}
@@ -439,8 +508,13 @@ def build_a_network(extra_arguments = None):
             print("Invalid contaminant threshold year '%s'" % (run_settings.exclude), file=sys.stderr)
             raise
 
+    run_settings.auto_threshold = False
     if run_settings.threshold is not None:
-        run_settings.threshold = float(run_settings.threshold)
+        if str (run_settings.threshold) == 'auto':
+            run_settings.auto_threshold = True
+            run_settings.threshold = None
+        else:
+            run_settings.threshold = float(run_settings.threshold)
 
     if run_settings.uds is not None:
         try:
@@ -459,7 +533,64 @@ def build_a_network(extra_arguments = None):
         raise ValueError('-l option is necessary to report cycles')
 
     network = transmission_network(multiple_edges=run_settings.multiple_edges)
-    network.read_from_csv_file(run_settings.input, formatter, run_settings.threshold, 'BULK')
+    
+    if run_settings.auto_prof is not None or run_settings.auto_threshold: 
+                            
+        profile = []
+        
+        
+        
+        def network_report (threshold, network, max_clusters = [0]):
+            clusters = network.retrieve_clusters(singletons=False)
+            edges = len (network.edges)
+            cl = sorted ([len (c) for c in clusters.values()], reverse = True)
+            nnodes = sum (cl)
+            profile.append ([threshold, sum (cl), edges, len (cl), cl[0], cl[1] if len (cl) > 1 else 0,0.])
+            max_clusters[0] = max (max_clusters[0], len (cl))
+            print('\rEvaluating distance threshold %8.5f %d %d' % (threshold, max_clusters[0], len (cl)), end = '\r', file = sys.stderr)
+
+            #print ("%g\t%d\t%d\t%d\t%d\t%d\t%g" % (profile))
+            sys.setrecursionlimit(max(sys.getrecursionlimit(), nnodes))
+            return run_settings.auto_prof is not None or len (cl) > max_clusters[0] // 4
+            
+        network.read_from_csv_file_ordered(run_settings.input, network_report, formatter, run_settings.threshold if run_settings.threshold is not None else 1., 'BULK', run_settings.auto_prof if run_settings.auto_prof else 1e-5)
+        print (file = sys.stderr)
+        compute_threshold_scores(profile)
+        
+        
+        if run_settings.auto_prof is not None:
+            print ("\t".join (["Threshold","Nodes","Edges","Clusters","LargestCluster","SecondLargestCluster","Score"]))
+            for r in profile:
+                print ("%g\t%d\t%d\t%d\t%d\t%d\t%g" % tuple(r))
+            return network
+        else:
+            rec = [[k[0],k[-1]] for k in sorted (profile, key = lambda r : r[-1], reverse = True) if k [-1] >= 1.9]
+
+            run_settings.threshold = None
+
+            if len (rec) == 1:
+                run_settings.threshold = rec[0][0]
+            else:
+                if len (rec) > 1:
+                    suggested_span = max (rec, key = lambda x: x[0])[0] - min (rec, key = lambda x: x[0])[0]
+                    mean_diff = sum ([k[1] - profile[i-1][1] for i,k in enumerate(profile[1:])]) / (len (profile)-1)
+                    if (suggested_span / mean_diff * log (len (profile))):
+                        run_settings.threshold = rec[0][0]
+        
+            if run_settings.threshold is None:
+                raise Exception('Could not automatically determine a distance threshold')
+            else:
+                print ("Selected distance threshold of % g" % run_settings.threshold, file = sys.stderr)
+                to_delete = set ()
+                for edge, v in network.edges.items():
+                    if network.distances[edge] > run_settings.threshold:
+                        to_delete.add (edge)
+                for edge in to_delete:
+                    del network.edges[edge]
+                    del network.distances[edge]
+                
+    else:                   
+        network.read_from_csv_file(run_settings.input, formatter, run_settings.threshold, 'BULK')
 
     uds_settings = None
 

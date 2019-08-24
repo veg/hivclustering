@@ -43,7 +43,7 @@ def parseAEH(str, position = None):
 def parseRegExp(regexp):
     def parseHeader(str, position = None):
         patient_description = {}
- 
+        
         for r in [regexp[position]] if position is not None else regexp:        
             try:
                 patient_description['date'] = None
@@ -647,6 +647,78 @@ class transmission_network:
                 edge = self.add_an_edge(line[0], line[1], distance, formatter[index], default_attribute, bootstrap_mode)
                 if edge is not None and len(line) > 3:
                     edgeAnnotations[edge] = line[2:]
+
+        return edgeAnnotations
+
+    def read_from_csv_file_ordered (self, file_name, callback, formatter=None, distance_cut=None, default_attribute=None, default_delta = 0.):
+        '''
+        Build the network up by adding edges in sorted order and report key network properties as a function of the distance threshold
+        '''
+        file_names = _ensure_list(file_name)
+
+        if formatter is None:
+            formatter = [parseAEH for f in file_names]
+
+        edgeAnnotations = {}
+        handled_ids     = set()
+        
+        edge_list       = []
+
+        for index, file_object in enumerate (file_names):
+            edgeReader = csv.reader(file_object)
+            header = next(edgeReader)
+            if len(header) < 3:
+                raise IOError('transmission_network.read_from_csv_file() : Expected a .csv file with at least 3 columns as input (file %s)' % file_object.name)
+            for line in edgeReader:
+                edge_list.append ([line[0], line[1], float (line[2])])
+
+        edge_list.sort (key = itemgetter (2))
+        
+        last_distance = 0.
+        node_count    = 0
+        edge_count    = 0
+        cluster_count = 0
+        cluster_sizes = {}
+        incremental_adjacency_matrix = {}
+        new_edge_set = set ()
+        
+        def handle_update (threshold):
+            self.compute_adjacency (False, new_edge_set, False, incremental_adjacency_matrix)
+            self.compute_clusters  (adjacency_matrix = incremental_adjacency_matrix)                
+            res = callback (threshold, self)
+            new_edge_set.clear()
+            return res
+        
+        for line in edge_list:
+            distance = line[2]
+            if distance_cut is not None and distance > distance_cut:
+                self.ensure_node_is_added(line[0], formatter[index], default_attribute, False, handled_ids, 0)
+                self.ensure_node_is_added(line[1], formatter[index], default_attribute, False, handled_ids, 1)
+                continue
+                
+            edge = self.add_an_edge(line[0], line[1], distance, formatter[index], default_attribute, False)
+            
+            if edge is not None:
+                if len(line) > 3:
+                    edgeAnnotations[edge] = line[2:]
+                edge_count += 1     
+                          
+                if default_delta > 0.:
+                    if distance > last_distance + default_delta:
+                        if not handle_update(last_distance + default_delta):
+                            return edgeAnnotations
+                        last_distance += default_delta
+                        while distance > last_distance:
+                            last_distance += default_delta
+                        #print ("Added an edge (%d, %g)" % (edge_count, distance), file = sys.stderr)      
+                else: 
+                    if distance > last_distance:
+                        if not handle_update(last_distance):
+                            return edgeAnnotations                              
+                        last_distance = distance
+                        #print ("Added an edge (%d, %g)" % (edge_count, distance), file = sys.stderr)
+                        
+                new_edge_set.add (edge)
 
         return edgeAnnotations
 
