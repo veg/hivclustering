@@ -41,16 +41,18 @@ def parseAEH(str, position = None):
 
 
 def parseRegExp(regexp):
-    def parseHeader(str, position = None):
+    def parseHeader(string, position = None):
         patient_description = {}
         
-        for r in [regexp[position]] if position is not None else regexp:        
+        candidates = [regexp[position]] if position is not None else regexp
+        
+        for r in candidates:        
             try:
                 patient_description['date'] = None
-                patient_description['rawid'] = str
+                patient_description['rawid'] = string
                 parseSuccess = False
 
-                bits = r.search(str.rstrip())
+                bits = r.search(string.rstrip())
                 groups = bits.groups ()
                 patient_description['id'] = groups[0]
                 if len (groups) > 1 and groups[1]: # try matching a date
@@ -66,8 +68,8 @@ def parseRegExp(regexp):
                 pass
         
         if not parseSuccess:
-            print("Warning: could not parse the following ID as the reg.exp. header: %s" % str, file = sys.stderr)
-            patient_description['id'] = str
+            print("Warning: could not parse the following ID as the reg.exp. header (position %s, patterns %s): %s" % ('None' if position is None else str(position), '; '.join ([r.pattern for r in candidates]), string), file = sys.stderr)
+            patient_description['id'] = string
 
         return patient_description, ('|'.join(bits[2:]) if bits is not None and len(bits.groups()) > 2 else None)
     return parseHeader
@@ -670,7 +672,7 @@ class transmission_network:
             if len(header) < 3:
                 raise IOError('transmission_network.read_from_csv_file() : Expected a .csv file with at least 3 columns as input (file %s)' % file_object.name)
             for line in edgeReader:
-                edge_list.append ([line[0], line[1], float (line[2])])
+                edge_list.append ([line[0], line[1], float (line[2]), index])
 
         edge_list.sort (key = itemgetter (2))
         
@@ -692,11 +694,11 @@ class transmission_network:
         for line in edge_list:
             distance = line[2]
             if distance_cut is not None and distance > distance_cut:
-                self.ensure_node_is_added(line[0], formatter[index], default_attribute, False, handled_ids, 0)
-                self.ensure_node_is_added(line[1], formatter[index], default_attribute, False, handled_ids, 1)
+                self.ensure_node_is_added(line[0], formatter[line[3]], default_attribute, False, handled_ids, 0)
+                self.ensure_node_is_added(line[1], formatter[line[3]], default_attribute, False, handled_ids, 1)
                 continue
                 
-            edge = self.add_an_edge(line[0], line[1], distance, formatter[index], default_attribute, False)
+            edge = self.add_an_edge(line[0], line[1], distance, formatter[line[3]], default_attribute, False)
             
             if edge is not None:
                 if len(line) > 3:

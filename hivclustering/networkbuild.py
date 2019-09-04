@@ -495,12 +495,12 @@ def build_a_network(extra_arguments = None):
                 print("%s is not a valid setting for 'format' (must be in %s)" %
                       (run_settings.format, str(list(formats.keys()))), file=sys.stderr)
                 raise
-
+                
         if len (run_settings.format) != len (run_settings.input):
             raise Exception ("Must specify as many formatters as there are input files when at least one formatter is specified explicitly")
     else:
         formatter = [parseAEH for k in run_settings.input]
-
+        
     if run_settings.exclude is not None:
         try:
             run_settings.exclude = datetime.datetime(int(run_settings.exclude), 12, 31)
@@ -562,7 +562,7 @@ def build_a_network(extra_arguments = None):
             print ("\t".join (["Threshold","Nodes","Edges","Clusters","LargestCluster","SecondLargestCluster","Score"]))
             for r in profile:
                 print ("%g\t%d\t%d\t%d\t%d\t%d\t%g" % tuple(r))
-            return network
+            sys.exit (0)
         else:
             rec = [[k[0],k[-1]] for k in sorted (profile, key = lambda r : r[-1], reverse = True) if k [-1] >= 1.9]
 
@@ -578,7 +578,11 @@ def build_a_network(extra_arguments = None):
                         run_settings.threshold = rec[0][0]
         
             if run_settings.threshold is None:
-                raise Exception('Could not automatically determine a distance threshold')
+                if len (rec) == 0:
+                    print ('ERROR : Could not automatically determine a distance threshold; no sufficiently strong outlier, best guess %g' % sorted (profile, key = lambda r : r[-1], reverse = True)[0][0], file = sys.stderr)
+                else:
+                    print ('ERROR : Multiple candidate thresholds: %s', ', '.join ([str (r[0]) for r in rec]), file = sys.stderr)
+                sys.exit (1)
             else:
                 print ("Selected distance threshold of % g" % run_settings.threshold, file = sys.stderr)
                 to_delete = set ()
