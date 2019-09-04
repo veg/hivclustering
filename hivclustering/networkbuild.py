@@ -42,7 +42,7 @@ def printProgressBar (iteration, total, prefix = '', suffix = '', decimals = 1, 
         decimals    - Optional  : positive number of decimals in percent complete (Int)
         length      - Optional  : character length of bar (Int)
         fill        - Optional  : bar fill character (Str)
-        
+
     https://stackoverflow.com/questions/3173320/text-progress-bar-in-the-console
     """
     percent = ("{0:." + str(decimals) + "f}").format(100 * (iteration / float(total)))
@@ -50,7 +50,7 @@ def printProgressBar (iteration, total, prefix = '', suffix = '', decimals = 1, 
     bar = fill * filledLength + '-' * (length - filledLength)
     print('\r%s |%s| %s%% %s' % (prefix, bar, percent, suffix), end = '\r', file = sys.stderr)
     # Print New Line on Complete
-    if iteration == total: 
+    if iteration == total:
         print(file = sys.stderr)
 
 #-------------------------------------------------------------------------------
@@ -355,10 +355,10 @@ def compute_threshold_scores (full_records):
     length = min (min (max (3, len(records)//100), 30), len (records) // 20)
     if length < 3:
         raise Exception ("Too few distance threshold datapoints to perform automatic threshold tuning")
-    
+
     cluster_min = min (records, key = lambda x: x[2])[2]
     cluster_max = max (records, key = lambda x: x[2])[2]
-    
+
     for i, v in enumerate (records):
         if i >= length and i < len (records) - 1:
             trailing = sum ([k[3] for k in records [i - length : i + 1]])
@@ -371,7 +371,7 @@ def compute_threshold_scores (full_records):
     for i,d in enumerate(diffs):
         cs = cluster_scaler (records[d[0]][2])
         full_records[d[0]][6] = zs[i] + cs
-       
+
 
 
 #-------------------------------------------------------------------------------
@@ -473,19 +473,19 @@ def build_a_network(extra_arguments = None):
             raise
 
     formatter = []
-    
+
 
 
     if run_settings.format is not None:
         regExpByIndex = {}
-        
+
         if run_settings.parser is not None:
             for patterns in run_settings.parser :
                 idx = int (patterns[0])
                 if not idx in regExpByIndex:
                     regExpByIndex[idx] = []
                 regExpByIndex[idx].append (patterns[1])
-                
+
         for index, format_k in enumerate (run_settings.format):
             formats = {"AEH": parseAEH, "LANL": parseLANL, "plain": parsePlain, "regexp": parseRegExp(
                 None if run_settings.parser is None  or index not in regExpByIndex else [re.compile (r) for r in regExpByIndex[index]])}
@@ -495,12 +495,12 @@ def build_a_network(extra_arguments = None):
                 print("%s is not a valid setting for 'format' (must be in %s)" %
                       (run_settings.format, str(list(formats.keys()))), file=sys.stderr)
                 raise
-                
+
         if len (run_settings.format) != len (run_settings.input):
             raise Exception ("Must specify as many formatters as there are input files when at least one formatter is specified explicitly")
     else:
         formatter = [parseAEH for k in run_settings.input]
-        
+
     if run_settings.exclude is not None:
         try:
             run_settings.exclude = datetime.datetime(int(run_settings.exclude), 12, 31)
@@ -533,13 +533,13 @@ def build_a_network(extra_arguments = None):
         raise ValueError('-l option is necessary to report cycles')
 
     network = transmission_network(multiple_edges=run_settings.multiple_edges)
-    
-    if run_settings.auto_prof is not None or run_settings.auto_threshold: 
-                            
+
+    if run_settings.auto_prof is not None or run_settings.auto_threshold:
+
         profile = []
-        
-        
-        
+
+
+
         def network_report (threshold, network, max_clusters = [0]):
             clusters = network.retrieve_clusters(singletons=False)
             edges = len (network.edges)
@@ -552,12 +552,12 @@ def build_a_network(extra_arguments = None):
             #print ("%g\t%d\t%d\t%d\t%d\t%d\t%g" % (profile))
             sys.setrecursionlimit(max(sys.getrecursionlimit(), nnodes))
             return run_settings.auto_prof is not None or len (cl) > max_clusters[0] // 4
-            
+
         network.read_from_csv_file_ordered(run_settings.input, network_report, formatter, run_settings.threshold if run_settings.threshold is not None else 1., 'BULK', run_settings.auto_prof if run_settings.auto_prof else 1e-5)
         print (file = sys.stderr)
         compute_threshold_scores(profile)
-        
-        
+
+
         if run_settings.auto_prof is not None:
             print ("\t".join (["Threshold","Nodes","Edges","Clusters","LargestCluster","SecondLargestCluster","Score"]))
             for r in profile:
@@ -576,10 +576,11 @@ def build_a_network(extra_arguments = None):
                     mean_diff = sum ([k[1] - profile[i-1][1] for i,k in enumerate(profile[1:])]) / (len (profile)-1)
                     if (suggested_span / mean_diff * log (len (profile))):
                         run_settings.threshold = rec[0][0]
-        
+
             if run_settings.threshold is None:
                 if len (rec) == 0:
-                    print ('ERROR : Could not automatically determine a distance threshold; no sufficiently strong outlier, best guess %g' % sorted (profile, key = lambda r : r[-1], reverse = True)[0][0], file = sys.stderr)
+                    best_guess = sorted (profile, key = lambda r : r[-1], reverse = True)
+                    print ('ERROR : Could not automatically determine a distance threshold; no sufficiently strong outlier, best guess %g (score %g)' % (best_guess[0][0], best_guess[0][-1]) , file = sys.stderr)
                 else:
                     print ('ERROR : Multiple candidate thresholds: %s', ', '.join ([str (r[0]) for r in rec]), file = sys.stderr)
                 sys.exit (1)
@@ -592,8 +593,8 @@ def build_a_network(extra_arguments = None):
                 for edge in to_delete:
                     del network.edges[edge]
                     del network.distances[edge]
-                
-    else:                   
+
+    else:
         network.read_from_csv_file(run_settings.input, formatter, run_settings.threshold, 'BULK')
 
     uds_settings = None

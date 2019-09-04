@@ -20,7 +20,8 @@ setup(name='hivclustering',
     ]},
     scripts=[
         'scripts/hivnetworkcsv',
-        'scripts/TNS'
+        'scripts/TNS',
+        'scripts/hivnetworkannotate'
     ],
     install_requires=[
         'bioext >= 0.19.0',

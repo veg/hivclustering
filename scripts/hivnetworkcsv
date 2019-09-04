@@ -38,6 +38,8 @@ def make_hiv_network():
 
         nodes = []
 
+        cluster_summary_info = None
+
         if settings().prior is not None:
             try:
                 existing_nodes      = {} # // node ID -> cluster ID
@@ -212,7 +214,7 @@ def make_hiv_network():
         if cluster_summary_info is not None:
             network_info['Cluster description'] = cluster_summary_info
 
-        print(json.dumps(network_info, indent=4, sort_keys=True))
+        print(json.dumps(network_info, indent=4, sort_keys=True), file = settings().output)
 
     else:
         describe_network(network)
