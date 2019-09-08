@@ -55,7 +55,7 @@ arguments.add_argument  ('-n', '--network',   help    = 'The input network file 
 arguments.add_argument  ('-x', '--missing', help  = 'If desired, provide a value to inject for nodes that do not have an attribute value specified', required = False, nargs = 2, action = 'append')
 arguments.add_argument  ('-X', '--clear', help = 'Flush existing attributes', required = False, action = 'store_true')
 arguments.add_argument  ('-i', '--index',   help    = 'The name of the column that indexes records (patient ID); default is to index on the first column', type = str)
-arguments.add_argument  ('-r', '--in-place', help = 'Write attributes to the input file (cannot be stdin)', required = False, action = 'store_true')
+arguments.add_argument  ('-r', '--inplace', help = 'Write attributes to the input file (cannot be stdin)', required = False, action = 'store_true')
 
 input_group = arguments.add_mutually_exclusive_group(required=True)
 input_group.add_argument  ('-a', '--attributes',   help    = 'The JSON file with node attributes', type = argparse.FileType('r'))
@@ -78,11 +78,15 @@ ensure_key (network_json, network_attribute_key)
 
 field_transformations = {}
 field_names = {}
-predefined_transforms = {'fulldate' : 's: datetime.datetime.strptime (s,"%Y-%m-%d").strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3]+"Z"'}
+predefined_transforms = {'YYYYMMDD' : 's: datetime.datetime.strptime (s,"%Y-%m-%d").strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3]+"Z"',
+                         'YYYY' : 's: datetime.datetime.strptime (s,"%Y").strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3]+"Z"'}
+
+uninjected_set      = {}
 
 for key_pair in import_settings.field:
     network_json [network_attribute_key][key_pair[0]] = {'name' : key_pair[1], 'type': key_pair[2], 'label' : key_pair[1]}
     field_names [key_pair[0]] = key_pair[0]
+    uninjected_set [key_pair[0]] = set ()
     if key_pair[2] == 'enum':
         mapping = eval (key_pair[3])
         network_json [network_attribute_key][key_pair[0]]['type'] = "String"
@@ -96,6 +100,8 @@ for key_pair in import_settings.field:
         else:
             field_transformations [key_pair[0]] = eval ("lambda " + key_pair[3])
 
+
+total_records = 0
 
 if import_settings.attributes: # JSON input
     to_import = json.load (import_settings.attributes)
@@ -117,6 +123,7 @@ else: # TSV import
     try:
         for line in csv_reader:
             to_import [line[index_on]] = {}
+            total_records += 1
             for i, k in enumerate (line):
                 if i != index_on:
                      to_import [line[index_on]][fields[i]] = k
@@ -127,13 +134,14 @@ else: # TSV import
 id_mapper = lambda x: x
 
 nodes_indexed_by_id = {}
-uninjected_set = set ()
 for n in network_json ["Nodes"]:
     nodes_indexed_by_id [n['id']] = n
-    uninjected_set.add (n['id'])
+    for f, s in uninjected_set.items():
+        s.add (n['id'])
     if import_settings.clear:
         if node_attribute_key in n:
             del n[node_attribute_key]
+            
 
 
 for n, values in to_import.items():
@@ -145,14 +153,30 @@ for n, values in to_import.items():
                 store_this = field_transformations[k] (val)
                 if store_this is not None:
                     node_dict[field_names[k]] = store_this
-                    if node_id in uninjected_set:
-                        uninjected_set.remove (node_id)
+                    if node_id in uninjected_set[field_names[k]]:
+                        uninjected_set[field_names[k]].remove (node_id)
+
+print ("\nImport summary", file = sys.stderr)
+print ("\t Records in file  : %d" % total_records, file = sys.stderr)
+print ("\t Nodes in network : %d" % len(network_json ["Nodes"]), file = sys.stderr)
+
+for k, v in uninjected_set.items():
+    print ("\t Field '%s'  : %d records imported" % (k, len(network_json ["Nodes"])-len (v)), file = sys.stderr)
+    
+
+print ("\n", file = sys.stderr)
+    
+    
+
 
 if inject_missing_value:
-    for node_id in  uninjected_set:
-        node_dict = ensure_key (nodes_indexed_by_id[node_id], node_attribute_key)
-        for values in inject_missing_value:
+    for values in inject_missing_value:        
+        for node_id in uninjected_set[values[0]]:
+            node_dict = ensure_key (nodes_indexed_by_id[node_id], node_attribute_key)
             node_dict[values[0]] = values[1]
 
+
+if import_settings.inplace and import_settings.network is not sys.stdin:
+    import_settings.output = open (import_settings.network.name, "w")
 
 json.dump (network_json, import_settings.output, indent = 1)
