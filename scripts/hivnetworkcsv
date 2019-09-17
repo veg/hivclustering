@@ -42,8 +42,11 @@ def make_hiv_network():
 
         if settings().prior is not None:
             try:
-                existing_nodes      = {} # // node ID -> cluster ID
-                prior_network_nodes = json.load (settings().prior)["Nodes"]
+                existing_nodes      = {} # node ID -> cluster ID
+                prior_network       = json.load (settings().prior)
+                prior_network_nodes = prior_network["Nodes"]
+                existing_edges      = {} # node ID -> set of other node IDs
+                prior_network_edges = prior_network["Edges"]
 
                 max_id = 0
                 cluster_sizes = {}
@@ -67,6 +70,13 @@ def make_hiv_network():
                             cluster_sizes[numeric_id] += 1
                         else:
                             cluster_sizes[numeric_id] = 1
+                            
+                for e in prior_network_edges:
+                    node_pair = [prior_network_nodes[e['source']]["id"],prior_network_nodes[e['target']]["id"]]
+                    for i, n in enumerate (node_pair):
+                        if n not in existing_edges:
+                            existing_edges[n] = set ()
+                        existing_edges[n].add (node_pair [1-i])
 
                 cluster_map = {} # // current cluster ID -> set of previous cluster ID
 
@@ -107,7 +117,7 @@ def make_hiv_network():
                                 print ("Cluster %d matches a previous cluster %d" % (c_id, cluster_remap[c_id]),  file = sys.stderr)
                                 cluster_summary_info [list(mapped_id)[0]] = {'type' : 'existing'}
                                 if cluster_remap[c_id] in used_existing_clusters:
-                                    raise Exception("Cluster %d from the existing network is mapped to multiple new clusters" % c_id)
+                                    raise Exception("Cluster %d from the existing network is mapped to multiple new clusters" % cluster_remap[c_id])
                                 else:
                                     used_existing_clusters.add (cluster_remap[c_id])
 
@@ -122,7 +132,7 @@ def make_hiv_network():
                                 mapped_to_existing_clusters.add (c_id)
                                 cluster_summary_info [update_id] = {'type' : 'extended', 'size' : new_cluster_sizes [c_id], 'old_size' : old_cluster_sizes[update_id]}
                                 if cluster_remap[c_id] in used_existing_clusters:
-                                    raise Exception("Cluster %d from the existing network is mapped to multiple new clusters" % c_id)
+                                    raise Exception("Cluster %d from the existing network is mapped to multiple new clusters" % cluster_remap[c_id])
                                 else:
                                     used_existing_clusters.add (cluster_remap[c_id])
                             else:
@@ -168,6 +178,33 @@ def make_hiv_network():
                             #print (n.cluster_id, max_id, cluster_summary_info[n.cluster_id], file = sys.stderr)
                             cluster_summary_info[n.cluster_id]['size'] += 1
 
+                added_edges = 0
+    
+                for e in network.edges:
+                    p1p2 = False
+                    p2p1 = False
+                    if e.p1.id in existing_edges:
+                        if not e.p2.id in existing_edges[e.p1.id]:
+                            e.update_attributes ("added-to-prior")
+                        else:  
+                            p1p2 = True
+                    if e.p2.id in existing_edges:
+                        if not e.p1.id in existing_edges[e.p2.id]:
+                            e.update_attributes ("added-to-prior")
+                        else:  
+                            p2p1 = True
+                            
+                            
+                            
+                    if p1p2 != p2p1: 
+                        print ("Edge ", e, " is not consistent with prior network", file = sys.stderr)
+                    else:
+                        if not p1p2:
+                            added_edges += 1
+                            
+                print ("Added %d edges compared to the prior network" % added_edges, file = sys.stderr)
+                        
+                        
 
 
             except Exception as e:

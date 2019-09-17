@@ -393,7 +393,7 @@ def build_a_network(extra_arguments = None):
     arguments.add_argument('-p', '--parser', help='The reg.exp pattern to split up sequence ids; only used if format is regexp; format is INDEX EXPRESSION (consumes two arguments)', required=False, type=str, action = 'append', nargs = 2)
     arguments.add_argument('-a', '--attributes',help='Load a CSV file with optional node attributes', type=argparse.FileType('r'))
     arguments.add_argument('-j', '--json', help='Output the network report as a JSON object',required=False,  action='store_true', default=False)
-    arguments.add_argument('-o', '--singletons', help='Include singletons in JSON output',required=False,  action='store_true', default=False)
+    arguments.add_argument('-o', '--singletons', help='Include singletons in JSON output',  action='store_true', default=False)
     arguments.add_argument('-k', '--filter', help='Only return clusters with ids listed by a newline separated supplied file. ', required=False)
     arguments.add_argument('-s', '--sequences', help='Provide the MSA with sequences which were used to make the distance file. Can be specified multiple times to include mutliple MSA files', required=False, action = 'append')
     arguments.add_argument('-n', '--edge-filtering', dest='edge_filtering', choices=['remove', 'report'], help='Compute edge support and mark edges for removal using sequence-based triangle tests (requires the -s argument) and either only report them or remove the edges before doing other analyses ', required=False)
@@ -410,7 +410,8 @@ def build_a_network(extra_arguments = None):
     arguments.add_argument('-O', '--output',help='Write the output file to', default = sys.stdout, type = argparse.FileType('w'))
     arguments.add_argument('-P', '--prior',help='When running in JSON output mode, provide a JSON file storing a previous (subset) version of the network for consistent cluster naming', required=False, type=argparse.FileType('r'))
     arguments.add_argument('-A', '--auto-profile', dest = 'auto_prof', help='If provided supercedes most other output and inference settings; will add edges from shortest to longest and report network statistics as a function of distance cutoff ', type = float)
-
+    arguments.add_argument('--after', help='[assumes DATES are available] If provided (as YYYYMMDD) then only allow EDGES that connect nodes with dates at or AFTER this date', required=False, type = str)
+    arguments.add_argument('--before', help='[assumes DATES are available] If provided (as YYYYMMDD) then only allow EDGES that connect nodes with dates at or BEFORE this date', required=False, type = str)
 
 
     if extra_arguments:
@@ -534,10 +535,19 @@ def build_a_network(extra_arguments = None):
 
     network = transmission_network(multiple_edges=run_settings.multiple_edges)
 
+    edge_filter_function = lambda edge : True
+    
+    if run_settings.before:
+        run_settings.before = time.strptime(run_settings.before, '%Y%m%d')
+        edge_filter_function = lambda edge : edge.check_exact_date (run_settings.before )
+        
+    if run_settings.after:
+        run_settings.after = time.strptime(run_settings.after, '%Y%m%d')
+        edge_filter_function = lambda edge, ef = edge_filter_function: ef (edge) and  edge.check_exact_date (run_settings.after, newer = True)
+
     if run_settings.auto_prof is not None or run_settings.auto_threshold:
 
         profile = []
-
 
 
         def network_report (threshold, network, max_clusters = [0]):
@@ -553,7 +563,7 @@ def build_a_network(extra_arguments = None):
             sys.setrecursionlimit(max(sys.getrecursionlimit(), nnodes))
             return run_settings.auto_prof is not None or len (cl) > max_clusters[0] // 4
 
-        network.read_from_csv_file_ordered(run_settings.input, network_report, formatter, run_settings.threshold if run_settings.threshold is not None else 1., 'BULK', run_settings.auto_prof if run_settings.auto_prof else 1e-5)
+        network.read_from_csv_file_ordered(run_settings.input, network_report, formatter, run_settings.threshold if run_settings.threshold is not None else 1., 'BULK', run_settings.auto_prof if run_settings.auto_prof else 1e-5, filter = edge_filter_function)
         print (file = sys.stderr)
         compute_threshold_scores(profile)
 
@@ -595,12 +605,12 @@ def build_a_network(extra_arguments = None):
                     del network.distances[edge]
 
     else:
-        network.read_from_csv_file(run_settings.input, formatter, run_settings.threshold, 'BULK')
+        network.read_from_csv_file(run_settings.input, formatter, run_settings.threshold, 'BULK', filter = edge_filter_function)
 
     uds_settings = None
 
     if run_settings.uds:
-        uds_settings = network.read_from_csv_file(run_settings.uds, formatter, run_settings.threshold, 'UDS')
+        uds_settings = network.read_from_csv_file(run_settings.uds, formatter, run_settings.threshold, 'UDS', filter = edge_filter_function)
 
     sys.setrecursionlimit(max(sys.getrecursionlimit(), len (network.nodes)))
 

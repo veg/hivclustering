@@ -56,7 +56,7 @@ def parseRegExp(regexp):
                 groups = bits.groups ()
                 patient_description['id'] = groups[0]
                 if len (groups) > 1 and groups[1]: # try matching a date
-                    for pattern in ["%m%d%Y", "%m/%d/%y", "%Y%m%d", "%m_%d_%y", "%m-%d-%y"]:
+                    for pattern in ["%m%d%Y", "%m/%d/%y", "%Y%m%d", "%m_%d_%y", "%m-%d-%y", "%Y"]:
                         try:
                             patient_description['date'] = time.strptime(groups[1], pattern)
                         except ValueError:
@@ -623,7 +623,7 @@ class transmission_network:
         self.multiple_edges = multiple_edges
         self.sequence_ids = {}  # this will store unique sequence ids keyed by edge information (pid and date)
 
-    def read_from_csv_file(self, file_name, formatter=None, distance_cut=None, default_attribute=None, bootstrap_mode=False):
+    def read_from_csv_file(self, file_name, formatter=None, distance_cut=None, default_attribute=None, bootstrap_mode=False, filter = None):
 
         file_names = _ensure_list(file_name)
 
@@ -646,13 +646,13 @@ class transmission_network:
                     self.ensure_node_is_added(line[0], formatter[index], default_attribute, bootstrap_mode, handled_ids, 0)
                     self.ensure_node_is_added(line[1], formatter[index], default_attribute, bootstrap_mode, handled_ids, 1)
                     continue
-                edge = self.add_an_edge(line[0], line[1], distance, formatter[index], default_attribute, bootstrap_mode)
+                edge = self.add_an_edge(line[0], line[1], distance, formatter[index], default_attribute, bootstrap_mode, edge_date_filter = filter)
                 if edge is not None and len(line) > 3:
                     edgeAnnotations[edge] = line[2:]
 
         return edgeAnnotations
 
-    def read_from_csv_file_ordered (self, file_name, callback, formatter=None, distance_cut=None, default_attribute=None, default_delta = 0.):
+    def read_from_csv_file_ordered (self, file_name, callback, formatter=None, distance_cut=None, default_attribute=None, default_delta = 0., filter = None):
         '''
         Build the network up by adding edges in sorted order and report key network properties as a function of the distance threshold
         '''
@@ -698,7 +698,7 @@ class transmission_network:
                 self.ensure_node_is_added(line[1], formatter[line[3]], default_attribute, False, handled_ids, 1)
                 continue
                 
-            edge = self.add_an_edge(line[0], line[1], distance, formatter[line[3]], default_attribute, False)
+            edge = self.add_an_edge(line[0], line[1], distance, formatter[line[3]], default_attribute, False, edge_date_filter = filter)
             
             if edge is not None:
                 if len(line) > 3:
@@ -1151,7 +1151,7 @@ class transmission_network:
 
         return edge_support
 
-    def add_an_edge(self, id1, id2, distance, header_parser=None, edge_attribute=None, bootstrap_mode=False, node_only=False):
+    def add_an_edge(self, id1, id2, distance, header_parser=None, edge_attribute=None, bootstrap_mode=False, node_only=False, edge_date_filter = None):
         if header_parser == None:
             header_parser = parseAEH
 
@@ -1176,21 +1176,22 @@ class transmission_network:
 
                 new_edge = min(self.make_network_edge(p1, p2, patient1['date'], patient2['date'], True, edge_attribute, (patient1["rawid"], patient2["rawid"])),
                                self.make_network_edge(p2, p1, patient2['date'], patient1['date'], True, edge_attribute, (patient2["rawid"], patient1["rawid"])))
+                               
+                if not edge_date_filter or edge_date_filter(new_edge):
+                    #new_edge = self.make_network_edge (p1,p2,patient1['date'],patient2['date'],True, edge_attribute, (patient1["rawid"], patient2["rawid"]))
+                    if new_edge not in self.edges:
+                        if not bootstrap_mode or edge_attribute is None:
+                            self.edges[new_edge] = new_edge
+                            self.distances[new_edge] = distance
 
-                #new_edge = self.make_network_edge (p1,p2,patient1['date'],patient2['date'],True, edge_attribute, (patient1["rawid"], patient2["rawid"]))
-                if new_edge not in self.edges:
-                    if not bootstrap_mode or edge_attribute is None:
-                        self.edges[new_edge] = new_edge
-                        self.distances[new_edge] = distance
+                    else:
+                        #print (id1, id2)
+                        self.edges[new_edge].update_attributes(edge_attribute)
+                        if distance < self.distances[new_edge]:
+                            self.edges[new_edge].update_sequence_info(new_edge.sequences)
+                            self.distances[new_edge] = distance
 
-                else:
-                    #print (id1, id2)
-                    self.edges[new_edge].update_attributes(edge_attribute)
-                    if distance < self.distances[new_edge]:
-                        self.edges[new_edge].update_sequence_info(new_edge.sequences)
-                        self.distances[new_edge] = distance
-
-                return new_edge
+                    return new_edge
 
         return None
 
