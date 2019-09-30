@@ -352,9 +352,9 @@ def compute_threshold_scores (full_records):
         records.append ([len (records), line[0], line[3], line[4] / max (1, line[5])])
 
     diffs  = []
-    length = min (min (max (3, len(records)//100), 30), len (records) // 20)
+    length = min (max (3, len(records)//100), 30)
     if length < 3:
-        raise Exception ("Too few distance threshold datapoints to perform automatic threshold tuning")
+        raise Exception ("Too few distance threshold datapoints (%d) to perform automatic threshold tuning" % len (full_records))
 
     cluster_min = min (records, key = lambda x: x[2])[2]
     cluster_max = max (records, key = lambda x: x[2])[2]
@@ -555,16 +555,16 @@ def build_a_network(extra_arguments = None):
             edges = len (network.edges)
             cl = sorted ([len (c) for c in clusters.values()], reverse = True)
             nnodes = sum (cl)
-            profile.append ([threshold, sum (cl), edges, len (cl), cl[0], cl[1] if len (cl) > 1 else 0,0.])
+            profile.append ([threshold, sum (cl), edges, len (cl), cl[0] if len (cl) > 0 else 0, cl[1] if len (cl) > 1 else 0,0.])
             max_clusters[0] = max (max_clusters[0], len (cl))
             print('\rEvaluating distance threshold %8.5f %d %d' % (threshold, max_clusters[0], len (cl)), end = '\r', file = sys.stderr)
 
             #print ("%g\t%d\t%d\t%d\t%d\t%d\t%g" % (profile))
             sys.setrecursionlimit(max(sys.getrecursionlimit(), nnodes))
-            return run_settings.auto_prof is not None or len (cl) > max_clusters[0] // 4
+            return run_settings.auto_prof is not None or len (cl) == 0 or len (cl) > max_clusters[0] // 4
 
         network.read_from_csv_file_ordered(run_settings.input, network_report, formatter, run_settings.threshold if run_settings.threshold is not None else 1., 'BULK', run_settings.auto_prof if run_settings.auto_prof else 1e-5, filter = edge_filter_function)
-        print (file = sys.stderr)
+        #print (profile, file = sys.stderr)
         compute_threshold_scores(profile)
 
 
@@ -584,7 +584,7 @@ def build_a_network(extra_arguments = None):
                 if len (rec) > 1:
                     suggested_span = max (rec, key = lambda x: x[0])[0] - min (rec, key = lambda x: x[0])[0]
                     mean_diff = sum ([k[1] - profile[i-1][1] for i,k in enumerate(profile[1:])]) / (len (profile)-1)
-                    if (suggested_span / mean_diff * log (len (profile))):
+                    if (suggested_span / mean_diff < log (len (profile))):
                         run_settings.threshold = rec[0][0]
 
             if run_settings.threshold is None:

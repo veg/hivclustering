@@ -14,9 +14,36 @@ def make_hiv_network():
 
     if settings().auto_prof:
         return network
+        
+        
+    if settings().bridges:
+        print ("Finding all non-trivial (not ending in a terminal node) bridges in the network", file = sys.stderr)
+        network.find_all_bridges (attr = "bridge") ## this will labels the EDGES with "bridge" attribute
+
+        bin_by_node = {}
+
+        for e in network.reduce_edge_set():
+            if e.has_attribute ("bridge") and e.p1.degree > 1 and e.p2.degree > 1 :
+                if not settings().json:
+                    print ("%s [degree %d] -- %s [degree %d]" % (e.p1.id, e.p1.degree, e.p2.id, e.p2.degree), file = settings().output)
+                for n in [e.p1, e.p2]:
+                    n.add_attribute ("bridge")
+                    if n not in bin_by_node:
+                        bin_by_node[n] = 1
+                    else:
+                        bin_by_node[n] += 1
+            else:
+                e.remove_attribute ("bridge")
+
+        if not settings().json:
+            if len (bin_by_node):
+                for n, d in bin_by_node.items():
+                    print ("Node %s (degree %d) is involved in %d bridges" % (n.id, n.degree, d), file = settings().output)
+            else:
+                print ("No non-trivial bridges found", file = sys.stderr)
+
 
     if settings().json:
-
 
         network_info = describe_network(network, True, settings().singletons)
 
@@ -53,11 +80,15 @@ def make_hiv_network():
 
                 old_cluster_sizes = {}
                 new_cluster_sizes = {}
+                node_to_prior_cluster = {}
 
 
                 for n in prior_network_nodes:
                     if n["cluster"] is not None:
                         numeric_id = int (n["cluster"])
+                        
+                        node_to_prior_cluster [n["id"]] = numeric_id
+
 
                         if not numeric_id in old_cluster_sizes:
                             old_cluster_sizes[numeric_id] = 1
@@ -70,6 +101,7 @@ def make_hiv_network():
                             cluster_sizes[numeric_id] += 1
                         else:
                             cluster_sizes[numeric_id] = 1
+                            
                             
                 for e in prior_network_edges:
                     node_pair = [prior_network_nodes[e['source']]["id"],prior_network_nodes[e['target']]["id"]]
@@ -107,14 +139,14 @@ def make_hiv_network():
                 for c_id, mapped_id in cluster_map.items():
                     if c_id is None: # singletons
                         if len (mapped_id) > 1 or None not in mapped_id:
-                            raise Exception("Incostistent singletons, nodes previously clustered became unclustered")
+                            raise Exception("Incostistent singletons, nodes previously clustered became unclustered (%s)" % str (mapped_id))
                     else:
                         if len (mapped_id) == 1:
                             if None in mapped_id: # new cluster
                                 print ("Cluster %d is a new cluster" % c_id,  file = sys.stderr)
                             else:
                                 cluster_remap[c_id] = list(mapped_id)[0]
-                                print ("Cluster %d matches a previous cluster %d" % (c_id, cluster_remap[c_id]),  file = sys.stderr)
+                                print ("Cluster %d matches previous cluster %d" % (c_id, cluster_remap[c_id]),  file = sys.stderr)
                                 cluster_summary_info [list(mapped_id)[0]] = {'type' : 'existing'}
                                 if cluster_remap[c_id] in used_existing_clusters:
                                     raise Exception("Cluster %d from the existing network is mapped to multiple new clusters" % cluster_remap[c_id])
@@ -128,7 +160,7 @@ def make_hiv_network():
                                 mapped_id.remove (None)
                                 update_id = list(mapped_id)[0]
                                 cluster_remap[c_id] = update_id
-                                print ("Cluster %d extends a previous cluster %d" % (c_id, update_id),  file = sys.stderr)
+                                print ("Cluster %d extends previous cluster %d" % (c_id, update_id),  file = sys.stderr)
                                 mapped_to_existing_clusters.add (c_id)
                                 cluster_summary_info [update_id] = {'type' : 'extended', 'size' : new_cluster_sizes [c_id], 'old_size' : old_cluster_sizes[update_id]}
                                 if cluster_remap[c_id] in used_existing_clusters:
@@ -159,6 +191,7 @@ def make_hiv_network():
                 for n in network.nodes:
                     if not n.id in existing_nodes:
                         n.add_attribute ("new_node")
+                        node_to_prior_cluster[n.id] = None
 
                     if n.cluster_id in cluster_remap:
                         n.cluster_id  = cluster_remap [n.cluster_id]
@@ -194,8 +227,6 @@ def make_hiv_network():
                         else:  
                             p2p1 = True
                             
-                            
-                            
                     if p1p2 != p2p1: 
                         print ("Edge ", e, " is not consistent with prior network", file = sys.stderr)
                     else:
@@ -226,7 +257,7 @@ def make_hiv_network():
                                   'attributes': list(n.attributes),
                                   'edi': n.get_edi(),
                                   'baseline': n.get_baseline_date(True)})
-                node_idx[n] = len(nodes) - 1
+                    node_idx[n] = len(nodes) - 1
 
 
         edges = []
@@ -260,33 +291,10 @@ def make_hiv_network():
         network.generate_dot(settings().dot)
 
     if settings().cluster:
-        network.write_clusters(settings().cluster)
+        network.write_clusters(settings().cluster, node_to_prior_cluster if settings().prior is not None and settings().json else None)
 
     if settings().centralities:
         network.write_centralities(settings().centralities)
-
-
-
-    if settings().bridges:
-        print ("Finding all non-trivial (not ending in a terminal node) bridges in the network", file = sys.stderr)
-        network.find_all_bridges (attr = "bridge") ## this will labels the nodes with "bridge" attribute
-
-        bin_by_node = {}
-
-        for e in network.reduce_edge_set():
-            if e.has_attribute ("bridge") and e.p1.degree != 1 and e.p2.degree != 1 :
-                print ("%s [degree %d] -- %s [degree %d]" % (e.p1.id, e.p1.degree, e.p2.id, e.p2.degree), file = settings().output)
-                for n in [e.p1, e.p2]:
-                    if n not in bin_by_node:
-                        bin_by_node[n] = 1
-                    else:
-                        bin_by_node[n] += 1
-
-        if len (bin_by_node):
-            for n, d in bin_by_node.items():
-                print ("Node %s (degree %d) is involved in %d bridges" % (n.id, n.degree, d), file = settings().output)
-        else:
-            print ("No non-trivial bridges found", file = sys.stderr)
 
     return network
 

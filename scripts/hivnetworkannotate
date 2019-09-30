@@ -84,13 +84,13 @@ predefined_transforms = {'YYYYMMDD' : 's: datetime.datetime.strptime (s,"%Y-%m-%
 uninjected_set      = {}
 
 for key_pair in import_settings.field:
-    network_json [network_attribute_key][key_pair[0]] = {'name' : key_pair[1], 'type': key_pair[2], 'label' : key_pair[1]}
-    field_names [key_pair[0]] = key_pair[0]
-    uninjected_set [key_pair[0]] = set ()
+    network_json [network_attribute_key][key_pair[1]] = {'name' : key_pair[1], 'type': key_pair[2], 'label' : key_pair[1]}
+    field_names [key_pair[0]] = key_pair[1]
+    uninjected_set [key_pair[1]] = set ()
     if key_pair[2] == 'enum':
         mapping = eval (key_pair[3])
-        network_json [network_attribute_key][key_pair[0]]['type'] = "String"
-        network_json [network_attribute_key][key_pair[0]]['enum'] = list (mapping.values())
+        network_json [network_attribute_key][key_pair[1]]['type'] = "String"
+        network_json [network_attribute_key][key_pair[1]]['enum'] = list (mapping.values())
         field_transformations [key_pair[0]] = functools.partial (enum_mapper, dict = mapping)
     else:
         if len (key_pair[3]) == 0 :
@@ -99,7 +99,6 @@ for key_pair in import_settings.field:
             field_transformations [key_pair[0]] = eval ("lambda " + predefined_transforms[key_pair[3]])
         else:
             field_transformations [key_pair[0]] = eval ("lambda " + key_pair[3])
-
 
 total_records = 0
 

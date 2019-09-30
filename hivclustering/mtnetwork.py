@@ -735,11 +735,13 @@ class transmission_network:
 
     def ensure_node_is_added(self, id1, header_parser, default_attribute, bootstrap_mode, cache, position = None):
         if id1 not in cache:
+        
             cache.add(id1)
             if header_parser == None:
                 header_parser = parseAEH
 
             patient1, attrib = header_parser(id1, position)
+            #print ("Adding node %s" % patient1)
             self.insert_patient(patient1['id'], patient1['date'], False, attrib)
 
     def sample_from_network(self, how_many_nodes=100, how_many_edges=None, node_sampling_bias=0.0):
@@ -1160,8 +1162,8 @@ class transmission_network:
 
         loop = patient1['id'] == patient2['id']
 
-        p1 = self.insert_patient(patient1['id'], patient1['date'], not loop and not node_only, attrib)
-        p2 = self.insert_patient(patient2['id'], patient2['date'], not loop and not node_only, attrib)
+        p1 = self.insert_patient(patient1['id'], patient1['date'], False, attrib)
+        p2 = self.insert_patient(patient2['id'], patient2['date'], False, attrib)
 
         pid1 = self.make_sequence_key(patient1['id'], patient1['date'])
         if pid1 not in self.sequence_ids:
@@ -1183,6 +1185,8 @@ class transmission_network:
                         if not bootstrap_mode or edge_attribute is None:
                             self.edges[new_edge] = new_edge
                             self.distances[new_edge] = distance
+                            p1.add_degree()
+                            p2.add_degree()
 
                     else:
                         #print (id1, id2)
@@ -1806,14 +1810,25 @@ class transmission_network:
             if edge.visible:
                 file.write("%s,%s,%g\n" % (edge.p1.id, edge.p2.id, self.distances[edge]))
 
-    def write_clusters(self, file):
-        file.write("SequenceID,ClusterID\n")
+    def write_clusters(self, file, previous_cluster_assignments = None):
+        if previous_cluster_assignments:
+            file.write("SequenceID,ClusterID,PreviousClusterID\n")        
+        else:
+            file.write("SequenceID,ClusterID\n")
         for node in self.nodes:
             if node.cluster_id is not None:
                 for d in node.dates:
                     try:
-                        file.write("%s,%d\n" %
-                                   (self.sequence_ids[self.make_sequence_key(node.id, d)], node.cluster_id))
+                        if previous_cluster_assignments:
+                            file.write("%s,%d" %
+                                    (self.sequence_ids[self.make_sequence_key(node.id, d)], node.cluster_id))
+                            if  previous_cluster_assignments[node.id] is None:
+                                file.write (",N/A\n")
+                            else:
+                                file.write (",%d\n" % previous_cluster_assignments[node.id])                        
+                        else:
+                            file.write("%s,%d\n" %
+                                    (self.sequence_ids[self.make_sequence_key(node.id, d)], node.cluster_id))
                         break
                     except KeyError:
                         pass
