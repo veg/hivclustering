@@ -66,7 +66,7 @@ arguments.add_argument ('-f', '--field', help = 'Describe an argument to be adde
 
 import_settings = arguments.parse_args()
 
-network_json    = json.load (import_settings.network)
+network_json    = ht_process_network_json(json.load (import_settings.network))
 
 # set up record filtering
 
@@ -165,9 +165,6 @@ for k, v in uninjected_set.items():
 
 print ("\n", file = sys.stderr)
     
-    
-
-
 if inject_missing_value:
     for values in inject_missing_value:        
         for node_id in uninjected_set[values[0]]:
@@ -177,5 +174,8 @@ if inject_missing_value:
 
 if import_settings.inplace and import_settings.network is not sys.stdin:
     import_settings.output = open (import_settings.network.name, "w")
+    
+if 'Settings' in json and 'compact_json' in json['Settings']:
+    ht_compress_network_json (network_json)
 
-json.dump (network_json, import_settings.output, indent = 1)
+json.dump (network_json, separators=(',', ':'), file = import_settings.output)

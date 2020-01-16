@@ -569,76 +569,7 @@ def make_hiv_network():
                         network_info["Nodes"][id_to_idx[n['id']]]['patient_attributes'] = n['patient_attributes']
                 
         if settings().compact_json:
-            def collect_keys (dict_set):
-                unique_keys = set()
-                for v in dict_set:
-                    unique_keys.update (list (v.keys()))
-                return unique_keys
-                
-            def compress_array (array):
-                unique_values = {}
-                try:
-                    for v in array:
-                        if v not in unique_values:
-                            unique_values[v] = len (unique_values)
-                            
-                    #print (unique_values, file = sys.stderr)
-                            
-                    if len (unique_values) * 4 < len (array):
-                        lookup = {}
-                        for k, v in unique_values.items():
-                            lookup[v] = k
-                        compact_array = {'keys' : lookup, 'values' : []}
-                        for a in array:
-                            compact_array ['values'].append (unique_values[a])
-                        
-                        return compact_array
-                        
-                    return array
-                    
-                except Exception as e:                   
-                    return array
-
-            def convert_array_of_dicts (array, unique_keys):
-                converted_set = {}
-                null_by_key   = {}
-                
-                for k in unique_keys:
-                    converted_set[k] = []
-                    null_by_key[k] = 0
-                    
-                    
-                for a in array:
-                    for k in unique_keys:
-                        if k in a:
-                            if type (a[k]) is list:
-                                converted_set[k].append (tuple (a[k]))                                
-                            else:
-                                converted_set[k].append (a[k])
-                        else:
-                            converted_set[k].append (None)
-                            null_by_key[k] += 1
-                          
-                for k, nulls in null_by_key.items():
-                    '''
-                    print (k, nulls, len(array), file = sys.stderr)
-                    if nulls * 2 > len (array):
-                        sparse_set = {'sparse' : True, 'indices' : [], 'values' : []}
-                        for i, v in enumerate(converted_set[k]):
-                            if v is not None:
-                                sparse_set['indices'].append (i)
-                                sparse_set['values'].append (v)
-                        sparse_set['values'] = compress_array(sparse_set['values'])
-                        converted_set[k] = sparse_set
-                    else:
-                    '''
-                    converted_set[k] = compress_array(converted_set[k])
-                          
-                    
-                return converted_set
-                
-            network_info ["Edges"] = convert_array_of_dicts (network_info["Edges"], collect_keys (network_info["Edges"]))           
-            network_info ["Nodes"] = convert_array_of_dicts (network_info["Nodes"], collect_keys (network_info["Nodes"]))           
+            ht_compress_network_json (network_info)
             
   
         print(json.dumps(network_info, separators=(',', ':')), file = settings().output)
