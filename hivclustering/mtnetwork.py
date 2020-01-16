@@ -1651,20 +1651,25 @@ class transmission_network:
 
         return vis_count
 
-    def retrieve_clusters(self, singletons=True):
+    def retrieve_clusters(self, singletons=True, key = lambda node: node.cluster_id):
         clusters = {}
         for node in self.nodes:
             # if node.cluster_id == None:
             #    raise BaseException ('Called return_clusters but node %s had no associated cluster ID' % node)
-            if node.cluster_id not in clusters:
-                clusters[node.cluster_id] = []
-            clusters[node.cluster_id].append(node)
+            try:
+                cluster_id = key(node)
+            except:
+                cluster_id = None
+                
+            if cluster_id not in clusters:
+                clusters[cluster_id] = []
+            clusters[cluster_id].append(node)
 
         if not singletons:
             clusters.pop(None, None)
         return clusters
 
-    def sort_clusters (self, singletons=True, filter = None, start_id = 1):
+    def sort_clusters (self, singletons=True, filter = None, precomputed_clusters = None, start_id = 1, cluster_key = lambda node: node.cluster_id, set_cluster_id = lambda node, value: setattr(node, "cluster_id", value)):
         '''
          Assuming that clusters have been built, sort them using the following rules
 
@@ -1703,7 +1708,10 @@ class transmission_network:
 
             return len (cluster2) - len (cluster1)
 
-        clusters = self.retrieve_clusters (singletons = singletons)
+        if precomputed_clusters:
+            clusters = precomputed_clusters
+        else:
+            clusters = self.retrieve_clusters (singletons = singletons, key = cluster_key)
 
         if singletons and None in clusters:
             stash_singletons = clusters.pop(None, None)
@@ -1730,7 +1738,8 @@ class transmission_network:
             new_clusters [c_id + start_id] = c_nodes
             for node in c_nodes:
                 #print (node.id, node.cluster_id, c_id + start_id)
-                node.cluster_id = c_id + start_id
+                #node.cluster_id = c_id + start_id
+                set_cluster_id (node, c_id + start_id)
 
         if stash_singletons is not None:
             new_clusters[None] = stash_singletons

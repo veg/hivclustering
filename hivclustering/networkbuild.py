@@ -26,6 +26,27 @@ uds_settings = None
 def settings():
     return run_settings
 
+def ht_process_network_json (json):
+    if 'trace_results' in json:
+        json = json ['trace_results']
+    if 'Settings' in json and 'compact_json' in json['Settings']:
+        for key in ["Nodes","Edges"]:
+            fields = list(json[key].keys())
+            expanded = []
+            for idx, f in enumerate (fields):
+                field_values = json[key][f]
+                if type (field_values) == dict and "values" in field_values:
+                    field_values = [field_values["keys"][str(v)] for v in field_values["values"]]
+                
+                for j,fv in enumerate(field_values):     
+                    if idx == 0:
+                        expanded.append ({})                   
+                    expanded[j][f] = fv
+                
+            json[key] = expanded
+            
+    return json
+                
 
 def uds_attributes():
     return uds_settings
@@ -128,7 +149,7 @@ def describe_network(network, json_output=False, keep_singletons=False):
         return_json['Network Summary']['Clusters'] = len(clusters)
         return_json['Cluster sizes'] = [len(clusters[c]) for c in clusters if c is not None]
     else:
-        print("Found %d clusters" % len(clusters), file=sys.stderr)
+        print("Found %d clusters" % (len(clusters) - (1 if None in clusters else 0)), file=sys.stderr)
         cluster_sizes = sorted ([len(clusters[c]) for c in clusters if c is not None])
         print("Maximum cluster size = %d (second largest = %d) nodes" % (cluster_sizes[len(cluster_sizes)-1],cluster_sizes[len(cluster_sizes)-2]), file=sys.stderr)
 
@@ -384,7 +405,7 @@ def build_a_network(extra_arguments = None):
     arguments.add_argument('-u', '--uds',   help='Input CSV file with UDS data. Must be a CSV file with three columns: ID1,ID2,distance.')
     arguments.add_argument('-d', '--dot',   help='Output DOT file for GraphViz (or stdout if omitted)')
     arguments.add_argument('-c', '--cluster', help='Output a CSV file with cluster assignments for each sequence')
-    arguments.add_argument('-t', '--threshold', help='Only count edges where the distance is less than this threshold')
+    arguments.add_argument('-t', '--threshold', help='Only count edges where the distance is less than this threshold. Provide comma-separated values to compute subclusters if the output mode is JSON. If -t auto is specified, a heuristic is used to determine an ad hoc optimal threshold.')
     arguments.add_argument('-e', '--edi',   help='A .json file with clinical information')
     arguments.add_argument('-z', '--old_edi',   help='A .csv file with legacy EDI dates')
     arguments.add_argument('-f', '--format',   help='Sequence ID format. One of AEH (ID | sample_date | otherfiels default), LANL (e.g. B_HXB2_K03455_1983 : subtype_country_id_year -- could have more fields), regexp (match a regular expression, use the first group as the ID), or plain (treat as sequence ID only, no meta); one per input argument if specified', action = 'append')
@@ -392,7 +413,11 @@ def build_a_network(extra_arguments = None):
     arguments.add_argument('-r', '--resistance',help='Load a JSON file with resistance annotation by sequence', type=argparse.FileType('r'))
     arguments.add_argument('-p', '--parser', help='The reg.exp pattern to split up sequence ids; only used if format is regexp; format is INDEX EXPRESSION (consumes two arguments)', required=False, type=str, action = 'append', nargs = 2)
     arguments.add_argument('-a', '--attributes',help='Load a CSV file with optional node attributes', type=argparse.FileType('r'))
-    arguments.add_argument('-j', '--json', help='Output the network report as a JSON object',required=False,  action='store_true', default=False)
+    
+    json_group = arguments.add_mutually_exclusive_group ();
+    json_group.add_argument('-J', '--compact-json', dest = 'compact_json', help='Output the network report as a compact JSON object',required=False,  action='store_true', default=False)
+    json_group.add_argument('-j', '--json', help='Output the network report as a JSON object',required=False,  action='store_true', default=False)
+    
     arguments.add_argument('-o', '--singletons', help='Include singletons in JSON output',  action='store_true', default=False)
     arguments.add_argument('-k', '--filter', help='Only return clusters with ids listed by a newline separated supplied file. ', required=False)
     arguments.add_argument('-s', '--sequences', help='Provide the MSA with sequences which were used to make the distance file. Can be specified multiple times to include mutliple MSA files', required=False, action = 'append')
@@ -412,6 +437,8 @@ def build_a_network(extra_arguments = None):
     arguments.add_argument('-A', '--auto-profile', dest = 'auto_prof', help='If provided supercedes most other output and inference settings; will add edges from shortest to longest and report network statistics as a function of distance cutoff ', type = float)
     arguments.add_argument('--after', help='[assumes DATES are available] If provided (as YYYYMMDD) then only allow EDGES that connect nodes with dates at or AFTER this date', required=False, type = str)
     arguments.add_argument('--before', help='[assumes DATES are available] If provided (as YYYYMMDD) then only allow EDGES that connect nodes with dates at or BEFORE this date', required=False, type = str)
+    arguments.add_argument('--import-attributes', dest = 'import_attr', help='Import node attributes from this JSON', required=False, type=argparse.FileType('r'))
+    arguments.add_argument('--subcluster-annotation', dest = 'subcluster_annotation', help='As "dist" "field"". Use subcluster annotation for distance "dist" from node attribute "field"  ', required=False, nargs = 2)
 
 
     if extra_arguments:
@@ -510,13 +537,18 @@ def build_a_network(extra_arguments = None):
             raise
 
     run_settings.auto_threshold = False
+    run_settings.additional_thresholds = None
     if run_settings.threshold is not None:
         if str (run_settings.threshold) == 'auto':
             run_settings.auto_threshold = True
             run_settings.threshold = None
         else:
-            run_settings.threshold = float(run_settings.threshold)
-
+            thresholds = [float (k) for k in run_settings.threshold.split (',')]
+            run_settings.threshold = max (thresholds)
+            if len (thresholds) > 1:
+                run_settings.additional_thresholds = [k for k in thresholds if k != run_settings.threshold]
+                run_settings.additional_thresholds.sort (reverse = True)
+                
     if run_settings.uds is not None:
         try:
             run_settings.uds = open(run_settings.uds, 'r')
@@ -815,6 +847,7 @@ def build_a_network(extra_arguments = None):
 
         if run_settings.edge_filtering == 'remove':
             print("Edge filtering removed %d edges" % network.conditional_prune_edges(), file=sys.stderr)
+            
 
 
     return network
