@@ -128,7 +128,6 @@ def make_hiv_network():
                     else:
                         prior_network_subclusters = None
                         
-                
                 max_id = 0
                 cluster_sizes = {}
 
