@@ -108,7 +108,11 @@ def make_hiv_network():
                 prior_network       = ht_process_network_json(json.load (settings().prior))
                 
                 
-                prior_network_nodes = prior_network["Nodes"]
+                if "trace_results" in prior_network.keys():
+                    prior_network_nodes = prior_network["trace_results"]["Nodes"]
+                else:
+                    prior_network_nodes = prior_network["Nodes"]
+
                 existing_edges      = {} # node ID -> set of other node IDs
                 prior_network_edges = prior_network["Edges"]
                 new_clusters        = network.retrieve_clusters ()
