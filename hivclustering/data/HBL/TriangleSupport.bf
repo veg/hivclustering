@@ -48,7 +48,7 @@ function _testNetworkTriangle (filter, efv, seq1, seq2, seq3) {
         MLE_stash [id] = Eval (id);
     }
 
-    USE_LAST_RESULTS = 1;
+    USE_LAST_RESULTS    = 1;
     OPTIMIZATION_METHOD = 0;
 
     p_values = {3,1};
@@ -124,13 +124,11 @@ for (_t = 0; _t < triangle_count; _t += 1) {
 }
 
 
-function _THyPhyAskFor(key)
-{
+function _THyPhyAskFor(key) {
     key_n = 0 + key;
     if (key_n >= 0 && key_n < triangle_count) {
     	return all_p_values[key_n][-1];
     }
-
 
 
     return "_THyPhy_NOT_HANDLED_";

@@ -41,20 +41,22 @@ def parseAEH(str, position = None):
 
 
 def parseRegExp(regexp):
-    def parseHeader(str, position = None):
+    def parseHeader(string, position = None):
         patient_description = {}
- 
-        for r in [regexp[position]] if position is not None else regexp:        
+        
+        candidates = [regexp[position]] if position is not None else regexp
+        
+        for r in candidates:        
             try:
                 patient_description['date'] = None
-                patient_description['rawid'] = str
+                patient_description['rawid'] = string
                 parseSuccess = False
 
-                bits = r.search(str.rstrip())
+                bits = r.search(string.rstrip())
                 groups = bits.groups ()
                 patient_description['id'] = groups[0]
                 if len (groups) > 1 and groups[1]: # try matching a date
-                    for pattern in ["%m%d%Y", "%m/%d/%y", "%Y%m%d", "%m_%d_%y", "%m-%d-%y"]:
+                    for pattern in ["%m%d%Y", "%m/%d/%y", "%Y%m%d", "%m_%d_%y", "%m-%d-%y", "%Y"]:
                         try:
                             patient_description['date'] = time.strptime(groups[1], pattern)
                         except ValueError:
@@ -66,8 +68,8 @@ def parseRegExp(regexp):
                 pass
         
         if not parseSuccess:
-            print("Warning: could not parse the following ID as the reg.exp. header: %s" % str, file = sys.stderr)
-            patient_description['id'] = str
+            print("Warning: could not parse the following ID as the reg.exp. header (position %s, patterns %s): %s" % ('None' if position is None else str(position), '; '.join ([r.pattern for r in candidates]), string), file = sys.stderr)
+            patient_description['id'] = string
 
         return patient_description, ('|'.join(bits[2:]) if bits is not None and len(bits.groups()) > 2 else None)
     return parseHeader
@@ -621,7 +623,7 @@ class transmission_network:
         self.multiple_edges = multiple_edges
         self.sequence_ids = {}  # this will store unique sequence ids keyed by edge information (pid and date)
 
-    def read_from_csv_file(self, file_name, formatter=None, distance_cut=None, default_attribute=None, bootstrap_mode=False):
+    def read_from_csv_file(self, file_name, formatter=None, distance_cut=None, default_attribute=None, bootstrap_mode=False, filter = None):
 
         file_names = _ensure_list(file_name)
 
@@ -644,9 +646,81 @@ class transmission_network:
                     self.ensure_node_is_added(line[0], formatter[index], default_attribute, bootstrap_mode, handled_ids, 0)
                     self.ensure_node_is_added(line[1], formatter[index], default_attribute, bootstrap_mode, handled_ids, 1)
                     continue
-                edge = self.add_an_edge(line[0], line[1], distance, formatter[index], default_attribute, bootstrap_mode)
+                edge = self.add_an_edge(line[0], line[1], distance, formatter[index], default_attribute, bootstrap_mode, edge_date_filter = filter)
                 if edge is not None and len(line) > 3:
                     edgeAnnotations[edge] = line[2:]
+
+        return edgeAnnotations
+
+    def read_from_csv_file_ordered (self, file_name, callback, formatter=None, distance_cut=None, default_attribute=None, default_delta = 0., filter = None):
+        '''
+        Build the network up by adding edges in sorted order and report key network properties as a function of the distance threshold
+        '''
+        file_names = _ensure_list(file_name)
+
+        if formatter is None:
+            formatter = [parseAEH for f in file_names]
+
+        edgeAnnotations = {}
+        handled_ids     = set()
+        
+        edge_list       = []
+
+        for index, file_object in enumerate (file_names):
+            edgeReader = csv.reader(file_object)
+            header = next(edgeReader)
+            if len(header) < 3:
+                raise IOError('transmission_network.read_from_csv_file() : Expected a .csv file with at least 3 columns as input (file %s)' % file_object.name)
+            for line in edgeReader:
+                edge_list.append ([line[0], line[1], float (line[2]), index])
+
+        edge_list.sort (key = itemgetter (2))
+        
+        last_distance = 0.
+        node_count    = 0
+        edge_count    = 0
+        cluster_count = 0
+        cluster_sizes = {}
+        incremental_adjacency_matrix = {}
+        new_edge_set = set ()
+        
+        def handle_update (threshold):
+            self.compute_adjacency (False, new_edge_set, False, incremental_adjacency_matrix)
+            self.compute_clusters  (adjacency_matrix = incremental_adjacency_matrix)                
+            res = callback (threshold, self)
+            new_edge_set.clear()
+            return res
+        
+        for line in edge_list:
+            distance = line[2]
+            if distance_cut is not None and distance > distance_cut:
+                self.ensure_node_is_added(line[0], formatter[line[3]], default_attribute, False, handled_ids, 0)
+                self.ensure_node_is_added(line[1], formatter[line[3]], default_attribute, False, handled_ids, 1)
+                continue
+                
+            edge = self.add_an_edge(line[0], line[1], distance, formatter[line[3]], default_attribute, False, edge_date_filter = filter)
+            
+            if edge is not None:
+                if len(line) > 3:
+                    edgeAnnotations[edge] = line[2:]
+                edge_count += 1     
+                          
+                if default_delta > 0.:
+                    if distance > last_distance + default_delta:
+                        if not handle_update(last_distance + default_delta):
+                            return edgeAnnotations
+                        last_distance += default_delta
+                        while distance > last_distance:
+                            last_distance += default_delta
+                        #print ("Added an edge (%d, %g)" % (edge_count, distance), file = sys.stderr)      
+                else: 
+                    if distance > last_distance:
+                        if not handle_update(last_distance):
+                            return edgeAnnotations                              
+                        last_distance = distance
+                        #print ("Added an edge (%d, %g)" % (edge_count, distance), file = sys.stderr)
+                        
+                new_edge_set.add (edge)
 
         return edgeAnnotations
 
@@ -661,11 +735,13 @@ class transmission_network:
 
     def ensure_node_is_added(self, id1, header_parser, default_attribute, bootstrap_mode, cache, position = None):
         if id1 not in cache:
+        
             cache.add(id1)
             if header_parser == None:
                 header_parser = parseAEH
 
             patient1, attrib = header_parser(id1, position)
+            #print ("Adding node %s" % patient1)
             self.insert_patient(patient1['id'], patient1['date'], False, attrib)
 
     def sample_from_network(self, how_many_nodes=100, how_many_edges=None, node_sampling_bias=0.0):
@@ -1077,7 +1153,7 @@ class transmission_network:
 
         return edge_support
 
-    def add_an_edge(self, id1, id2, distance, header_parser=None, edge_attribute=None, bootstrap_mode=False, node_only=False):
+    def add_an_edge(self, id1, id2, distance, header_parser=None, edge_attribute=None, bootstrap_mode=False, node_only=False, edge_date_filter = None):
         if header_parser == None:
             header_parser = parseAEH
 
@@ -1086,8 +1162,8 @@ class transmission_network:
 
         loop = patient1['id'] == patient2['id']
 
-        p1 = self.insert_patient(patient1['id'], patient1['date'], not loop and not node_only, attrib)
-        p2 = self.insert_patient(patient2['id'], patient2['date'], not loop and not node_only, attrib)
+        p1 = self.insert_patient(patient1['id'], patient1['date'], False, attrib)
+        p2 = self.insert_patient(patient2['id'], patient2['date'], False, attrib)
 
         pid1 = self.make_sequence_key(patient1['id'], patient1['date'])
         if pid1 not in self.sequence_ids:
@@ -1102,21 +1178,24 @@ class transmission_network:
 
                 new_edge = min(self.make_network_edge(p1, p2, patient1['date'], patient2['date'], True, edge_attribute, (patient1["rawid"], patient2["rawid"])),
                                self.make_network_edge(p2, p1, patient2['date'], patient1['date'], True, edge_attribute, (patient2["rawid"], patient1["rawid"])))
+                               
+                if not edge_date_filter or edge_date_filter(new_edge):
+                    #new_edge = self.make_network_edge (p1,p2,patient1['date'],patient2['date'],True, edge_attribute, (patient1["rawid"], patient2["rawid"]))
+                    if new_edge not in self.edges:
+                        if not bootstrap_mode or edge_attribute is None:
+                            self.edges[new_edge] = new_edge
+                            self.distances[new_edge] = distance
+                            p1.add_degree()
+                            p2.add_degree()
 
-                #new_edge = self.make_network_edge (p1,p2,patient1['date'],patient2['date'],True, edge_attribute, (patient1["rawid"], patient2["rawid"]))
-                if new_edge not in self.edges:
-                    if not bootstrap_mode or edge_attribute is None:
-                        self.edges[new_edge] = new_edge
-                        self.distances[new_edge] = distance
+                    else:
+                        #print (id1, id2)
+                        self.edges[new_edge].update_attributes(edge_attribute)
+                        if distance < self.distances[new_edge]:
+                            self.edges[new_edge].update_sequence_info(new_edge.sequences)
+                            self.distances[new_edge] = distance
 
-                else:
-                    #print (id1, id2)
-                    self.edges[new_edge].update_attributes(edge_attribute)
-                    if distance < self.distances[new_edge]:
-                        self.edges[new_edge].update_sequence_info(new_edge.sequences)
-                        self.distances[new_edge] = distance
-
-                return new_edge
+                    return new_edge
 
         return None
 
@@ -1572,20 +1651,25 @@ class transmission_network:
 
         return vis_count
 
-    def retrieve_clusters(self, singletons=True):
+    def retrieve_clusters(self, singletons=True, key = lambda node: node.cluster_id):
         clusters = {}
         for node in self.nodes:
             # if node.cluster_id == None:
             #    raise BaseException ('Called return_clusters but node %s had no associated cluster ID' % node)
-            if node.cluster_id not in clusters:
-                clusters[node.cluster_id] = []
-            clusters[node.cluster_id].append(node)
+            try:
+                cluster_id = key(node)
+            except:
+                cluster_id = None
+                
+            if cluster_id not in clusters:
+                clusters[cluster_id] = []
+            clusters[cluster_id].append(node)
 
         if not singletons:
             clusters.pop(None, None)
         return clusters
 
-    def sort_clusters (self, singletons=True, filter = None, start_id = 1):
+    def sort_clusters (self, singletons=True, filter = None, precomputed_clusters = None, start_id = 1, cluster_key = lambda node: node.cluster_id, set_cluster_id = lambda node, value: setattr(node, "cluster_id", value)):
         '''
          Assuming that clusters have been built, sort them using the following rules
 
@@ -1624,7 +1708,10 @@ class transmission_network:
 
             return len (cluster2) - len (cluster1)
 
-        clusters = self.retrieve_clusters (singletons = singletons)
+        if precomputed_clusters:
+            clusters = precomputed_clusters
+        else:
+            clusters = self.retrieve_clusters (singletons = singletons, key = cluster_key)
 
         if singletons and None in clusters:
             stash_singletons = clusters.pop(None, None)
@@ -1651,7 +1738,8 @@ class transmission_network:
             new_clusters [c_id + start_id] = c_nodes
             for node in c_nodes:
                 #print (node.id, node.cluster_id, c_id + start_id)
-                node.cluster_id = c_id + start_id
+                #node.cluster_id = c_id + start_id
+                set_cluster_id (node, c_id + start_id)
 
         if stash_singletons is not None:
             new_clusters[None] = stash_singletons
@@ -1731,14 +1819,25 @@ class transmission_network:
             if edge.visible:
                 file.write("%s,%s,%g\n" % (edge.p1.id, edge.p2.id, self.distances[edge]))
 
-    def write_clusters(self, file):
-        file.write("SequenceID,ClusterID\n")
+    def write_clusters(self, file, previous_cluster_assignments = None):
+        if previous_cluster_assignments:
+            file.write("SequenceID,ClusterID,PreviousClusterID\n")        
+        else:
+            file.write("SequenceID,ClusterID\n")
         for node in self.nodes:
             if node.cluster_id is not None:
                 for d in node.dates:
                     try:
-                        file.write("%s,%d\n" %
-                                   (self.sequence_ids[self.make_sequence_key(node.id, d)], node.cluster_id))
+                        if previous_cluster_assignments:
+                            file.write("%s,%d" %
+                                    (self.sequence_ids[self.make_sequence_key(node.id, d)], node.cluster_id))
+                            if  previous_cluster_assignments[node.id] is None:
+                                file.write (",N/A\n")
+                            else:
+                                file.write (",%d\n" % previous_cluster_assignments[node.id])                        
+                        else:
+                            file.write("%s,%d\n" %
+                                    (self.sequence_ids[self.make_sequence_key(node.id, d)], node.cluster_id))
                         break
                     except KeyError:
                         pass
