@@ -30,39 +30,40 @@ def ht_process_network_json (json):
     if 'trace_results' in json:
         json = json ['trace_results']
     if 'Settings' in json and 'compact_json' in json['Settings']:
-        for key in ["Nodes","Edges"]:
-            fields = list(json[key].keys())
-            expanded = []
-            for idx, f in enumerate (fields):
-                field_values = json[key][f]
-                if type (field_values) == dict and "values" in field_values:
-                    field_values = [field_values["keys"][str(v)] for v in field_values["values"]]
-                
-                for j,fv in enumerate(field_values):     
-                    if idx == 0:
-                        expanded.append ({})                   
-                    expanded[j][f] = fv
-                
-            json[key] = expanded
-            
+        if json['Settings']['compact_array']:
+            for key in ["Nodes","Edges"]:
+                fields = list(json[key].keys())
+                expanded = []
+                for idx, f in enumerate (fields):
+                    field_values = json[key][f]
+                    if type (field_values) == dict and "values" in field_values:
+                        field_values = [field_values["keys"][str(v)] for v in field_values["values"]]
+
+                    for j,fv in enumerate(field_values):
+                        if idx == 0:
+                            expanded.append ({})
+                        expanded[j][f] = fv
+
+                json[key] = expanded
+
     return json
-                
+
 def ht_compress_network_json (network_info):
     def collect_keys (dict_set):
                 unique_keys = set()
                 for v in dict_set:
                     unique_keys.update (list (v.keys()))
                 return unique_keys
-                
+
     def compress_array (array):
         unique_values = {}
         try:
             for v in array:
                 if v not in unique_values:
                     unique_values[v] = len (unique_values)
-                    
+
             #print (unique_values, file = sys.stderr)
-                    
+
             if len (unique_values) * 4 < len (array):
                 lookup = {}
                 for k, v in unique_values.items():
@@ -70,34 +71,34 @@ def ht_compress_network_json (network_info):
                 compact_array = {'keys' : lookup, 'values' : []}
                 for a in array:
                     compact_array ['values'].append (unique_values[a])
-                
+
                 return compact_array
-                
+
             return array
-            
-        except Exception as e:                   
+
+        except Exception as e:
             return array
 
     def convert_array_of_dicts (array, unique_keys):
         converted_set = {}
         null_by_key   = {}
-        
+
         for k in unique_keys:
             converted_set[k] = []
             null_by_key[k] = 0
-            
-            
+
+
         for a in array:
             for k in unique_keys:
                 if k in a:
                     if type (a[k]) is list:
-                        converted_set[k].append (tuple (a[k]))                                
+                        converted_set[k].append (tuple (a[k]))
                     else:
                         converted_set[k].append (a[k])
                 else:
                     converted_set[k].append (None)
                     null_by_key[k] += 1
-                  
+
         for k, nulls in null_by_key.items():
             '''
             print (k, nulls, len(array), file = sys.stderr)
@@ -112,13 +113,13 @@ def ht_compress_network_json (network_info):
             else:
             '''
             converted_set[k] = compress_array(converted_set[k])
-                  
-            
+
+
         return converted_set
-                
-    network_info ["Edges"] = convert_array_of_dicts (network_info["Edges"], collect_keys (network_info["Edges"]))           
-    network_info ["Nodes"] = convert_array_of_dicts (network_info["Nodes"], collect_keys (network_info["Nodes"]))           
-                
+
+    network_info ["Edges"] = convert_array_of_dicts (network_info["Edges"], collect_keys (network_info["Edges"]))
+    network_info ["Nodes"] = convert_array_of_dicts (network_info["Nodes"], collect_keys (network_info["Nodes"]))
+
 
 def uds_attributes():
     return uds_settings
@@ -485,11 +486,11 @@ def build_a_network(extra_arguments = None):
     arguments.add_argument('-r', '--resistance',help='Load a JSON file with resistance annotation by sequence', type=argparse.FileType('r'))
     arguments.add_argument('-p', '--parser', help='The reg.exp pattern to split up sequence ids; only used if format is regexp; format is INDEX EXPRESSION (consumes two arguments)', required=False, type=str, action = 'append', nargs = 2)
     arguments.add_argument('-a', '--attributes',help='Load a CSV file with optional node attributes', type=argparse.FileType('r'))
-    
+
     json_group = arguments.add_mutually_exclusive_group ();
     json_group.add_argument('-J', '--compact-json', dest = 'compact_json', help='Output the network report as a compact JSON object',required=False,  action='store_true', default=False)
     json_group.add_argument('-j', '--json', help='Output the network report as a JSON object',required=False,  action='store_true', default=False)
-    
+
     arguments.add_argument('-o', '--singletons', help='Include singletons in JSON output',  action='store_true', default=False)
     arguments.add_argument('-k', '--filter', help='Only return clusters with ids listed by a newline separated supplied file. ', required=False)
     arguments.add_argument('-s', '--sequences', help='Provide the MSA with sequences which were used to make the distance file. Can be specified multiple times to include mutliple MSA files', required=False, action = 'append')
@@ -620,7 +621,7 @@ def build_a_network(extra_arguments = None):
             if len (thresholds) > 1:
                 run_settings.additional_thresholds = [k for k in thresholds if k != run_settings.threshold]
                 run_settings.additional_thresholds.sort (reverse = True)
-                
+
     if run_settings.uds is not None:
         try:
             run_settings.uds = open(run_settings.uds, 'r')
@@ -640,11 +641,11 @@ def build_a_network(extra_arguments = None):
     network = transmission_network(multiple_edges=run_settings.multiple_edges)
 
     edge_filter_function = lambda edge : True
-    
+
     if run_settings.before:
         run_settings.before = time.strptime(run_settings.before, '%Y%m%d')
         edge_filter_function = lambda edge : edge.check_exact_date (run_settings.before )
-        
+
     if run_settings.after:
         run_settings.after = time.strptime(run_settings.after, '%Y%m%d')
         edge_filter_function = lambda edge, ef = edge_filter_function: ef (edge) and  edge.check_exact_date (run_settings.after, newer = True)
@@ -919,7 +920,7 @@ def build_a_network(extra_arguments = None):
 
         if run_settings.edge_filtering == 'remove':
             print("Edge filtering removed %d edges" % network.conditional_prune_edges(), file=sys.stderr)
-            
+
 
 
     return network
