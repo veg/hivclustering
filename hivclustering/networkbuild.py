@@ -30,7 +30,7 @@ def ht_process_network_json (json):
     if 'trace_results' in json:
         json = json ['trace_results']
     if 'Settings' in json and 'compact_json' in json['Settings']:
-        if json['Settings']['compact_array']:
+        if json['Settings']['compact_json']:
             for key in ["Nodes","Edges"]:
                 fields = list(json[key].keys())
                 expanded = []
