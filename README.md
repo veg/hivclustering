@@ -33,6 +33,21 @@ Components
 
 ```
 optional arguments:
+usage: hivnetworkcsv [-h] [-i INPUT] [-u UDS] [-d DOT] [-c CLUSTER]
+                     [-t THRESHOLD] [-e EDI] [-z OLD_EDI] [-f FORMAT]
+                     [-x EXCLUDE] [-r RESISTANCE] [-p PARSER PARSER]
+                     [-a ATTRIBUTES] [-J | -j] [-o] [-k FILTER] [-s SEQUENCES]
+                     [-n {remove,report}] [-y CENTRALITIES] [-l]
+                     [--cycle-report-file CYCLE_REPORT_FILENAME]
+                     [-g TRIANGLES] [-C {report,remove}] [-F CONTAMINANT_FILE]
+                     [-M] [-B] [--no-degree-fit] [-X EXTRACT] [-O OUTPUT]
+                     [-P PRIOR] [-A AUTO_PROF] [--after AFTER]
+                     [--before BEFORE] [--import-attributes IMPORT_ATTR]
+                     [--subcluster-annotation SUBCLUSTER_ANNOTATION SUBCLUSTER_ANNOTATION]
+
+Construct a molecular transmission network.
+
+optional arguments:
   -h, --help            show this help message and exit
   -i INPUT, --input INPUT
                         Input CSV file with inferred genetic links (or stdin
@@ -48,7 +63,10 @@ optional arguments:
                         sequence
   -t THRESHOLD, --threshold THRESHOLD
                         Only count edges where the distance is less than this
-                        threshold
+                        threshold. Provide comma-separated values to compute
+                        subclusters if the output mode is JSON. If -t auto is
+                        specified, a heuristic is used to determine an ad hoc
+                        optimal threshold.
   -e EDI, --edi EDI     A .json file with clinical information
   -z OLD_EDI, --old_edi OLD_EDI
                         A .csv file with legacy EDI dates
@@ -70,12 +88,13 @@ optional arguments:
   -r RESISTANCE, --resistance RESISTANCE
                         Load a JSON file with resistance annotation by
                         sequence
-  -p PARSER, --parser PARSER
+  -p PARSER PARSER, --parser PARSER PARSER
                         The reg.exp pattern to split up sequence ids; only
-                        used if format is regexp (specify N times for N input
-                        files, even if empty)
+                        used if format is regexp; format is INDEX EXPRESSION
+                        (consumes two arguments)
   -a ATTRIBUTES, --attributes ATTRIBUTES
                         Load a CSV file with optional node attributes
+  -J, --compact-json    Output the network report as a compact JSON object
   -j, --json            Output the network report as a JSON object
   -o, --singletons      Include singletons in JSON output
   -k FILTER, --filter FILTER
@@ -92,6 +111,10 @@ optional arguments:
                         edges before doing other analyses
   -y CENTRALITIES, --centralities CENTRALITIES
                         Output a CSV file with node centralities
+  -l, --edge-filter-cycles
+                        Filter edges that are in cycles other than triangles
+  --cycle-report-file CYCLE_REPORT_FILENAME
+                        Prints cycle report to specified file
   -g TRIANGLES, --triangles TRIANGLES
                         Maximum number of triangles to consider in each
                         filtering pass
@@ -104,9 +127,33 @@ optional arguments:
   -M, --multiple-edges  Permit multiple edges (e.g. different dates) to link
                         the same pair of nodes in the network [default is to
                         choose the one with the shortest distance]
- -P PRIOR, --prior PRIOR
+  -B, --bridges         Report all bridges (edges whose removal would cause
+                        the graph to disconnect)
+  --no-degree-fit       Do not perform degree distribution fitting
+  -X EXTRACT, --extract EXTRACT
+                        If provided, extract all the sequences
+  -O OUTPUT, --output OUTPUT
+                        Write the output file to
+  -P PRIOR, --prior PRIOR
                         When running in JSON output mode, provide a JSON file
                         storing a previous (subset) version of the network for
                         consistent cluster naming
+  -A AUTO_PROF, --auto-profile AUTO_PROF
+                        If provided supercedes most other output and inference
+                        settings; will add edges from shortest to longest and
+                        report network statistics as a function of distance
+                        cutoff
+  --after AFTER         [assumes DATES are available] If provided (as
+                        YYYYMMDD) then only allow EDGES that connect nodes
+                        with dates at or AFTER this date
+  --before BEFORE       [assumes DATES are available] If provided (as
+                        YYYYMMDD) then only allow EDGES that connect nodes
+                        with dates at or BEFORE this date
+  --import-attributes IMPORT_ATTR
+                        Import node attributes from this JSON
+  --subcluster-annotation SUBCLUSTER_ANNOTATION SUBCLUSTER_ANNOTATION
+                        As "dist" "field"". Use subcluster annotation for
+                        distance "dist" from node attribute "field"
+
 
 ```
