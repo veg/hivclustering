@@ -69,7 +69,12 @@ field_input_group.add_argument ('-g', '--fields-file', help = 'Read in fields fr
 
 import_settings = arguments.parse_args()
 
-network_json    = ht_process_network_json(json.load (import_settings.network))
+results_json = json.load (import_settings.network)
+
+if('trace_results' in results_json.keys()):
+    root_trace_results = True
+
+network_json    = ht_process_network_json(results_json)
 
 # set up record filtering
 
@@ -195,4 +200,12 @@ if import_settings.inplace and import_settings.network is not sys.stdin:
 if 'Settings' in network_json and 'compact_json' in network_json['Settings']:
      ht_compress_network_json (network_json)
 
-json.dump(network_json, import_settings.output, separators=(',', ':'))
+# Return with trace_results key
+to_return = {}
+if(root_trace_results):
+    to_return["trace_results"] = network_json
+else:
+    to_return = network_json
+
+
+json.dump(to_return, import_settings.output, separators=(',', ':'))

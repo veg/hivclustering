@@ -43,10 +43,10 @@ def parseAEH(str, position = None):
 def parseRegExp(regexp):
     def parseHeader(string, position = None):
         patient_description = {}
-        
+
         candidates = [regexp[position]] if position is not None else regexp
-        
-        for r in candidates:        
+
+        for r in candidates:
             try:
                 patient_description['date'] = None
                 patient_description['rawid'] = string
@@ -60,13 +60,13 @@ def parseRegExp(regexp):
                         try:
                             patient_description['date'] = time.strptime(groups[1], pattern)
                         except ValueError:
-                            continue 
+                            continue
                 parseSuccess = True
                 break
-                
+
             except:
                 pass
-        
+
         if not parseSuccess:
             print("Warning: could not parse the following ID as the reg.exp. header (position %s, patterns %s): %s" % ('None' if position is None else str(position), '; '.join ([r.pattern for r in candidates]), string), file = sys.stderr)
             patient_description['id'] = string
@@ -663,7 +663,7 @@ class transmission_network:
 
         edgeAnnotations = {}
         handled_ids     = set()
-        
+
         edge_list       = []
 
         for index, file_object in enumerate (file_names):
@@ -675,7 +675,7 @@ class transmission_network:
                 edge_list.append ([line[0], line[1], float (line[2]), index])
 
         edge_list.sort (key = itemgetter (2))
-        
+
         last_distance = 0.
         node_count    = 0
         edge_count    = 0
@@ -683,28 +683,28 @@ class transmission_network:
         cluster_sizes = {}
         incremental_adjacency_matrix = {}
         new_edge_set = set ()
-        
+
         def handle_update (threshold):
             self.compute_adjacency (False, new_edge_set, False, incremental_adjacency_matrix)
-            self.compute_clusters  (adjacency_matrix = incremental_adjacency_matrix)                
+            self.compute_clusters  (adjacency_matrix = incremental_adjacency_matrix)
             res = callback (threshold, self)
             new_edge_set.clear()
             return res
-        
+
         for line in edge_list:
             distance = line[2]
             if distance_cut is not None and distance > distance_cut:
                 self.ensure_node_is_added(line[0], formatter[line[3]], default_attribute, False, handled_ids, 0)
                 self.ensure_node_is_added(line[1], formatter[line[3]], default_attribute, False, handled_ids, 1)
                 continue
-                
+
             edge = self.add_an_edge(line[0], line[1], distance, formatter[line[3]], default_attribute, False, edge_date_filter = filter)
-            
+
             if edge is not None:
                 if len(line) > 3:
                     edgeAnnotations[edge] = line[2:]
-                edge_count += 1     
-                          
+                edge_count += 1
+
                 if default_delta > 0.:
                     if distance > last_distance + default_delta:
                         if not handle_update(last_distance + default_delta):
@@ -712,14 +712,14 @@ class transmission_network:
                         last_distance += default_delta
                         while distance > last_distance:
                             last_distance += default_delta
-                        #print ("Added an edge (%d, %g)" % (edge_count, distance), file = sys.stderr)      
-                else: 
+                        #print ("Added an edge (%d, %g)" % (edge_count, distance), file = sys.stderr)
+                else:
                     if distance > last_distance:
                         if not handle_update(last_distance):
-                            return edgeAnnotations                              
+                            return edgeAnnotations
                         last_distance = distance
                         #print ("Added an edge (%d, %g)" % (edge_count, distance), file = sys.stderr)
-                        
+
                 new_edge_set.add (edge)
 
         return edgeAnnotations
@@ -735,7 +735,7 @@ class transmission_network:
 
     def ensure_node_is_added(self, id1, header_parser, default_attribute, bootstrap_mode, cache, position = None):
         if id1 not in cache:
-        
+
             cache.add(id1)
             if header_parser == None:
                 header_parser = parseAEH
@@ -1178,7 +1178,7 @@ class transmission_network:
 
                 new_edge = min(self.make_network_edge(p1, p2, patient1['date'], patient2['date'], True, edge_attribute, (patient1["rawid"], patient2["rawid"])),
                                self.make_network_edge(p2, p1, patient2['date'], patient1['date'], True, edge_attribute, (patient2["rawid"], patient1["rawid"])))
-                               
+
                 if not edge_date_filter or edge_date_filter(new_edge):
                     #new_edge = self.make_network_edge (p1,p2,patient1['date'],patient2['date'],True, edge_attribute, (patient1["rawid"], patient2["rawid"]))
                     if new_edge not in self.edges:
@@ -1660,7 +1660,7 @@ class transmission_network:
                 cluster_id = key(node)
             except:
                 cluster_id = None
-                
+
             if cluster_id not in clusters:
                 clusters[cluster_id] = []
             clusters[cluster_id].append(node)
@@ -1726,7 +1726,7 @@ class transmission_network:
                     stashed_filtered.append (cdata)
                 else:
                     stashed_unfiltered [cid] = cdata
-                    
+
 
             clusters = sorted (stashed_filtered, key = cmp_to_key (cmp_clusters))
         else:
@@ -1821,7 +1821,7 @@ class transmission_network:
 
     def write_clusters(self, file, previous_cluster_assignments = None):
         if previous_cluster_assignments:
-            file.write("SequenceID,ClusterID,PreviousClusterID\n")        
+            file.write("SequenceID,ClusterID,PreviousClusterID\n")
         else:
             file.write("SequenceID,ClusterID\n")
         for node in self.nodes:
@@ -1834,7 +1834,7 @@ class transmission_network:
                             if  previous_cluster_assignments[node.id] is None:
                                 file.write (",N/A\n")
                             else:
-                                file.write (",%d\n" % previous_cluster_assignments[node.id])                        
+                                file.write (",%d\n" % previous_cluster_assignments[node.id])
                         else:
                             file.write("%s,%d\n" %
                                     (self.sequence_ids[self.make_sequence_key(node.id, d)], node.cluster_id))

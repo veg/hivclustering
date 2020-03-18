@@ -206,7 +206,7 @@ def describe_network(network, json_output=False, keep_singletons=False):
     network_stats = network.get_edge_node_count()
     if json_output:
         return_json = {'Network Summary': {'Edges': network_stats['edges'], 'Nodes': network_stats['nodes'],
-                                           'Sequences used to make links': network_stats['total_sequences']},
+            'Sequences used to make links': network_stats['total_sequences'] },
                        'Multiple sequences': {'Subjects with': len(network_stats['multiple_dates']),
                                               'Followup, days': None if len(network_stats['multiple_dates']) == 0 else describe_vector([k[1] for k in network_stats['multiple_dates']])}
                        }
@@ -216,10 +216,11 @@ def describe_network(network, json_output=False, keep_singletons=False):
 
     network.compute_clusters(keep_singletons)
     clusters = network.retrieve_clusters()
-    #print (describe_vector([len(clusters[c]) for c in clusters]))
+    singletons = network.extract_singleton_nodes()
 
     if json_output:
         return_json['Network Summary']['Clusters'] = len(clusters)
+        return_json['Network Summary']['Singletons'] = len(singletons)
         return_json['Cluster sizes'] = [len(clusters[c]) for c in clusters if c is not None]
     else:
         print("Found %d clusters" % (len(clusters) - (1 if None in clusters else 0)), file=sys.stderr)
