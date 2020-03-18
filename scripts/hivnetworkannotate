@@ -28,6 +28,7 @@ import json
 import re
 import datetime
 import functools
+from hivclustering.networkbuild import *
 
 def enum_mapper (key, dict):
     try:
@@ -62,7 +63,9 @@ input_group.add_argument  ('-a', '--attributes',   help    = 'The JSON file with
 input_group.add_argument  ('-t', '--tab',   help    = 'A TSV file with node attributes', type = argparse.FileType('r'))
 input_group.add_argument  ('-c', '--csv',   help    = 'A CSV file with node attributes', type = argparse.FileType('r'))
 
-arguments.add_argument ('-f', '--field', help = 'Describe an argument to be added to invididual nodes as "name" "label" "type" "transform"; currently supported types are "String", "enum", "Date", "Number"; transform must be specified as a lambda, an empty string to use an identity map, or a python style dict to specify an enum; "fulldate" is a predefined option to reformat the date using the default hivtrace-viz format', required = True, nargs = 4, action = 'append')
+field_input_group = arguments.add_mutually_exclusive_group(required=True)
+field_input_group.add_argument ('-f', '--field', help = 'Describe an argument to be added to invididual nodes as "name" "label" "type" "transform"; currently supported types are "String", "enum", "Date", "Number"; transform must be specified as a lambda, an empty string to use an identity map, or a python style dict to specify an enum; "fulldate" is a predefined option to reformat the date using the default hivtrace-viz format', nargs = 4, action = 'append')
+field_input_group.add_argument ('-g', '--fields-file', help = 'Read in fields from a JSON file', type = argparse.FileType('r'))
 
 import_settings = arguments.parse_args()
 
@@ -83,7 +86,21 @@ predefined_transforms = {'YYYYMMDD' : 's: datetime.datetime.strptime (s,"%Y-%m-%
 
 uninjected_set      = {}
 
-for key_pair in import_settings.field:
+if import_settings.field:
+    field_settings = import_settings.field
+else:
+    # If fields file supplied, get fields from that first
+    fields_file_json = json.load(import_settings.fields_file)
+    for key, d in fields_file_json.items():
+        ensure_key(d, 'enum')
+    #Filter out items that don't have a label
+    fields_file_json = {k : v for k,v in fields_file_json.items() if "label" in v.keys()}
+    field_settings = [[k, v["label"], v["type"], ""] for k,v in fields_file_json.items()]
+
+    # Ensure each item has a key
+
+
+for key_pair in field_settings:
     network_json [network_attribute_key][key_pair[1]] = {'name' : key_pair[1], 'type': key_pair[2], 'label' : key_pair[1]}
     field_names [key_pair[0]] = key_pair[1]
     uninjected_set [key_pair[1]] = set ()
@@ -104,6 +121,8 @@ total_records = 0
 
 if import_settings.attributes: # JSON input
     to_import = json.load (import_settings.attributes)
+    #If a list of items, then key by ehars_uid
+    to_import = { v['ehars_uid']: v for v in to_import}
 else: # TSV import
     if import_settings.tab:
         csv_reader = csv.reader (import_settings.tab, delimiter = '\t')
@@ -140,8 +159,6 @@ for n in network_json ["Nodes"]:
     if import_settings.clear:
         if node_attribute_key in n:
             del n[node_attribute_key]
-            
-
 
 for n, values in to_import.items():
     node_id = id_mapper (n)
@@ -175,7 +192,7 @@ if inject_missing_value:
 if import_settings.inplace and import_settings.network is not sys.stdin:
     import_settings.output = open (import_settings.network.name, "w")
     
-if 'Settings' in json and 'compact_json' in json['Settings']:
-    ht_compress_network_json (network_json)
+if 'Settings' in network_json and 'compact_json' in network_json['Settings']:
+     ht_compress_network_json (network_json)
 
-json.dump (network_json, separators=(',', ':'), file = import_settings.output)
+json.dump(network_json, import_settings.output, separators=(',', ':'))
