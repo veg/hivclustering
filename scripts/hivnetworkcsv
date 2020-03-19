@@ -348,7 +348,7 @@ def make_hiv_network():
                                 cluster_summary_info [d_id] = {'type' : 'extended', 'size' : new_cluster_sizes [inheritor], 'old_size' : old_cluster_sizes[d_id]}
                                                                        
                                 for nid in new_mapping_only_to_old:
-                                    if nid != inheritor:
+                                    if nid != inheritor and nid in cluster_remap:
                                         del cluster_remap[nid]
                                         for n in new_clusters[nid]:
                                             if n.id in old_node_ids:
