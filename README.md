@@ -1,7 +1,7 @@
 HIVClustering
 -------------
 
-A Python 3 library that makes infers molecular transmission networks from sequence data. A part of [HIV-TRACE](https://academic.oup.com/mbe/article/35/7/1812/4833215), available at http://hivtrace.hyphy.org
+A Python 3 library that makes infers molecular transmission networks from sequence data. A part of [HIV-TRACE](https://academic.oup.com/mbe/article/35/7/1812/4833215), available at http://hivtrace.org
 
 Related projects
 
