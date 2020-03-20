@@ -513,6 +513,7 @@ def build_a_network(extra_arguments = None):
     arguments.add_argument('--before', help='[assumes DATES are available] If provided (as YYYYMMDD) then only allow EDGES that connect nodes with dates at or BEFORE this date', required=False, type = str)
     arguments.add_argument('--import-attributes', dest = 'import_attr', help='Import node attributes from this JSON', required=False, type=argparse.FileType('r'))
     arguments.add_argument('--subcluster-annotation', dest = 'subcluster_annotation', help='As "dist" "field"". Use subcluster annotation for distance "dist" from node attribute "field"  ', required=False, nargs = 2)
+    arguments.add_argument('-q', '--quiet', help='Enable quiet mode',  action='store_true', default=False)
 
 
     if extra_arguments:
