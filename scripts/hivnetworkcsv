@@ -232,17 +232,19 @@ def make_hiv_network():
                 for c_id, mapped_id in cluster_map.items():
                     if c_id is None: # singletons
                          if len (mapped_id) > 1 or None not in mapped_id:
-                            report_warning ("Incostistent singletons, nodes previously clustered became unclustered (%s)" % str (mapped_id))
+                            report_warning ("Inconsistent singletons, nodes previously clustered became unclustered (%s)" % str (mapped_id))
                             for old_id in mapped_id:
                                 ensure_key (discrepant_old_clusters, old_id)['disconnected'] = True
                                     
                     else:
                         if len (mapped_id) == 1:
-                            if None in mapped_id: # new cluster
-                                print ("Cluster %d is a new cluster" % c_id,  file = sys.stderr)
+                            if None in mapped_id :
+                                if not settings().quiet: # new cluster
+                                    print ("Cluster %d is a new cluster" % c_id,  file = sys.stderr)
                             else:
                                 cluster_remap[c_id] = list(mapped_id)[0]
-                                print ("Cluster %d [%d nodes] matches previous cluster %d [%d nodes]" % (c_id, new_cluster_sizes [c_id], cluster_remap[c_id], old_cluster_sizes[cluster_remap[c_id]]),  file = sys.stderr)
+                                if not settings().quiet:
+                                    print ("Cluster %d [%d nodes] matches previous cluster %d [%d nodes]" % (c_id, new_cluster_sizes [c_id], cluster_remap[c_id], old_cluster_sizes[cluster_remap[c_id]]),  file = sys.stderr)
                                 cluster_summary_info [cluster_remap[c_id]] = {'type' : 'existing'}
                                 if cluster_remap[c_id] in used_existing_clusters:
                                     record_multiple_mapping (cluster_remap[c_id], c_id)
@@ -259,7 +261,8 @@ def make_hiv_network():
                                 mapped_id.remove (None)
                                 update_id = list(mapped_id)[0]
                                 cluster_remap[c_id] = update_id
-                                print ("Cluster %d [%d nodes] extends previous cluster %d [%d nodes]" % (c_id, new_cluster_sizes [c_id], update_id, old_cluster_sizes[update_id]),  file = sys.stderr)
+                                if not settings().quiet:
+                                    print ("Cluster %d [%d nodes] extends previous cluster %d [%d nodes]" % (c_id, new_cluster_sizes [c_id], update_id, old_cluster_sizes[update_id]),  file = sys.stderr)
                                 cluster_summary_info [update_id] = {'type' : 'extended', 'size' : new_cluster_sizes [c_id], 'old_size' : old_cluster_sizes[update_id]}
                                 if cluster_remap[c_id] in used_existing_clusters:
                                     report_warning("Cluster %d from the existing network is mapped to multiple new clusters (nodes %s)" % (update_id, dump_cluster_members (c_id)))
@@ -270,7 +273,8 @@ def make_hiv_network():
                                 mapped_to_existing_clusters.add (c_id)
  
                             else:
-                                print ("Cluster %d MERGES %s" % (c_id, ", ".join ([str(k) for k in list(mapped_id)])), file = sys.stderr)
+                                if not settings().quiet:
+                                    print ("Cluster %d MERGES %s" % (c_id, ", ".join ([str(k) for k in list(mapped_id)])), file = sys.stderr)
                                 if None in mapped_id:
                                     mapped_id.remove (None)
                                     
