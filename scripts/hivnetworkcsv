@@ -66,7 +66,7 @@ def make_hiv_network():
                                         'contaminants': settings().contaminants
                                         }
 
-        if settings().singletons:
+        if bool(settings().singletons):
             network_info['Settings']['singletons'] = True
 
 
