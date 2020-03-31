@@ -32,7 +32,6 @@ Components
 2. [hivnetworkannotate](https://github.com/veg/hivclustering/wiki/hivnetworkannotate) : imports network node attributes (read from a `.csv`, `.tsv`, or `.json`) to a  `JSON` file output by `hivnetworkcsv`
 
 ```
-optional arguments:
 usage: hivnetworkcsv [-h] [-i INPUT] [-u UDS] [-d DOT] [-c CLUSTER]
                      [-t THRESHOLD] [-e EDI] [-z OLD_EDI] [-f FORMAT]
                      [-x EXCLUDE] [-r RESISTANCE] [-p PARSER PARSER]
@@ -44,6 +43,7 @@ usage: hivnetworkcsv [-h] [-i INPUT] [-u UDS] [-d DOT] [-c CLUSTER]
                      [-P PRIOR] [-A AUTO_PROF] [--after AFTER]
                      [--before BEFORE] [--import-attributes IMPORT_ATTR]
                      [--subcluster-annotation SUBCLUSTER_ANNOTATION SUBCLUSTER_ANNOTATION]
+                     [-q]
 
 Construct a molecular transmission network.
 
@@ -154,6 +154,7 @@ optional arguments:
   --subcluster-annotation SUBCLUSTER_ANNOTATION SUBCLUSTER_ANNOTATION
                         As "dist" "field"". Use subcluster annotation for
                         distance "dist" from node attribute "field"
+  -q, --quiet           Enable quiet mode
 
 
 ```
