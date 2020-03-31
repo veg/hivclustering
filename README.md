@@ -35,8 +35,9 @@ Components
 usage: hivnetworkcsv [-h] [-i INPUT] [-u UDS] [-d DOT] [-c CLUSTER]
                      [-t THRESHOLD] [-e EDI] [-z OLD_EDI] [-f FORMAT]
                      [-x EXCLUDE] [-r RESISTANCE] [-p PARSER PARSER]
-                     [-a ATTRIBUTES] [-J | -j] [-o] [-k FILTER] [-s SEQUENCES]
-                     [-n {remove,report}] [-y CENTRALITIES] [-l]
+                     [-a ATTRIBUTES] [-J | -j] [-o {include,report}]
+                     [-k FILTER] [-s SEQUENCES] [-n {remove,report}]
+                     [-y CENTRALITIES] [-l]
                      [--cycle-report-file CYCLE_REPORT_FILENAME]
                      [-g TRIANGLES] [-C {report,remove}] [-F CONTAMINANT_FILE]
                      [-M] [-B] [--no-degree-fit] [-X EXTRACT] [-O OUTPUT]
@@ -96,7 +97,8 @@ optional arguments:
                         Load a CSV file with optional node attributes
   -J, --compact-json    Output the network report as a compact JSON object
   -j, --json            Output the network report as a JSON object
-  -o, --singletons      Include singletons in JSON output
+  -o {include,report}, --singletons {include,report}
+                        Include singletons in JSON output
   -k FILTER, --filter FILTER
                         Only return clusters with ids listed by a newline
                         separated supplied file.
