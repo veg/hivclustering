@@ -1665,8 +1665,9 @@ class transmission_network:
                 clusters[cluster_id] = []
             clusters[cluster_id].append(node)
 
+        # Remove all clusters with length 1
         if not singletons:
-            clusters.pop(None, None)
+            clusters = {k:v for k,v in clusters.items() if len(v) > 1}
         return clusters
 
     def sort_clusters (self, singletons=True, filter = None, precomputed_clusters = None, start_id = 1, cluster_key = lambda node: node.cluster_id, set_cluster_id = lambda node, value: setattr(node, "cluster_id", value)):
@@ -1800,11 +1801,11 @@ class transmission_network:
         cluster_id = [0]  # this will pass the object by reference
 
         for node in self.nodes:
-            if (singletons or node in use_this_am) and node.cluster_id == None:
-                self.breadth_first_traverse(node, cluster_id, use_this_am)
+            if (bool(singletons) or node in use_this_am) and node.cluster_id == None:
+                self.breadth_first_traverse(node, cluster_id, use_this_am, singletons)
 
-    def breadth_first_traverse(self, node, cluster_id, use_this_am):
-        if node.cluster_id == None:
+    def breadth_first_traverse(self, node, cluster_id, use_this_am, singletons="report"):
+        if node.cluster_id == None and (node in use_this_am or singletons=="include"):
             cluster_id[0] += 1
             node.cluster_id = cluster_id[0]
         if node in use_this_am:
