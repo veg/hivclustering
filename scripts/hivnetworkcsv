@@ -101,7 +101,8 @@ def make_hiv_network():
                 
                 
         cluster_summary_info = None
-
+        prior_network_subclusters = None
+        
         if settings().prior is not None:
             try:
                 existing_nodes      = {} # node ID -> cluster ID
