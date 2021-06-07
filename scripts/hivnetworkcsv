@@ -617,5 +617,6 @@ def make_hiv_network():
     return network
 
 if __name__ == '__main__':
+    __spec__ = None
     make_hiv_network()
 
