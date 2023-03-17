@@ -214,8 +214,9 @@ def describe_network(network, json_output=False, keep_singletons=False):
     else:
         print("%d edges on %d nodes" % (network_stats['edges'], network_stats['nodes']), file=sys.stderr)
 
+    # If keep_singletons is set, then compute with them on, otherwise don't
     network.compute_clusters(keep_singletons)
-    clusters = network.retrieve_clusters()
+    clusters = network.retrieve_clusters(singletons=(keep_singletons=="include"))
     singletons = network.extract_singleton_nodes()
 
     if json_output:
@@ -492,7 +493,7 @@ def build_a_network(extra_arguments = None):
     json_group.add_argument('-J', '--compact-json', dest = 'compact_json', help='Output the network report as a compact JSON object',required=False,  action='store_true', default=False)
     json_group.add_argument('-j', '--json', help='Output the network report as a JSON object',required=False,  action='store_true', default=False)
 
-    arguments.add_argument('-o', '--singletons', help='Include singletons in JSON output',  action='store_true', default=False)
+    arguments.add_argument('-o', '--singletons', help='Include singletons in JSON output', choices=['include', 'report'], default='report')
     arguments.add_argument('-k', '--filter', help='Only return clusters with ids listed by a newline separated supplied file. ', required=False)
     arguments.add_argument('-s', '--sequences', help='Provide the MSA with sequences which were used to make the distance file. Can be specified multiple times to include mutliple MSA files', required=False, action = 'append')
     arguments.add_argument('-n', '--edge-filtering', dest='edge_filtering', choices=['remove', 'report'], help='Compute edge support and mark edges for removal using sequence-based triangle tests (requires the -s argument) and either only report them or remove the edges before doing other analyses ', required=False)

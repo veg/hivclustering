@@ -145,6 +145,7 @@ else: # TSV import
             raise "Invalid field to index on (%s)" % import_settings.index
 
     to_import = {}
+
     try:
         for line in csv_reader:
             to_import [line[index_on]] = {}
@@ -174,7 +175,7 @@ for n, values in to_import.items():
         for k, val in values.items():
             if k in field_transformations:
                 store_this = field_transformations[k] (val)
-                if store_this is not None:
+                if store_this is not None and node_dict is not None:
                     node_dict[field_names[k]] = store_this
                     if node_id in uninjected_set[field_names[k]]:
                         uninjected_set[field_names[k]].remove (node_id)
@@ -210,4 +211,4 @@ else:
     to_return = network_json
 
 
-json.dump(to_return, import_settings.output, separators=(',', ':'))
+json.dump(to_return, import_settings.output, indent=2, separators=(',', ':'))

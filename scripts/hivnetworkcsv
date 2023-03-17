@@ -66,7 +66,7 @@ def make_hiv_network():
                                         'contaminants': settings().contaminants
                                         }
 
-        if settings().singletons:
+        if bool(settings().singletons):
             network_info['Settings']['singletons'] = True
 
 
@@ -172,7 +172,8 @@ def make_hiv_network():
                                 existing_edges[n] = set ()
                             existing_edges[n].add (node_pair [1-i])
                     except Exception as error:
-                        print ("[WARNING] Egde %s is not properly formed in the prior network" % str (e), file = sys.stderr)
+                        if not settings().quiet: # new cluster
+                            print ("[WARNING] Edge %s is not properly formed in the prior network" % str (e), file = sys.stderr)
 
                 cluster_map = {} # // current cluster ID -> set of previous cluster ID
                 
