@@ -2,7 +2,6 @@
 
 import csv
 import argparse
-import operator
 import sys
 import datetime
 import time
@@ -11,14 +10,8 @@ import os.path
 import json
 import hppy as hy
 import re
-from math import log10, floor, sqrt, exp, log
+from math import sqrt, exp, log
 from hivclustering import *
-from functools import partial
-import multiprocessing
-import hppy as hy
-from operator import itemgetter
-
-
 
 run_settings = None
 uds_settings = None
@@ -692,7 +685,9 @@ def build_a_network(extra_arguments = None):
                 if len (rec) > 1:
                     suggested_span = max (rec, key = lambda x: x[0])[0] - min (rec, key = lambda x: x[0])[0]
                     mean_diff = sum ([k[1] - profile[i-1][1] for i,k in enumerate(profile[1:])]) / (len (profile)-1)
-                    if (suggested_span / mean_diff < log (len (profile))):
+                    if mean_diff == 0.0:
+                        pass
+                    elif (suggested_span / mean_diff < log (len (profile))):
                         run_settings.threshold = rec[0][0]
 
             if run_settings.threshold is None:
