@@ -71,6 +71,8 @@ import_settings = arguments.parse_args()
 
 results_json = json.load (import_settings.network)
 
+root_trace_results = False
+
 if('trace_results' in results_json.keys()):
     root_trace_results = True
 
@@ -143,6 +145,7 @@ else: # TSV import
             raise "Invalid field to index on (%s)" % import_settings.index
 
     to_import = {}
+
     try:
         for line in csv_reader:
             to_import [line[index_on]] = {}
@@ -172,7 +175,7 @@ for n, values in to_import.items():
         for k, val in values.items():
             if k in field_transformations:
                 store_this = field_transformations[k] (val)
-                if store_this is not None:
+                if store_this is not None and node_dict is not None:
                     node_dict[field_names[k]] = store_this
                     if node_id in uninjected_set[field_names[k]]:
                         uninjected_set[field_names[k]].remove (node_id)
@@ -197,7 +200,7 @@ if inject_missing_value:
 if import_settings.inplace and import_settings.network is not sys.stdin:
     import_settings.output = open (import_settings.network.name, "w")
     
-if 'Settings' in network_json and 'compact_json' in network_json['Settings']:
+if 'Settings' in network_json and 'compact_json' in network_json['Settings'] and network_json['Settings']['compact_json']:
      ht_compress_network_json (network_json)
 
 # Return with trace_results key
@@ -208,4 +211,4 @@ else:
     to_return = network_json
 
 
-json.dump(to_return, import_settings.output, separators=(',', ':'))
+json.dump(to_return, import_settings.output, indent=2, separators=(',', ':'))
