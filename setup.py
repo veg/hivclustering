@@ -8,7 +8,7 @@ from setuptools import setup
 sys.path.insert(0, join(split(abspath(__file__))[0], 'lib'))
 
 setup(name='hivclustering',
-      version="1.6.6",
+      version="1.6.7",
       description='HIV molecular clustering tools',
       author='Sergei Kosakovsky Pond',
       author_email='spond@ucsd.edu',
