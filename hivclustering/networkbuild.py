@@ -8,7 +8,6 @@ import time
 import random
 import os.path
 import json
-import hppy as hy
 import re
 from math import sqrt, exp, log
 from hivclustering import *
@@ -764,6 +763,10 @@ def build_a_network(extra_arguments = None):
     edge_visibility = network.get_edge_visibility()
 
     if run_settings.sequences and run_settings.edge_filtering:
+        try:
+            import hppy as hy
+        except ImportError:
+            raise ImportError("Optional dependencies not found. Please install the 'edgefiltering' extras to use this function: pip install hivclustering[edgefiltering]")
 
         # Check that all sequences defined in distance file occur in source fasta file
         distance_ids = network.sequence_set_for_edge_filtering()

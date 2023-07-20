@@ -11,7 +11,6 @@ from math import log, exp, floor
 from copy import copy, deepcopy
 from bisect import bisect_left
 from operator import itemgetter
-import hppy as hy
 import os
 import csv
 import multiprocessing
@@ -128,6 +127,10 @@ def describe_vector(vector):
 
 def _test_edge_support(cycles, sequence_records, hy_instance, p_value_cutoff, test_quads):
     if hy_instance is None:
+        try:
+            import hppy as hy
+        except ImportError:
+            raise ImportError("Optional dependencies not found. Please install the 'edgefiltering' extras to use this function: pip install hivclustering[edgefiltering]")
         hy_instance = hy.HyphyInterface()
     script_path = os.path.realpath(__file__)
 
