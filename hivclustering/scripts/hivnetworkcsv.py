@@ -6,8 +6,8 @@ import itertools
 import os.path
 import datetime
 
-from hivclustering import *
-from hivclustering.networkbuild import *
+from .. import *
+from ..networkbuild import *
 
 
 def ensure_key (dict_object, key, default_value = {}):

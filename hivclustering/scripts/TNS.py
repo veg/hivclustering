@@ -3,8 +3,8 @@
 import csv, argparse, operator, sys, datetime, time, random, os.path, json, hppy as hy
 from math import log10
 #from scipy import stats
-from hivclustering import *
-from hivclustering.networkbuild import *
+from .. import *
+from ..networkbuild import *
 
 from datetime import date 
 

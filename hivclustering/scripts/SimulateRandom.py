@@ -2,7 +2,7 @@
 
 import csv, argparse, sys, datetime, time, random, os, math
 #from scipy import stats
-from hivclustering import *
+from .. import *
 
 N          = 648
 replicates = 100
