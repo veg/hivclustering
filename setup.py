@@ -16,14 +16,16 @@ setup(name='hivclustering',
       license='MIT License',
       packages=['hivclustering'],
       package_data={'hivclustering': [
-            'data/HBL/*.bf',
-    ]},
-    extras_require={
-        'edgefiltering': ['bioext >= 0.19.0','hyphy-python >= 0.1.11','hppy >= 0.9.9'],
-    },
-    scripts=[
-        'scripts/hivnetworkcsv',
-        'scripts/TNS',
-        'scripts/hivnetworkannotate'
-    ],
- )
+          'data/HBL/*.bf',
+      ]},
+      extras_require={
+          'edgefiltering': ['bioext >= 0.19.0', 'hyphy-python >= 0.1.11', 'hppy >= 0.9.9'],
+      },
+      entry_points={
+          'console_scripts': [
+              'hivnetworkcsv = hivclustering.scripts:hivnetworkcsv',
+              'hivnetworkannotate = hivclustering.scripts:hivnetworkannotate',
+              'TNS = hivclustering.scripts:TNS',
+          ]
+      },
+      )

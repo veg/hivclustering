@@ -72,7 +72,7 @@ if settings.alignment != None:
 	hy_instance = hy.HyphyInterface ();
 	
 	script_path = os.path.realpath(__file__)
-	hbl_path =  os.path.join(os.path.dirname(script_path), "..", "lib", "hivclustering", "data", "HBL", "ExtractACluster.bf")
+	hbl_path =  os.path.join(os.path.dirname(script_path), "../..", "lib", "hivclustering", "data", "HBL", "ExtractACluster.bf")
 	
 	hy_instance.queuevar ('alignment',  os.path.realpath(settings.alignment))
 	hy_instance.queuevar ('cluster_definitions',  write_these)

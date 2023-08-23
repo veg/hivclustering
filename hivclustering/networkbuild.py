@@ -10,7 +10,7 @@ import os.path
 import json
 import re
 from math import sqrt, exp, log
-from hivclustering import *
+from . import *
 
 run_settings = None
 uds_settings = None
