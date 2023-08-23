@@ -10,6 +10,8 @@ import os.path
 import json
 import re
 from math import sqrt, exp, log
+from typing import Optional, List, Dict, Union, Literal
+
 from . import *
 
 run_settings = None
@@ -461,10 +463,25 @@ def compute_threshold_scores (full_records):
         full_records[d[0]][6] = zs[i] + cs
 
 
+def parse_args(args: Optional[List[str]] = None,
+               extra_arguments: Optional[
+                   List[
+                       Dict[
+                           Union[Literal["arg"], Literal["kwarg"]],
+                           Union[List[str], Dict[str, str]]
+                       ]
+                   ]
+               ] = None) -> argparse.Namespace:
+    """
+    Parse CLI arguments for building a network.
 
-#-------------------------------------------------------------------------------
-def build_a_network(extra_arguments = None):
+    :param args: Optionally, a list of command line parameters.
+    :param extra_arguments: Dynamycally define commandline parameters by passing a list of dicts.
+    :return: A Namespace object with the parsed arguments.
+    """
+    args = sys.argv[1:] if args is None else args
 
+    # TODO is this necessary here?
     random.seed()
     arguments = argparse.ArgumentParser(description='Construct a molecular transmission network.')
 
@@ -516,7 +533,20 @@ def build_a_network(extra_arguments = None):
     global run_settings
 
     run_settings = arguments.parse_args()
+    return run_settings
 
+
+
+#-------------------------------------------------------------------------------
+# run_settings should probably be the first parameter,
+# but even though extra_arguments does not seem to be used,
+# I don't want to break 3rd parties that rely on its position
+def build_a_network(extra_arguments = None, run_settings = None):
+    if run_settings is None:
+        run_settings = parse_args(extra_arguments=extra_arguments)
+
+    # TODO is this necessary here?
+    random.seed()
 
     if run_settings.input == None:
         run_settings.input = [sys.stdin]
