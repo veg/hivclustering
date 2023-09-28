@@ -132,6 +132,7 @@ def _test_edge_support(cycles, sequence_records, hy_instance, p_value_cutoff, te
         except ImportError:
             raise ImportError("Optional dependencies not found. Please install the 'edgefiltering' extras to use this function: pip install hivclustering[edgefiltering]")
         hy_instance = hy.HyphyInterface()
+
     script_path = os.path.realpath(__file__)
 
     cycle_spec = []
@@ -173,6 +174,10 @@ def _batch_sequence_sim(spec):
 
 def _simulate_HIV_sequences(sequence, tree_matrix, hy_instance):
     if hy_instance is None:
+        try:
+            import hppy as hy
+        except ImportError:
+            raise ImportError("Optional dependencies not found. Please install the 'edgefiltering' extras to use this function: pip install hivclustering[edgefiltering]")
         hy_instance = hy.HyphyInterface()
 
     script_path = os.path.realpath(__file__)
@@ -929,6 +934,11 @@ class transmission_network:
     def simulate_sequence_evolution(self, founders, founder_sequences, rate_per_year, sampling_delay=None):
         if self.adjacency_list is None:
             self.compute_adjacency()
+
+        try:
+            import hppy as hy
+        except ImportError:
+            raise ImportError("Optional dependencies not found. Please install the 'edgefiltering' extras to use this function: pip install hivclustering[edgefiltering]")
 
         hy_instance = hy.HyphyInterface()
         already_simulated = set()
@@ -2496,7 +2506,13 @@ class transmission_network:
 
     def fit_degree_distribution(self, degree_option=None, hy_instance=None):
         if hy_instance is None:
+            try:
+                import hppy as hy
+            except ImportError:
+                raise ImportError("Optional dependencies not found. please install the 'edgefiltering' extras to use this function: pip install hivclustering[edgefiltering]")
+
             hy_instance = hy.HyphyInterface()
+
         script_path = os.path.realpath(__file__)
         hbl_path = os.path.join(os.path.dirname(script_path), "data", "HBL", "DegreeDistributions.bf")
         if degree_option == 'indegree':
