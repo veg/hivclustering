@@ -451,7 +451,10 @@ def compute_threshold_scores (full_records):
         if i >= length and i < len (records) - 1:
             trailing = sum ([k[3] for k in records [i - length : i + 1]])
             leading  = sum ([k[3] for k in records [i + 1: i + length + 1]])
-            diffs.append ([i, trailing, leading, leading / trailing])
+            if trailing > 0:
+                diffs.append ([i, trailing, leading, leading / trailing])
+            else:
+                diffs.append ([i, trailing, leading, 1.])
 
     diffs.sort (key = lambda r : r[3])
     zs = zscores ([d[3] for d in diffs])
@@ -502,6 +505,7 @@ def build_a_network(extra_arguments = None):
     arguments.add_argument('-O', '--output',help='Write the output file to', default = sys.stdout, type = argparse.FileType('w'))
     arguments.add_argument('-P', '--prior',help='When running in JSON output mode, provide a JSON file storing a previous (subset) version of the network for consistent cluster naming', required=False, type=argparse.FileType('r'))
     arguments.add_argument('-A', '--auto-profile', dest = 'auto_prof', help='If provided supercedes most other output and inference settings; will add edges from shortest to longest and report network statistics as a function of distance cutoff ', type = float)
+    arguments.add_argument('--min-cluster-size', dest = 'min_profile_size', help='If provided, works in conjunction with automatic distance threshold determination to only count clusters that have this many or more members', type = int, default = 2)
     arguments.add_argument('--after', help='[assumes DATES are available] If provided (as YYYYMMDD) then only allow EDGES that connect nodes with dates at or AFTER this date', required=False, type = str)
     arguments.add_argument('--before', help='[assumes DATES are available] If provided (as YYYYMMDD) then only allow EDGES that connect nodes with dates at or BEFORE this date', required=False, type = str)
     arguments.add_argument('--import-attributes', dest = 'import_attr', help='Import node attributes from this JSON', required=False, type=argparse.FileType('r'))
@@ -649,14 +653,17 @@ def build_a_network(extra_arguments = None):
 
         profile = []
 
+        min_cluster_size = run_settings.min_profile_size
+        
 
         def network_report (threshold, network, max_clusters = [0]):
             clusters = network.retrieve_clusters(singletons=False)
             edges = len (network.edges)
-            cl = sorted ([len (c) for c in clusters.values()], reverse = True)
+            cl = [k for k in sorted ([len (c) for c in clusters.values()], reverse = True) if k >= min_cluster_size]
             nnodes = sum (cl)
-            profile.append ([threshold, sum (cl), edges, len (cl), cl[0] if len (cl) > 0 else 0, cl[1] if len (cl) > 1 else 0,0.])
-            max_clusters[0] = max (max_clusters[0], len (cl))
+            if nnodes > 0:
+                profile.append ([threshold, sum (cl), edges, len (cl), cl[0] if len (cl) > 0 else 0, cl[1] if len (cl) > 1 else 0,0.])
+                max_clusters[0] = max (max_clusters[0], len (cl))
             print('\rEvaluating distance threshold %8.5f %d %d' % (threshold, max_clusters[0], len (cl)), end = '\r', file = sys.stderr)
 
             #print ("%g\t%d\t%d\t%d\t%d\t%d\t%g" % (profile))
