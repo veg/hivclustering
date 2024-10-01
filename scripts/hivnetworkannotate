@@ -46,7 +46,7 @@ def ensure_key (d,key,value = None):
 
     return d[key]
 
-# Construct keys using specified fields and delimiter from _keying_ field in schema 
+# Construct keys using specified fields and delimiter from keying field in schema 
 def construct_key(record, fields, delimiter):
     try:
         return delimiter.join([str(record[field]) for field in fields])
@@ -130,15 +130,12 @@ else:
         ensure_key(d, 'enum')
 
     # Check for _keying_ value
-    key_fields = fields_file_json.get('keying', {}).get('fields', [])
+    key_fields = fields_file_json.get('keying', {}).get('fields', ['ehars_uid'])
     key_delimiter = fields_file_json.get('keying', {}).get('delimiter', '~')
 
     #Filter out items that don't have a label
     fields_file_json = {k : v for k,v in fields_file_json.items() if "label" in v.keys()}
     field_settings = [[k, v["label"], v["type"], ""] for k,v in fields_file_json.items()]
-
-    # Ensure each item has a key
-
 
 
 for key_pair in field_settings:
