@@ -46,6 +46,31 @@ def ensure_key (d,key,value = None):
 
     return d[key]
 
+# Construct keys using specified fields and delimiter from keying field in schema 
+def construct_key(record, fields, delimiter):
+    try:
+        return delimiter.join([str(record[field]) for field in fields])
+    except KeyError as e:
+        print(f"Missing field {e} in record {record}")
+        return None
+
+def construct_node_key_from_schema(node_id, schema_key_fields, delimiter):
+
+    node = dict(zip(schema_key_fields, node_id.split(delimiter)))
+    key_parts = []
+    for field in schema_key_fields:
+
+        # Assume each node's 'id' contains a delimiter-separated string of fields
+        # Extract the value corresponding to each field
+        field_value = node.get(field, None)
+
+        if field_value is not None:
+            key_parts.append(str(field_value))
+        else:
+            print(f"Field '{field}' not found in node: {node}")
+            return None  # Return None if any key field is missing
+    return delimiter.join(key_parts)
+
 #-------------------------------------------------------------------------------
 
 
@@ -84,6 +109,9 @@ network_attribute_key = "patient_attribute_schema"
 node_attribute_key    = "patient_attributes"
 inject_missing_value  = import_settings.missing
 
+key_fields = ['ehars_uid'];
+key_delimiter = '~';
+
 ensure_key (network_json, network_attribute_key)
 
 field_transformations = {}
@@ -100,11 +128,14 @@ else:
     fields_file_json = json.load(import_settings.fields_file)
     for key, d in fields_file_json.items():
         ensure_key(d, 'enum')
+
+    # Check for _keying_ value
+    key_fields = fields_file_json.get('keying', {}).get('fields', ['ehars_uid'])
+    key_delimiter = fields_file_json.get('keying', {}).get('delimiter', '~')
+
     #Filter out items that don't have a label
     fields_file_json = {k : v for k,v in fields_file_json.items() if "label" in v.keys()}
     field_settings = [[k, v["label"], v["type"], ""] for k,v in fields_file_json.items()]
-
-    # Ensure each item has a key
 
 
 for key_pair in field_settings:
@@ -129,7 +160,11 @@ total_records = 0
 if import_settings.attributes: # JSON input
     to_import = json.load (import_settings.attributes)
     #If a list of items, then key by ehars_uid
-    to_import = { v['ehars_uid']: v for v in to_import}
+    to_import = {
+        construct_key(v, key_fields, key_delimiter): v 
+        for v in to_import 
+        if construct_key(v, key_fields, key_delimiter)
+    }
 else: # TSV import
     if import_settings.tab:
         csv_reader = csv.reader (import_settings.tab, delimiter = '\t')
@@ -160,32 +195,34 @@ else: # TSV import
 id_mapper = lambda x: x
 
 nodes_indexed_by_id = {}
-for n in network_json ["Nodes"]:
-    nodes_indexed_by_id [n['id']] = n
+# Index nodes by their constructed key, rather than their id
+for n in network_json["Nodes"]:
+    node_key = construct_node_key_from_schema(n['id'],  key_fields, key_delimiter)
+    nodes_indexed_by_id[node_key] = n
     for f, s in uninjected_set.items():
-        s.add (n['id'])
+        s.add(n['id'])  # Track uninjected nodes
     if import_settings.clear:
         if node_attribute_key in n:
-            del n[node_attribute_key]
+            del n[node_attribute_key]  # Clear attributes if requested
 
-for n, values in to_import.items():
-    node_id = id_mapper (n)
-    if node_id in nodes_indexed_by_id:
-        node_dict = ensure_key (nodes_indexed_by_id[node_id], node_attribute_key)
+# Now match nodes by the key constructed from the input data
+for node_key, values in to_import.items():
+    if node_key in nodes_indexed_by_id:  # Match by the constructed key
+        node_dict = ensure_key(nodes_indexed_by_id[node_key], node_attribute_key)
         for k, val in values.items():
             if k in field_transformations:
-                store_this = field_transformations[k] (val)
+                store_this = field_transformations[k](val)
                 if store_this is not None and node_dict is not None:
                     node_dict[field_names[k]] = store_this
-                    if node_id in uninjected_set[field_names[k]]:
-                        uninjected_set[field_names[k]].remove (node_id)
+                    if nodes_indexed_by_id[node_key]['id'] in uninjected_set[field_names[k]]:
+                        uninjected_set[field_names[k]].remove(nodes_indexed_by_id[node_key]['id'])
 
 print ("\nImport summary", file = sys.stderr)
 print ("\t Records in file  : %d" % total_records, file = sys.stderr)
 print ("\t Nodes in network : %d" % len(network_json ["Nodes"]), file = sys.stderr)
 
 for k, v in uninjected_set.items():
-    print ("\t Field '%s'  : %d records imported" % (k, len(network_json ["Nodes"])-len (v)), file = sys.stderr)
+    print ("\t Field '%s'  : %d records imported" % (k, len(network_json ["Nodes"]) -len (v)), file = sys.stderr)
     
 
 print ("\n", file = sys.stderr)
