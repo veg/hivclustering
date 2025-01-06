@@ -72,7 +72,13 @@ def make_hiv_network():
 
         
         network_info['Settings']['compact_json'] = True if settings().compact_json else False
-        network_info['Settings']['created'] = datetime.datetime.now (tz=datetime.timezone.utc).isoformat()
+        created_stamp = datetime.datetime.now (tz=datetime.timezone.utc)
+        if settings().created_stamp:
+             try:
+                created_stamp = datetime.datetime.strptime (settings().created_stamp, "%Y%m%d").replace(tzinfo=datetime.timezone.utc)
+             except:
+                pass
+        network_info['Settings']['created'] = created_stamp.isoformat()
 
         nodes = []
         

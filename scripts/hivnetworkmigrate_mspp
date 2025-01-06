@@ -1,0 +1,94 @@
+#!/usr/bin/env python3
+
+""" This scripts take a JSON network file (v1 data), and the list of underlying sequences
+from a dataqc v1 (ID = eHARS) and a dataqc v2 (ID = eHARS | sequence ID), attempts
+to match sequences by ID and sequence, and updates the v1 network to have eHARS | sequence ID ids 
+for nodes
+
+This enables -P mode for hivnetworkcsv to work better
+
+Author:
+    Sergei L Kosakovsky Pond (spond@temple.edu)
+
+Version:
+    v0.0.1 (2024-11-30)
+
+
+"""
+
+import csv
+import argparse
+import sys
+import json
+import re
+import datetime
+import functools
+from hivclustering.networkbuild import *
+from Bio import SeqIO
+
+
+#-------------------------------------------------------------------------------
+
+
+arguments = argparse.ArgumentParser(description='Try to rename V1 nodes to match V2 sequences if possible.')
+
+arguments.add_argument  ('-o', '--output', help    = 'Output the annotated JSON network file to', nargs = '?', type = argparse.FileType('w'), default = sys.stdout)
+
+arguments.add_argument  ('-n', '--network',   help    = 'The input network file to process', nargs = '?', type = argparse.FileType('r'), default = sys.stdin)
+
+arguments.add_argument  ('-v1', '--version1',   help    = 'Version 1 FASTA file', type = argparse.FileType('r'), required = True)
+arguments.add_argument  ('-v2', '--version2',   help    = 'Version 2 FASTA file', type = argparse.FileType('r'), required = True)
+
+import_settings = arguments.parse_args()
+
+
+results_json = json.load (import_settings.network)
+network_json    = ht_process_network_json(results_json)
+
+
+v1_sequences = {}
+# FASTA -> IDs
+
+
+for record in SeqIO.parse(import_settings.version1, "fasta"):
+    seq = str (record.seq)
+    if seq in v1_sequences:
+        v1_sequences[seq].append (record.id)
+    else:
+        v1_sequences[seq] = [record.id]
+    
+# Read multiple sequences from a FASTA file
+
+v1_to_v2 = {}
+
+
+for record in SeqIO.parse(import_settings.version2, "fasta"):
+    seq = str (record.seq)
+    entity_id = record.id.split ('|')[0]
+    if seq in v1_sequences:
+        v1_seqs = v1_sequences[seq]
+        if len (v1_seqs) == 1:
+            if v1_seqs[0] == entity_id:
+                if entity_id in v1_to_v2:
+                    pass
+                else:   
+                    v1_to_v2[entity_id] = record.id
+        else:
+            try:
+                v1i = v1_seqs.index (entity_id)
+                if entity_id in v1_to_v2:
+                    pass
+                else:   
+                    v1_to_v2[entity_id] = record.id
+            except:
+                pass
+                
+for n in network_json["Nodes"]:
+    if n["id"] in v1_to_v2:
+        n["id"] = v1_to_v2[n["id"]]
+        
+if 'Settings' in network_json and 'compact_json' in network_json['Settings'] and network_json['Settings']['compact_json']:
+     ht_compress_network_json (network_json)
+    
+
+json.dump(network_json, import_settings.output, indent=2, separators=(',', ':'))

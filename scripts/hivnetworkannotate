@@ -55,7 +55,6 @@ def construct_key(record, fields, delimiter):
         return None
 
 def construct_node_key_from_schema(node_id, schema_key_fields, delimiter):
-
     node = dict(zip(schema_key_fields, node_id.split(delimiter)))
     key_parts = []
     for field in schema_key_fields:
@@ -178,16 +177,26 @@ else: # TSV import
         index_on = fields.index (import_settings.index)
         if index_on < 0:
             raise "Invalid field to index on (%s)" % import_settings.index
-
+        index_on = lambda L : L[index_on]
+    else:
+        if import_settings.fields_file:
+             indices = []
+             for f in key_fields:
+                indices.append (fields.index (f))
+                if indices[-1] < 0:
+                    raise "Invalid field to index on (%s)" % f
+             index_on = lambda L : key_delimiter.join ([L[k] for k in indices])
+    
     to_import = {}
 
     try:
         for line in csv_reader:
-            to_import [line[index_on]] = {}
+            line_index = index_on (line)
+            to_import [line_index] = {}
             total_records += 1
             for i, k in enumerate (line):
                 if i != index_on:
-                     to_import [line[index_on]][fields[i]] = k
+                     to_import [line_index][fields[i]] = k
     except IndexError as e:
         print (i, index_on, line, fields)
         raise
