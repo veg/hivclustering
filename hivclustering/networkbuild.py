@@ -668,20 +668,41 @@ def build_a_network(extra_arguments = None):
 
         min_cluster_size = run_settings.min_profile_size
         
+        # Pre-read CSV to get all unique node IDs for singleton calculation
+        all_node_ids = set()
+        if run_settings.auto_prof is not None:
+            import csv
+            # Save current position and read CSV to get all node IDs
+            input_file = run_settings.input[0]
+            current_pos = input_file.tell()
+            input_file.seek(0)
+            
+            reader = csv.reader(input_file)
+            header = next(reader)  # Skip header
+            for row in reader:
+                if len(row) >= 2:
+                    all_node_ids.add(row[0])
+                    all_node_ids.add(row[1])
+            
+            # Reset file position for main processing
+            input_file.seek(current_pos)
 
         def network_report (threshold, network, max_clusters = [0]):
-            # Ensure clusters are computed properly for singleton detection
-            network.compute_clusters(singletons="include")
-            
             clusters = network.retrieve_clusters(singletons=False)
-            clusters_with_singletons = network.retrieve_clusters(singletons=True)
             edges = len (network.edges)
             cl = [k for k in sorted ([len (c) for c in clusters.values()], reverse = True) if k >= min_cluster_size]
             nnodes = sum (cl)
             
-            # Count singleton nodes (clusters of size 1)
-            singleton_count = sum(1 for cluster in clusters_with_singletons.values() if len(cluster) == 1)
-            
+            # Calculate singletons: nodes in CSV that have no connections at this threshold
+            singleton_count = 0
+            if run_settings.auto_prof is not None:
+                nodes_in_clusters = set()
+                for cluster in clusters.values():
+                    for node in cluster:
+                        nodes_in_clusters.add(node.id)
+                        
+                # Count nodes that exist in CSV but are not in any cluster
+                singleton_count = len(all_node_ids) - len(nodes_in_clusters)
             
             if nnodes > 0 or singleton_count > 0:
                 profile.append ([threshold, sum (cl), edges, len (cl), cl[0] if len (cl) > 0 else 0, cl[1] if len (cl) > 1 else 0, 0., singleton_count])

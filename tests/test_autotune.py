@@ -77,26 +77,25 @@ E|01012020,F|01012020,0.003
                 # (nodes are added as more edges become valid)
 
     def test_singleton_count_accuracy(self):
-        """Test that singleton counts are accurate at different thresholds"""
-        # Create a simple network with clear singleton nodes
-        # Z and AA are isolated nodes (singletons)
-        more_complex_data = """ID1,ID2,Distance
+        """Test that singleton counts are accurate and decrease as threshold increases"""
+        # Create test data with known singleton behavior
+        test_data = """ID1,ID2,Distance
 A|01012020,B|01012020,0.001
-B|01012020,C|01012020,0.002
-D|01012020,E|01012020,0.015
-F|01012020,G|01012020,0.025
+C|01012020,D|01012020,0.01
+E|01012020,F|01012020,0.02
+G|01012020,H|01012020,0.05
 """
         
         with tempfile.NamedTemporaryFile(mode='w', suffix='.csv', delete=False) as f:
-            f.write(more_complex_data)
-            complex_file = f.name
+            f.write(test_data)
+            test_file = f.name
         
         try:
             cmd = [
                 sys.executable,
                 os.path.join(os.path.dirname(__file__), '..', 'scripts', 'hivnetworkcsv'),
-                '-i', complex_file,
-                '-t', '0.05',
+                '-i', test_file,
+                '-t', '0.1',
                 '-A', '0.0001'
             ]
             
@@ -108,18 +107,38 @@ F|01012020,G|01012020,0.025
             
             self.assertIn('Singletons', header, "Singletons column not found in header")
             
-            # Just verify the column exists and has valid data
+            # Verify decreasing singleton pattern and total node conservation
+            threshold_idx = header.index('Threshold')
+            nodes_idx = header.index('Nodes')
             singletons_idx = header.index('Singletons')
+            
+            prev_singletons = None
+            total_nodes = 8  # A,B,C,D,E,F,G,H from the test data
             
             for line in lines[1:]:
                 if line.strip():
                     cols = line.split('\t')
+                    threshold = float(cols[threshold_idx])
+                    nodes = int(cols[nodes_idx])
                     singletons = int(cols[singletons_idx])
+                    
+                    # Verify singletons are non-negative
                     self.assertGreaterEqual(singletons, 0, 
-                                          "Singletons count should be non-negative")
+                                          f"Singletons count should be non-negative at threshold {threshold}")
+                    
+                    # Verify total node conservation
+                    self.assertEqual(nodes + singletons, total_nodes,
+                                   f"At threshold {threshold}: nodes ({nodes}) + singletons ({singletons}) should equal {total_nodes}")
+                    
+                    # Verify singletons generally decrease (allow for some variation)
+                    if prev_singletons is not None:
+                        self.assertLessEqual(singletons, prev_singletons + 2,
+                                           f"Singletons should generally decrease: {prev_singletons} → {singletons} at threshold {threshold}")
+                    
+                    prev_singletons = singletons
                     
         finally:
-            os.unlink(complex_file)
+            os.unlink(test_file)
 
 
 if __name__ == '__main__':
