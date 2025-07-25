@@ -422,16 +422,28 @@ def get_fasta_ids(fn):
 #-------------------------------------------------------------------------------
 
 def compute_threshold_scores (full_records):
+    if not full_records:
+        return
 
     def cluster_scaler (c):
+        if cluster_max == cluster_min:
+            return 0.5
         x = (cluster_max-c) / (cluster_max - cluster_min)
         return 1 - exp (- exp (-25*x + 3))
 
     def zscores (vector):
+        if len(vector) == 0:
+            return []
         mean = sum (vector) / len (vector)
+        if len(vector) == 1:
+            return [0.]
         sigma = sqrt (sum ([(v-mean)**2 for v in vector]) / (len (vector)-1))
+        if sigma == 0:
+            return [0.] * len(vector)
         zs = [(v-mean)/sigma for v in vector]
         zm = max (zs)
+        if zm == 0:
+            return [0.] * len(vector)
         return [z/zm for z in zs]
 
     records = []
@@ -658,17 +670,26 @@ def build_a_network(extra_arguments = None):
         
 
         def network_report (threshold, network, max_clusters = [0]):
+            # Ensure clusters are computed properly for singleton detection
+            network.compute_clusters(singletons="include")
+            
             clusters = network.retrieve_clusters(singletons=False)
+            clusters_with_singletons = network.retrieve_clusters(singletons=True)
             edges = len (network.edges)
             cl = [k for k in sorted ([len (c) for c in clusters.values()], reverse = True) if k >= min_cluster_size]
             nnodes = sum (cl)
-            if nnodes > 0:
-                profile.append ([threshold, sum (cl), edges, len (cl), cl[0] if len (cl) > 0 else 0, cl[1] if len (cl) > 1 else 0,0.])
+            
+            # Count singleton nodes (clusters of size 1)
+            singleton_count = sum(1 for cluster in clusters_with_singletons.values() if len(cluster) == 1)
+            
+            
+            if nnodes > 0 or singleton_count > 0:
+                profile.append ([threshold, sum (cl), edges, len (cl), cl[0] if len (cl) > 0 else 0, cl[1] if len (cl) > 1 else 0, 0., singleton_count])
                 max_clusters[0] = max (max_clusters[0], len (cl))
             print('\rEvaluating distance threshold %8.5f %d %d' % (threshold, max_clusters[0], len (cl)), end = '\r', file = sys.stderr)
 
             #print ("%g\t%d\t%d\t%d\t%d\t%d\t%g" % (profile))
-            sys.setrecursionlimit(max(sys.getrecursionlimit(), nnodes))
+            sys.setrecursionlimit(max(sys.getrecursionlimit(), max(1, nnodes)))
             return run_settings.auto_prof is not None or len (cl) == 0 or len (cl) > max_clusters[0] // 4
 
         network.read_from_csv_file_ordered(run_settings.input, network_report, formatter, run_settings.threshold if run_settings.threshold is not None else 1., 'BULK', run_settings.auto_prof if run_settings.auto_prof else 1e-5, filter = edge_filter_function)
@@ -677,9 +698,9 @@ def build_a_network(extra_arguments = None):
 
 
         if run_settings.auto_prof is not None:
-            print ("\t".join (["Threshold","Nodes","Edges","Clusters","LargestCluster","SecondLargestCluster","Score"]))
+            print ("\t".join (["Threshold","Nodes","Edges","Clusters","LargestCluster","SecondLargestCluster","Score","Singletons"]))
             for r in profile:
-                print ("%g\t%d\t%d\t%d\t%d\t%d\t%g" % tuple(r))
+                print ("%g\t%d\t%d\t%d\t%d\t%d\t%g\t%d" % tuple(r))
             sys.exit (0)
         else:
             rec = [[k[0],k[-1]] for k in sorted (profile, key = lambda r : r[-1], reverse = True) if k [-1] >= 1.9]
