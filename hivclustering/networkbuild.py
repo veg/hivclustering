@@ -735,17 +735,27 @@ def build_a_network(extra_arguments = None):
                     suggested_span = max (rec, key = lambda x: x[0])[0] - min (rec, key = lambda x: x[0])[0]
                     mean_diff = sum ([k[1] - profile[i-1][1] for i,k in enumerate(profile[1:])]) / (len (profile)-1)
                     if mean_diff == 0.0:
-                        pass
+                        # For low-diversity datasets (like HCV), when mean_diff is 0, 
+                        # select the highest scoring threshold among candidates
+                        run_settings.threshold = rec[0][0]
                     elif (suggested_span / mean_diff < log (len (profile))):
                         run_settings.threshold = rec[0][0]
 
             if run_settings.threshold is None:
                 if len (rec) == 0:
-                    best_guess = sorted (profile, key = lambda r : r[-1], reverse = True)
-                    print ('ERROR : Could not automatically determine a distance threshold; no sufficiently strong outlier, best guess %g (score %g)' % (best_guess[0][0], best_guess[0][-1]) , file = sys.stderr)
+                    # No thresholds meet the strict 1.9 score requirement
+                    # For low-diversity datasets, use a more relaxed threshold
+                    best_candidates = sorted (profile, key = lambda r : r[6], reverse = True)
+                    if len(best_candidates) > 0 and best_candidates[0][6] > 0:
+                        # If the best score is positive, use it
+                        run_settings.threshold = best_candidates[0][0]
+                        print ('Selected distance threshold of %g (relaxed criteria for low-diversity data, score %g)' % (run_settings.threshold, best_candidates[0][6]), file = sys.stderr)
+                    else:
+                        print ('ERROR : Could not automatically determine a distance threshold; no sufficiently strong outlier, best guess %g (score %g)' % (best_candidates[0][0], best_candidates[0][6]) , file = sys.stderr)
+                        sys.exit (1)
                 else:
                     print ('ERROR : Multiple candidate thresholds: %s', ', '.join ([str (r[0]) for r in rec]), file = sys.stderr)
-                sys.exit (1)
+                    sys.exit (1)
             else:
                 print ("Selected distance threshold of % g" % run_settings.threshold, file = sys.stderr)
                 to_delete = set ()

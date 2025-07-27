@@ -140,6 +140,62 @@ G|01012020,H|01012020,0.05
         finally:
             os.unlink(test_file)
 
+    def test_auto_threshold_low_diversity_data(self):
+        """Test that auto threshold works with low-diversity data like HCV"""
+        # Create HCV-like low diversity test data
+        test_data = """ID1,ID2,Distance
+seq1,seq2,0.001
+seq1,seq3,0.0015
+seq2,seq3,0.002
+seq3,seq4,0.0025
+seq4,seq5,0.003
+seq5,seq6,0.0035
+seq6,seq7,0.004
+seq7,seq8,0.0045
+seq8,seq9,0.005
+seq9,seq10,0.0055
+seq10,seq11,0.006
+seq11,seq12,0.0065
+seq12,seq13,0.007
+seq13,seq14,0.0075
+seq14,seq15,0.008
+seq15,seq16,0.0085
+seq16,seq17,0.009
+seq17,seq18,0.0095
+seq18,seq19,0.010
+seq19,seq20,0.0105
+"""
+        
+        with tempfile.NamedTemporaryFile(mode='w', suffix='.csv', delete=False) as f:
+            f.write(test_data)
+            test_file = f.name
+        
+        try:
+            cmd = [
+                sys.executable,
+                os.path.join(os.path.dirname(__file__), '..', 'scripts', 'hivnetworkcsv'),
+                '-i', test_file,
+                '-f', 'plain',
+                '-t', 'auto'
+            ]
+            
+            result = subprocess.run(cmd, capture_output=True, text=True)
+            
+            # Should see the "Selected distance threshold" message in stderr, indicating successful threshold selection
+            self.assertIn("Selected distance threshold", result.stderr,
+                         "Should successfully select a threshold for low-diversity data")
+            
+            # Should NOT see the old error message
+            self.assertNotIn("best guess 1e-05 (score 0)", result.stderr,
+                           "Should not fall back to default threshold for valid low-diversity data")
+            
+            # Should see the relaxed criteria message for low-diversity data
+            self.assertIn("relaxed criteria for low-diversity data", result.stderr,
+                         "Should indicate relaxed criteria were used for low-diversity data")
+                           
+        finally:
+            os.unlink(test_file)
+
 
 if __name__ == '__main__':
     unittest.main()
