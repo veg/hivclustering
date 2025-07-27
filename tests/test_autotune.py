@@ -60,7 +60,9 @@ E|01012020,F|01012020,0.003
                 self.assertTrue(singletons_value.isdigit(), 
                                f"Line {i} has non-numeric singleton value: {singletons_value}")
                 
-                threshold = float(columns[0].rstrip('*'))  # Remove asterisk if present
+                if columns[0] == "RECOMMENDED":
+                    continue  # Skip RECOMMENDED row for this test
+                threshold = float(columns[0])
                 nodes = int(columns[1])
                 singletons = int(singletons_value)
                 
@@ -118,7 +120,9 @@ G|01012020,H|01012020,0.05
             for line in lines[1:]:
                 if line.strip():
                     cols = line.split('\t')
-                    threshold = float(cols[threshold_idx].rstrip('*'))  # Remove asterisk if present
+                    if cols[threshold_idx] == "RECOMMENDED":
+                        continue  # Skip RECOMMENDED row for this test
+                    threshold = float(cols[threshold_idx])
                     nodes = int(cols[nodes_idx])
                     singletons = int(cols[singletons_idx])
                     
@@ -199,7 +203,7 @@ seq19,seq20,0.0105
             os.unlink(test_file)
 
     def test_auto_profile_shows_recommendation(self):
-        """Test that AUTO-TUNE auto-profile mode shows recommended threshold with asterisk"""
+        """Test that AUTO-TUNE auto-profile mode shows RECOMMENDED row"""
         test_data = """ID1,ID2,Distance
 A|01012020,B|01012020,0.001
 C|01012020,D|01012020,0.002
@@ -225,27 +229,28 @@ G|01012020,H|01012020,0.004
             lines = result.stdout.strip().split('\n')
             self.assertGreater(len(lines), 1, "Should have header and at least one data line")
             
-            # Check that exactly one threshold has an asterisk
-            asterisk_count = 0
+            # Check that there's exactly one RECOMMENDED row
+            recommended_count = 0
+            recommended_row_data = None
             for line in lines[1:]:  # Skip header
                 if line.strip():
                     cols = line.split('\t')
-                    if cols[0].endswith('*'):
-                        asterisk_count += 1
+                    if cols[0] == "RECOMMENDED":
+                        recommended_count += 1
+                        recommended_row_data = cols
             
-            self.assertEqual(asterisk_count, 1, "Exactly one threshold should be marked with asterisk")
+            self.assertEqual(recommended_count, 1, "Should have exactly one RECOMMENDED row")
+            self.assertIsNotNone(recommended_row_data, "Should have found RECOMMENDED row")
             
-            # Verify the recommended threshold makes sense (should be one of the lower thresholds)
-            recommended_threshold = None
-            for line in lines[1:]:
-                if line.strip():
-                    cols = line.split('\t')
-                    if cols[0].endswith('*'):
-                        recommended_threshold = float(cols[0].rstrip('*'))
-                        break
+            # Verify RECOMMENDED row has valid data structure
+            self.assertEqual(len(recommended_row_data), 8, "RECOMMENDED row should have 8 columns")
             
-            self.assertIsNotNone(recommended_threshold, "Should have found a recommended threshold")
-            self.assertLessEqual(recommended_threshold, 0.005, "Recommended threshold should be reasonable for test data")
+            # Verify all numeric columns are valid integers/floats
+            for i in range(1, 8):  # Skip threshold column (index 0)
+                if i == 6:  # Score column can be float
+                    float(recommended_row_data[i])
+                else:  # Other columns should be integers
+                    int(recommended_row_data[i])
                     
         finally:
             os.unlink(test_file)
