@@ -1,0 +1,218 @@
+{"4d_0.2_core.aligned.report": [
+{
+"Threshold": "1e-05", "Nodes": "10", "Edges": "8", "Clusters": "4", "LargestCluster": "3", "SecondLargestCluster": "3", "Score": "0"},
+{
+"Threshold": "0.00177", "Nodes": "21", "Edges": "34", "Clusters": "4", "LargestCluster": "14", "SecondLargestCluster": "3", "Score": "0"},
+{
+"Threshold": "0.00352", "Nodes": "25", "Edges": "69", "Clusters": "2", "LargestCluster": "23", "SecondLargestCluster": "2", "Score": "0"},
+{
+"Threshold": "0.00354", "Nodes": "28", "Edges": "97", "Clusters": "2", "LargestCluster": "26", "SecondLargestCluster": "2", "Score": "0.668684"},
+{
+"Threshold": "0.00528", "Nodes": "33", "Edges": "158", "Clusters": "2", "LargestCluster": "31", "SecondLargestCluster": "2", "Score": "0.138803"},
+{
+"Threshold": "0.0053", "Nodes": "36", "Edges": "183", "Clusters": "3", "LargestCluster": "32", "SecondLargestCluster": "2", "Score": "0.0164214"},
+{
+"Threshold": "0.00532", "Nodes": "36", "Edges": "186", "Clusters": "3", "LargestCluster": "32", "SecondLargestCluster": "2", "Score": "0.30448"},
+{
+"Threshold": "0.00704", "Nodes": "37", "Edges": "206", "Clusters": "3", "LargestCluster": "32", "SecondLargestCluster": "3", "Score": "0.775156"},
+{
+"Threshold": "0.00706", "Nodes": "39", "Edges": "271", "Clusters": "2", "LargestCluster": "37", "SecondLargestCluster": "2", "Score": "1"},
+{
+"Threshold": "0.00708", "Nodes": "40", "Edges": "291", "Clusters": "1", "LargestCluster": "40", "SecondLargestCluster": "0", "Score": "0.537066"},
+{
+"Threshold": "0.00711", "Nodes": "40", "Edges": "298", "Clusters": "1", "LargestCluster": "40", "SecondLargestCluster": "0", "Score": "0.293356"},
+{
+"Threshold": "0.00713", "Nodes": "40", "Edges": "299", "Clusters": "1", "LargestCluster": "40", "SecondLargestCluster": "0", "Score": "0.118426"},
+{
+"Threshold": "0.00882", "Nodes": "41", "Edges": "328", "Clusters": "1", "LargestCluster": "41", "SecondLargestCluster": "0", "Score": "0.0283215"},
+{
+"Threshold": "0.00884", "Nodes": "43", "Edges": "380", "Clusters": "1", "LargestCluster": "43", "SecondLargestCluster": "0", "Score": "0.0258266"},
+{
+"Threshold": "0.00886", "Nodes": "45", "Edges": "407", "Clusters": "1", "LargestCluster": "45", "SecondLargestCluster": "0", "Score": "0.00499093"},
+{
+"Threshold": "0.00888", "Nodes": "45", "Edges": "421", "Clusters": "1", "LargestCluster": "45", "SecondLargestCluster": "0", "Score": "-0.0146473"},
+{
+"Threshold": "0.0089", "Nodes": "45", "Edges": "423", "Clusters": "1", "LargestCluster": "45", "SecondLargestCluster": "0", "Score": "-0.0295635"},
+{
+"Threshold": "0.01059", "Nodes": "45", "Edges": "426", "Clusters": "1", "LargestCluster": "45", "SecondLargestCluster": "0", "Score": "-0.03202"},
+{
+"Threshold": "0.01061", "Nodes": "45", "Edges": "453", "Clusters": "1", "LargestCluster": "45", "SecondLargestCluster": "0", "Score": "-0.0272671"},
+{
+"Threshold": "0.01063", "Nodes": "45", "Edges": "507", "Clusters": "1", "LargestCluster": "45", "SecondLargestCluster": "0", "Score": "-0.0225142"},
+{
+"Threshold": "0.01065", "Nodes": "46", "Edges": "533", "Clusters": "1", "LargestCluster": "46", "SecondLargestCluster": "0", "Score": "-0.026138"},
+{
+"Threshold": "0.01067", "Nodes": "46", "Edges": "547", "Clusters": "1", "LargestCluster": "46", "SecondLargestCluster": "0", "Score": "-0.0297219"},
+{
+"Threshold": "0.01069", "Nodes": "46", "Edges": "548", "Clusters": "1", "LargestCluster": "46", "SecondLargestCluster": "0", "Score": "-0.0332667"},
+{
+"Threshold": "0.01238", "Nodes": "46", "Edges": "557", "Clusters": "1", "LargestCluster": "46", "SecondLargestCluster": "0", "Score": "-0.036773"},
+{
+"Threshold": "0.0124", "Nodes": "46", "Edges": "575", "Clusters": "1", "LargestCluster": "46", "SecondLargestCluster": "0", "Score": "-0.036773"},
+{
+"Threshold": "0.01242", "Nodes": "46", "Edges": "641", "Clusters": "1", "LargestCluster": "46", "SecondLargestCluster": "0", "Score": "-0.036773"},
+{
+"Threshold": "0.01244", "Nodes": "46", "Edges": "653", "Clusters": "1", "LargestCluster": "46", "SecondLargestCluster": "0", "Score": "-0.036773"},
+{
+"Threshold": "0.01246", "Nodes": "46", "Edges": "662", "Clusters": "1", "LargestCluster": "46", "SecondLargestCluster": "0", "Score": "-0.036773"},
+{
+"Threshold": "0.01248", "Nodes": "46", "Edges": "666", "Clusters": "1", "LargestCluster": "46", "SecondLargestCluster": "0", "Score": "-0.036773"},
+{
+"Threshold": "0.0125", "Nodes": "46", "Edges": "671", "Clusters": "1", "LargestCluster": "46", "SecondLargestCluster": "0", "Score": "-0.036773"},
+{
+"Threshold": "0.01255", "Nodes": "46", "Edges": "673", "Clusters": "1", "LargestCluster": "46", "SecondLargestCluster": "0", "Score": "-0.036773"},
+{
+"Threshold": "0.01417", "Nodes": "46", "Edges": "675", "Clusters": "1", "LargestCluster": "46", "SecondLargestCluster": "0", "Score": "-0.036773"},
+{
+"Threshold": "0.01419", "Nodes": "46", "Edges": "699", "Clusters": "1", "LargestCluster": "46", "SecondLargestCluster": "0", "Score": "-0.036773"},
+{
+"Threshold": "0.01421", "Nodes": "46", "Edges": "734", "Clusters": "1", "LargestCluster": "46", "SecondLargestCluster": "0", "Score": "-0.036773"},
+{
+"Threshold": "0.01423", "Nodes": "46", "Edges": "746", "Clusters": "1", "LargestCluster": "46", "SecondLargestCluster": "0", "Score": "-0.036773"},
+{
+"Threshold": "0.01425", "Nodes": "46", "Edges": "778", "Clusters": "1", "LargestCluster": "46", "SecondLargestCluster": "0", "Score": "-0.036773"},
+{
+"Threshold": "0.01427", "Nodes": "46", "Edges": "791", "Clusters": "1", "LargestCluster": "46", "SecondLargestCluster": "0", "Score": "-0.036773"},
+{
+"Threshold": "0.01431", "Nodes": "46", "Edges": "794", "Clusters": "1", "LargestCluster": "46", "SecondLargestCluster": "0", "Score": "-0.036773"},
+{
+"Threshold": "0.0144", "Nodes": "46", "Edges": "795", "Clusters": "1", "LargestCluster": "46", "SecondLargestCluster": "0", "Score": "-0.036773"},
+{
+"Threshold": "0.01597", "Nodes": "46", "Edges": "801", "Clusters": "1", "LargestCluster": "46", "SecondLargestCluster": "0", "Score": "-0.036773"},
+{
+"Threshold": "0.01599", "Nodes": "46", "Edges": "826", "Clusters": "1", "LargestCluster": "46", "SecondLargestCluster": "0", "Score": "-0.036773"},
+{
+"Threshold": "0.01601", "Nodes": "46", "Edges": "856", "Clusters": "1", "LargestCluster": "46", "SecondLargestCluster": "0", "Score": "-0.036773"},
+{
+"Threshold": "0.01603", "Nodes": "46", "Edges": "879", "Clusters": "1", "LargestCluster": "46", "SecondLargestCluster": "0", "Score": "-0.036773"},
+{
+"Threshold": "0.01605", "Nodes": "46", "Edges": "894", "Clusters": "1", "LargestCluster": "46", "SecondLargestCluster": "0", "Score": "-0.036773"},
+{
+"Threshold": "0.01608", "Nodes": "46", "Edges": "900", "Clusters": "1", "LargestCluster": "46", "SecondLargestCluster": "0", "Score": "-0.036773"},
+{
+"Threshold": "0.0161", "Nodes": "46", "Edges": "902", "Clusters": "1", "LargestCluster": "46", "SecondLargestCluster": "0", "Score": "-0.036773"},
+{
+"Threshold": "0.01614", "Nodes": "46", "Edges": "903", "Clusters": "1", "LargestCluster": "46", "SecondLargestCluster": "0", "Score": "-0.036773"},
+{
+"Threshold": "0.01617", "Nodes": "46", "Edges": "904", "Clusters": "1", "LargestCluster": "46", "SecondLargestCluster": "0", "Score": "-0.036773"},
+{
+"Threshold": "0.01778", "Nodes": "46", "Edges": "905", "Clusters": "1", "LargestCluster": "46", "SecondLargestCluster": "0", "Score": "-0.036773"},
+{
+"Threshold": "0.0178", "Nodes": "46", "Edges": "928", "Clusters": "1", "LargestCluster": "46", "SecondLargestCluster": "0", "Score": "-0.036773"},
+{
+"Threshold": "0.01783", "Nodes": "46", "Edges": "949", "Clusters": "1", "LargestCluster": "46", "SecondLargestCluster": "0", "Score": "-0.036773"},
+{
+"Threshold": "0.01785", "Nodes": "46", "Edges": "964", "Clusters": "1", "LargestCluster": "46", "SecondLargestCluster": "0", "Score": "-0.036773"},
+{
+"Threshold": "0.01787", "Nodes": "46", "Edges": "970", "Clusters": "1", "LargestCluster": "46", "SecondLargestCluster": "0", "Score": "-0.036773"},
+{
+"Threshold": "0.01789", "Nodes": "46", "Edges": "972", "Clusters": "1", "LargestCluster": "46", "SecondLargestCluster": "0", "Score": "-0.036773"},
+{
+"Threshold": "0.01793", "Nodes": "46", "Edges": "973", "Clusters": "1", "LargestCluster": "46", "SecondLargestCluster": "0", "Score": "-0.036773"},
+{
+"Threshold": "0.01962", "Nodes": "46", "Edges": "980", "Clusters": "1", "LargestCluster": "46", "SecondLargestCluster": "0", "Score": "-0.036773"},
+{
+"Threshold": "0.01964", "Nodes": "46", "Edges": "991", "Clusters": "1", "LargestCluster": "46", "SecondLargestCluster": "0", "Score": "-0.036773"},
+{
+"Threshold": "0.01967", "Nodes": "46", "Edges": "993", "Clusters": "1", "LargestCluster": "46", "SecondLargestCluster": "0", "Score": "-0.036773"},
+{
+"Threshold": "0.0197", "Nodes": "46", "Edges": "998", "Clusters": "1", "LargestCluster": "46", "SecondLargestCluster": "0", "Score": "-0.036773"},
+{
+"Threshold": "0.01974", "Nodes": "46", "Edges": "999", "Clusters": "1", "LargestCluster": "46", "SecondLargestCluster": "0", "Score": "-0.036773"},
+{
+"Threshold": "0.01978", "Nodes": "46", "Edges": "1000", "Clusters": "1", "LargestCluster": "46", "SecondLargestCluster": "0", "Score": "-0.036773"},
+{
+"Threshold": "0.02139", "Nodes": "46", "Edges": "1002", "Clusters": "1", "LargestCluster": "46", "SecondLargestCluster": "0", "Score": "-0.036773"},
+{
+"Threshold": "0.02141", "Nodes": "46", "Edges": "1003", "Clusters": "1", "LargestCluster": "46", "SecondLargestCluster": "0", "Score": "-0.036773"},
+{
+"Threshold": "0.02143", "Nodes": "46", "Edges": "1008", "Clusters": "1", "LargestCluster": "46", "SecondLargestCluster": "0", "Score": "-0.036773"},
+{
+"Threshold": "0.02145", "Nodes": "46", "Edges": "1012", "Clusters": "1", "LargestCluster": "46", "SecondLargestCluster": "0", "Score": "-0.036773"},
+{
+"Threshold": "0.02148", "Nodes": "46", "Edges": "1016", "Clusters": "1", "LargestCluster": "46", "SecondLargestCluster": "0", "Score": "-0.036773"},
+{
+"Threshold": "0.02153", "Nodes": "46", "Edges": "1017", "Clusters": "1", "LargestCluster": "46", "SecondLargestCluster": "0", "Score": "-0.036773"},
+{
+"Threshold": "0.02324", "Nodes": "46", "Edges": "1018", "Clusters": "1", "LargestCluster": "46", "SecondLargestCluster": "0", "Score": "-0.036773"},
+{
+"Threshold": "0.02327", "Nodes": "46", "Edges": "1021", "Clusters": "1", "LargestCluster": "46", "SecondLargestCluster": "0", "Score": "-0.036773"},
+{
+"Threshold": "0.02329", "Nodes": "46", "Edges": "1024", "Clusters": "1", "LargestCluster": "46", "SecondLargestCluster": "0", "Score": "-0.036773"},
+{
+"Threshold": "0.02331", "Nodes": "46", "Edges": "1026", "Clusters": "1", "LargestCluster": "46", "SecondLargestCluster": "0", "Score": "-0.036773"},
+{
+"Threshold": "0.02333", "Nodes": "46", "Edges": "1028", "Clusters": "1", "LargestCluster": "46", "SecondLargestCluster": "0", "Score": "-0.036773"},
+{
+"Threshold": "0.02506", "Nodes": "46", "Edges": "1029", "Clusters": "1", "LargestCluster": "46", "SecondLargestCluster": "0", "Score": "-0.036773"},
+{
+"Threshold": "0.0251", "Nodes": "46", "Edges": "1031", "Clusters": "1", "LargestCluster": "46", "SecondLargestCluster": "0", "Score": "-0.036773"},
+{
+"Threshold": "0.02512", "Nodes": "46", "Edges": "1034", "Clusters": "1", "LargestCluster": "46", "SecondLargestCluster": "0", "Score": "-0.0321234"},
+{
+"Threshold": "0.02518", "Nodes": "46", "Edges": "1035", "Clusters": "1", "LargestCluster": "46", "SecondLargestCluster": "0", "Score": "-0.0274738"},
+{
+"Threshold": "0.0269", "Nodes": "46", "Edges": "1036", "Clusters": "1", "LargestCluster": "46", "SecondLargestCluster": "0", "Score": "-0.0228242"},
+{
+"Threshold": "0.13468", "Nodes": "47", "Edges": "1037", "Clusters": "1", "LargestCluster": "47", "SecondLargestCluster": "0", "Score": "-0.0263679"},
+{
+"Threshold": "0.13706", "Nodes": "47", "Edges": "1041", "Clusters": "1", "LargestCluster": "47", "SecondLargestCluster": "0", "Score": "-0.0298736"},
+{
+"Threshold": "0.13738", "Nodes": "47", "Edges": "1042", "Clusters": "1", "LargestCluster": "47", "SecondLargestCluster": "0", "Score": "-0.0333417"},
+{
+"Threshold": "0.13887", "Nodes": "47", "Edges": "1043", "Clusters": "1", "LargestCluster": "47", "SecondLargestCluster": "0", "Score": "-0.036773"},
+{
+"Threshold": "0.13939", "Nodes": "47", "Edges": "1044", "Clusters": "1", "LargestCluster": "47", "SecondLargestCluster": "0", "Score": "-0.036773"},
+{
+"Threshold": "0.13942", "Nodes": "47", "Edges": "1050", "Clusters": "1", "LargestCluster": "47", "SecondLargestCluster": "0", "Score": "-0.036773"},
+{
+"Threshold": "0.13945", "Nodes": "47", "Edges": "1051", "Clusters": "1", "LargestCluster": "47", "SecondLargestCluster": "0", "Score": "-0.036773"},
+{
+"Threshold": "0.14093", "Nodes": "47", "Edges": "1052", "Clusters": "1", "LargestCluster": "47", "SecondLargestCluster": "0", "Score": "-0.036773"},
+{
+"Threshold": "0.1412", "Nodes": "47", "Edges": "1054", "Clusters": "1", "LargestCluster": "47", "SecondLargestCluster": "0", "Score": "-0.036773"},
+{
+"Threshold": "0.14148", "Nodes": "47", "Edges": "1055", "Clusters": "1", "LargestCluster": "47", "SecondLargestCluster": "0", "Score": "-0.036773"},
+{
+"Threshold": "0.1415", "Nodes": "47", "Edges": "1057", "Clusters": "1", "LargestCluster": "47", "SecondLargestCluster": "0", "Score": "-0.036773"},
+{
+"Threshold": "0.14152", "Nodes": "47", "Edges": "1058", "Clusters": "1", "LargestCluster": "47", "SecondLargestCluster": "0", "Score": "-0.036773"},
+{
+"Threshold": "0.14181", "Nodes": "47", "Edges": "1059", "Clusters": "1", "LargestCluster": "47", "SecondLargestCluster": "0", "Score": "-0.036773"},
+{
+"Threshold": "0.14331", "Nodes": "47", "Edges": "1060", "Clusters": "1", "LargestCluster": "47", "SecondLargestCluster": "0", "Score": "-0.036773"},
+{
+"Threshold": "0.14358", "Nodes": "47", "Edges": "1062", "Clusters": "1", "LargestCluster": "47", "SecondLargestCluster": "0", "Score": "-0.036773"},
+{
+"Threshold": "0.1436", "Nodes": "47", "Edges": "1063", "Clusters": "1", "LargestCluster": "47", "SecondLargestCluster": "0", "Score": "-0.036773"},
+{
+"Threshold": "0.14366", "Nodes": "47", "Edges": "1065", "Clusters": "1", "LargestCluster": "47", "SecondLargestCluster": "0", "Score": "-0.036773"},
+{
+"Threshold": "0.14386", "Nodes": "47", "Edges": "1067", "Clusters": "1", "LargestCluster": "47", "SecondLargestCluster": "0", "Score": "-0.036773"},
+{
+"Threshold": "0.14392", "Nodes": "47", "Edges": "1068", "Clusters": "1", "LargestCluster": "47", "SecondLargestCluster": "0", "Score": "-0.036773"},
+{
+"Threshold": "0.14426", "Nodes": "47", "Edges": "1069", "Clusters": "1", "LargestCluster": "47", "SecondLargestCluster": "0", "Score": "-0.036773"},
+{
+"Threshold": "0.14428", "Nodes": "47", "Edges": "1070", "Clusters": "1", "LargestCluster": "47", "SecondLargestCluster": "0", "Score": "-0.036773"},
+{
+"Threshold": "0.14568", "Nodes": "47", "Edges": "1071", "Clusters": "1", "LargestCluster": "47", "SecondLargestCluster": "0", "Score": "-0.036773"},
+{
+"Threshold": "0.14596", "Nodes": "47", "Edges": "1073", "Clusters": "1", "LargestCluster": "47", "SecondLargestCluster": "0", "Score": "-0.036773"},
+{
+"Threshold": "0.14602", "Nodes": "47", "Edges": "1074", "Clusters": "1", "LargestCluster": "47", "SecondLargestCluster": "0", "Score": "-0.036773"},
+{
+"Threshold": "0.14774", "Nodes": "47", "Edges": "1075", "Clusters": "1", "LargestCluster": "47", "SecondLargestCluster": "0", "Score": "-0.036773"},
+{
+"Threshold": "0.1478", "Nodes": "47", "Edges": "1076", "Clusters": "1", "LargestCluster": "47", "SecondLargestCluster": "0", "Score": "-0.036773"},
+{
+"Threshold": "0.14841", "Nodes": "47", "Edges": "1077", "Clusters": "1", "LargestCluster": "47", "SecondLargestCluster": "0", "Score": "-0.036773"},
+{
+"Threshold": "0.14848", "Nodes": "47", "Edges": "1078", "Clusters": "1", "LargestCluster": "47", "SecondLargestCluster": "0", "Score": "-0.036773"},
+{
+"Threshold": "0.15051", "Nodes": "47", "Edges": "1079", "Clusters": "1", "LargestCluster": "47", "SecondLargestCluster": "0", "Score": "-0.250655"},
+{
+"Threshold": "0.15054", "Nodes": "47", "Edges": "1080", "Clusters": "1", "LargestCluster": "47", "SecondLargestCluster": "0", "Score": "-0.464537"},
+{
+"Threshold": "0.15228", "Nodes": "47", "Edges": "1081", "Clusters": "1", "LargestCluster": "47", "SecondLargestCluster": "0", "Score": "0"}
+]}

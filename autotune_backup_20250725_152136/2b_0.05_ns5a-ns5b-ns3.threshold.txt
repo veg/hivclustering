@@ -1,0 +1,15 @@
+Evaluating distance threshold  0.00001 1 1Evaluating distance threshold  0.06745 1 1Evaluating distance threshold  0.06868 1 1Evaluating distance threshold  0.07465 1 1Evaluating distance threshold  0.07536 1 1Evaluating distance threshold  0.07845 1 1Evaluating distance threshold  0.08004 1 1Evaluating distance threshold  0.08079 1 1Evaluating distance threshold  0.08150 1 1Evaluating distance threshold  0.08450 1 1Traceback (most recent call last):
+  File "/home/sweaver/hcv/venv/bin/hivnetworkcsv", line 622, in <module>
+    make_hiv_network()
+  File "/home/sweaver/hcv/venv/bin/hivnetworkcsv", line 20, in make_hiv_network
+    network = build_a_network()
+              ^^^^^^^^^^^^^^^^^
+  File "/home/sweaver/hcv/venv/lib64/python3.11/site-packages/hivclustering/networkbuild.py", line 675, in build_a_network
+    compute_threshold_scores(profile)
+  File "/home/sweaver/hcv/venv/lib64/python3.11/site-packages/hivclustering/networkbuild.py", line 463, in compute_threshold_scores
+    cs = cluster_scaler (records[d[0]][2])
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/sweaver/hcv/venv/lib64/python3.11/site-packages/hivclustering/networkbuild.py", line 427, in cluster_scaler
+    x = (cluster_max-c) / (cluster_max - cluster_min)
+        ~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ZeroDivisionError: division by zero

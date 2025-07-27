@@ -1,0 +1,59 @@
+Evaluating distance threshold  0.00010 1 1Evaluating distance threshold  0.01850 1 1Evaluating distance threshold  0.01870 2 2Evaluating distance threshold  0.01890 2 2Evaluating distance threshold  0.02040 2 2Evaluating distance threshold  0.02130 2 2Evaluating distance threshold  0.02160 2 2Evaluating distance threshold  0.02180 2 2Evaluating distance threshold  0.02280 2 1Evaluating distance threshold  0.02370 2 1Evaluating distance threshold  0.02390 2 1Evaluating distance threshold  0.02410 2 1Evaluating distance threshold  0.02430 2 1Evaluating distance threshold  0.02540 2 1Evaluating distance threshold  0.02560 2 1Evaluating distance threshold  0.02590 2 1Evaluating distance threshold  0.02630 2 1Evaluating distance threshold  0.02650 2 1Evaluating distance threshold  0.02800 2 1Evaluating distance threshold  0.02910 2 1Evaluating distance threshold  0.02960 2 1Evaluating distance threshold  0.03110 2 1Evaluating distance threshold  0.03130 2 1Evaluating distance threshold  0.03170 2 1Evaluating distance threshold  0.03250 2 1Evaluating distance threshold  0.03300 2 1Evaluating distance threshold  0.03320 2 1Evaluating distance threshold  0.03340 2 1Evaluating distance threshold  0.03400 2 1Evaluating distance threshold  0.03420 2 1Evaluating distance threshold  0.03460 2 1Evaluating distance threshold  0.03480 2 1Evaluating distance threshold  0.03500 2 1Evaluating distance threshold  0.03540 2 1Evaluating distance threshold  0.03580 2 1Evaluating distance threshold  0.03630 2 1Evaluating distance threshold  0.03660 2 1Evaluating distance threshold  0.03690 2 1Evaluating distance threshold  0.03830 2 1Evaluating distance threshold  0.04020 2 1Evaluating distance threshold  0.04090 2 1Evaluating distance threshold  0.04190 2 1Evaluating distance threshold  0.04330 2 1Evaluating distance threshold  0.04650 2 1Evaluating distance threshold  0.04690 2 1Evaluating distance threshold  0.04810 2 1Evaluating distance threshold  0.04900 2 1Evaluating distance threshold  0.05220 2 1Evaluating distance threshold  0.05400 2 1Evaluating distance threshold  0.05510 2 1Evaluating distance threshold  0.05680 2 1Evaluating distance threshold  0.05780 2 1Evaluating distance threshold  0.05860 2 1Evaluating distance threshold  0.06490 2 1Evaluating distance threshold  0.06550 2 1Evaluating distance threshold  0.07150 2 1Evaluating distance threshold  0.07310 2 1Evaluating distance threshold  0.07510 2 1Threshold	Nodes	Edges	Clusters	LargestCluster	SecondLargestCluster	Score	Singletons
+0.0001	2	1	1	2	0	0	8
+0.0185	2	1	1	2	0	0	8
+0.0187	4	2	2	2	2	0	6
+0.0189	4	2	2	2	2	0.967925	6
+0.0204	4	3	2	2	2	1.18358	6
+0.0213	6	4	2	4	2	1.64571	4
+0.0216	6	5	2	4	2	1.93068	4
+0.0218	7	6	2	5	2	2	3
+0.0228	7	7	1	7	0	0.404375	3
+0.0237	8	8	1	8	0	0.15159	2
+0.0239	8	9	1	8	0	0.0177621	2
+0.0241	8	10	1	8	0	-0.0594046	2
+0.0243	8	11	1	8	0	-0.070585	2
+0.0254	8	12	1	8	0	-0.070585	2
+0.0256	8	13	1	8	0	-0.0561436	2
+0.0259	8	13	1	8	0	-0.0417023	2
+0.0263	8	14	1	8	0	-0.0272609	2
+0.0265	9	15	1	9	0	-0.0390766	1
+0.028	9	16	1	9	0	-0.0501972	1
+0.0291	9	17	1	9	0	-0.0606823	1
+0.0296	9	18	1	9	0	-0.070585	1
+0.0311	9	19	1	9	0	-0.070585	1
+0.0313	9	20	1	9	0	-0.070585	1
+0.0317	9	21	1	9	0	-0.070585	1
+0.0325	9	22	1	9	0	-0.070585	1
+0.033	9	23	1	9	0	-0.070585	1
+0.0332	9	23	1	9	0	-0.070585	1
+0.0334	9	23	1	9	0	-0.070585	1
+0.034	9	24	1	9	0	-0.070585	1
+0.0342	9	25	1	9	0	-0.070585	1
+0.0346	9	25	1	9	0	-0.070585	1
+0.0348	9	26	1	9	0	-0.070585	1
+0.035	9	27	1	9	0	-0.070585	1
+0.0354	9	28	1	9	0	-0.070585	1
+0.0358	9	29	1	9	0	-0.070585	1
+0.0363	9	29	1	9	0	-0.070585	1
+0.0366	9	29	1	9	0	-0.070585	1
+0.0369	9	29	1	9	0	-0.070585	1
+0.0383	9	30	1	9	0	-0.070585	1
+0.0402	9	30	1	9	0	-0.070585	1
+0.0409	9	31	1	9	0	-0.070585	1
+0.0419	9	31	1	9	0	-0.070585	1
+0.0433	9	32	1	9	0	-0.070585	1
+0.0465	9	33	1	9	0	-0.0577482	1
+0.0469	9	34	1	9	0	-0.0449115	1
+0.0481	9	35	1	9	0	-0.0320747	1
+0.049	10	36	1	10	0	-0.0424829	0
+0.0522	10	37	1	10	0	-0.0523433	0
+0.054	10	38	1	10	0	-0.061698	0
+0.0551	10	39	1	10	0	-0.070585	0
+0.0568	10	40	1	10	0	-0.070585	0
+0.0578	10	41	1	10	0	-0.070585	0
+0.0586	10	42	1	10	0	-0.070585	0
+0.0649	10	42	1	10	0	-0.070585	0
+0.0655	10	42	1	10	0	-0.070585	0
+0.0715	10	43	1	10	0	-0.186116	0
+0.0731	10	44	1	10	0	-0.301646	0
+0.0751	10	45	1	10	0	0	0

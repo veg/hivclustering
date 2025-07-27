@@ -1,0 +1,15 @@
+Evaluating distance threshold  0.00001 1 1Evaluating distance threshold  0.01062 1 1Evaluating distance threshold  0.01172 1 1Evaluating distance threshold  0.01678 1 1Evaluating distance threshold  0.02111 1 1Evaluating distance threshold  0.02497 1 1Evaluating distance threshold  0.02557 1 1Evaluating distance threshold  0.03370 1 1Evaluating distance threshold  0.03854 1 1Evaluating distance threshold  0.04020 1 1Evaluating distance threshold  0.04040 1 1Evaluating distance threshold  0.05321 1 1Evaluating distance threshold  0.05347 1 1Evaluating distance threshold  0.05485 1 1Evaluating distance threshold  0.05694 1 1Evaluating distance threshold  0.05771 1 1Evaluating distance threshold  0.06022 1 1Evaluating distance threshold  0.06105 1 1Evaluating distance threshold  0.06436 1 1Evaluating distance threshold  0.06459 1 1Evaluating distance threshold  0.06756 1 1Evaluating distance threshold  0.07034 1 1Evaluating distance threshold  0.07047 1 1Evaluating distance threshold  0.07289 1 1Evaluating distance threshold  0.07327 1 1Evaluating distance threshold  0.07781 1 1Evaluating distance threshold  0.08050 1 1Evaluating distance threshold  0.08592 1 1Traceback (most recent call last):
+  File "/home/sweaver/hcv/venv/bin/hivnetworkcsv", line 622, in <module>
+    make_hiv_network()
+  File "/home/sweaver/hcv/venv/bin/hivnetworkcsv", line 20, in make_hiv_network
+    network = build_a_network()
+              ^^^^^^^^^^^^^^^^^
+  File "/home/sweaver/hcv/venv/lib64/python3.11/site-packages/hivclustering/networkbuild.py", line 675, in build_a_network
+    compute_threshold_scores(profile)
+  File "/home/sweaver/hcv/venv/lib64/python3.11/site-packages/hivclustering/networkbuild.py", line 463, in compute_threshold_scores
+    cs = cluster_scaler (records[d[0]][2])
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/sweaver/hcv/venv/lib64/python3.11/site-packages/hivclustering/networkbuild.py", line 427, in cluster_scaler
+    x = (cluster_max-c) / (cluster_max - cluster_min)
+        ~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ZeroDivisionError: division by zero

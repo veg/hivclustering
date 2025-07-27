@@ -1,0 +1,9 @@
+Evaluating distance threshold  0.00010 1 1Evaluating distance threshold  0.07480 1 1Evaluating distance threshold  0.08430 1 1Evaluating distance threshold  0.08690 1 1Evaluating distance threshold  0.08920 1 1Evaluating distance threshold  0.09160 1 1Evaluating distance threshold  0.09180 1 1Evaluating distance threshold  0.09300 1 1Threshold	Nodes	Edges	Clusters	LargestCluster	SecondLargestCluster	Score	Singletons
+0.0001	2	1	1	2	0	0	3
+0.0748	2	2	1	2	0	0	3
+0.0843	4	4	1	4	0	0	1
+0.0869	4	5	1	4	0	1.5	1
+0.0892	4	6	1	4	0	1.2562	1
+0.0916	5	7	1	5	0	0.019271	0
+0.0918	5	8	1	5	0	-0.775471	0
+0.093	5	9	1	5	0	0	0
