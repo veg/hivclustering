@@ -1,0 +1,11 @@
+Threshold	Nodes	Edges	Clusters	LargestCluster	SecondLargestCluster	Score	Singletons
+1e-05	2	1	1	2	0	0	0
+0.08428	2	2	1	2	0	0	1
+0.08639	2	3	1	2	0	0	1
+0.08957	2	4	1	2	0	1.5	2
+0.09176	2	5	1	2	0	1.5	2
+0.09654	2	6	1	2	0	1.5	2
+0.09758	2	7	1	2	0	1.5	3
+0.09808	2	8	1	2	0	-0.5	3
+0.09819	2	9	1	2	0	-2.5	3
+0.09826	2	10	1	2	0	0	3

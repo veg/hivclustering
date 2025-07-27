@@ -1,0 +1,487 @@
+Evaluating distance threshold  0.00010 2 2Evaluating distance threshold  0.00050 3 3Evaluating distance threshold  0.00080 5 5Evaluating distance threshold  0.00100 8 8Evaluating distance threshold  0.00140 9 9Evaluating distance threshold  0.00180 11 11Evaluating distance threshold  0.00210 11 10Evaluating distance threshold  0.00230 11 11Evaluating distance threshold  0.00260 11 11Evaluating distance threshold  0.00280 11 11Evaluating distance threshold  0.00300 12 12Evaluating distance threshold  0.00320 12 12Evaluating distance threshold  0.00340 14 14Evaluating distance threshold  0.00360 15 15Evaluating distance threshold  0.00390 16 16Evaluating distance threshold  0.00410 16 16Evaluating distance threshold  0.00430 16 16Evaluating distance threshold  0.00460 17 17Evaluating distance threshold  0.00480 18 18Evaluating distance threshold  0.00500 18 18Evaluating distance threshold  0.00520 18 15Evaluating distance threshold  0.00540 18 13Evaluating distance threshold  0.00560 18 13Evaluating distance threshold  0.00580 18 12Evaluating distance threshold  0.00600 18 10Evaluating distance threshold  0.00620 18 10Evaluating distance threshold  0.00640 18 10Evaluating distance threshold  0.00660 18 12Evaluating distance threshold  0.00680 18 12Evaluating distance threshold  0.00700 18 12Evaluating distance threshold  0.00720 18 12Evaluating distance threshold  0.00740 18 12Evaluating distance threshold  0.00760 18 11Evaluating distance threshold  0.00780 18 9Evaluating distance threshold  0.00800 18 9Evaluating distance threshold  0.00820 18 9Evaluating distance threshold  0.00840 18 9Evaluating distance threshold  0.00860 18 9Evaluating distance threshold  0.00880 18 9Evaluating distance threshold  0.00900 18 9Evaluating distance threshold  0.00920 18 8Evaluating distance threshold  0.00940 18 8Evaluating distance threshold  0.00960 18 8Evaluating distance threshold  0.00980 18 8Evaluating distance threshold  0.01000 18 8Evaluating distance threshold  0.01020 18 6Evaluating distance threshold  0.01040 18 6Evaluating distance threshold  0.01060 18 6Evaluating distance threshold  0.01080 18 6Evaluating distance threshold  0.01100 18 5Evaluating distance threshold  0.01120 18 5Evaluating distance threshold  0.01140 18 5Evaluating distance threshold  0.01160 18 5Evaluating distance threshold  0.01180 18 5Evaluating distance threshold  0.01200 18 5Evaluating distance threshold  0.01220 18 5Evaluating distance threshold  0.01240 18 5Evaluating distance threshold  0.01260 18 5Evaluating distance threshold  0.01280 18 5Evaluating distance threshold  0.01300 18 6Evaluating distance threshold  0.01320 18 7Evaluating distance threshold  0.01340 18 7Evaluating distance threshold  0.01360 18 7Evaluating distance threshold  0.01380 18 6Evaluating distance threshold  0.01400 18 6Evaluating distance threshold  0.01420 18 6Evaluating distance threshold  0.01440 18 6Evaluating distance threshold  0.01460 18 5Evaluating distance threshold  0.01480 18 6Evaluating distance threshold  0.01500 18 7Evaluating distance threshold  0.01520 18 7Evaluating distance threshold  0.01540 18 6Evaluating distance threshold  0.01560 18 6Evaluating distance threshold  0.01580 18 6Evaluating distance threshold  0.01600 18 6Evaluating distance threshold  0.01620 18 6Evaluating distance threshold  0.01640 18 6Evaluating distance threshold  0.01660 18 6Evaluating distance threshold  0.01680 18 6Evaluating distance threshold  0.01700 18 6Evaluating distance threshold  0.01720 18 6Evaluating distance threshold  0.01740 18 6Evaluating distance threshold  0.01760 18 6Evaluating distance threshold  0.01780 18 6Evaluating distance threshold  0.01800 18 6Evaluating distance threshold  0.01820 18 6Evaluating distance threshold  0.01840 18 6Evaluating distance threshold  0.01860 18 6Evaluating distance threshold  0.01880 18 6Evaluating distance threshold  0.01900 18 6Evaluating distance threshold  0.01920 18 6Evaluating distance threshold  0.01940 18 6Evaluating distance threshold  0.01960 18 6Evaluating distance threshold  0.01980 18 6Evaluating distance threshold  0.02000 18 6Evaluating distance threshold  0.02020 18 6Evaluating distance threshold  0.02040 18 6Evaluating distance threshold  0.02060 18 6Evaluating distance threshold  0.02080 18 6Evaluating distance threshold  0.02100 18 5Evaluating distance threshold  0.02120 18 5Evaluating distance threshold  0.02140 18 5Evaluating distance threshold  0.02160 18 5Evaluating distance threshold  0.02180 18 5Evaluating distance threshold  0.02200 18 5Evaluating distance threshold  0.02220 18 5Evaluating distance threshold  0.02240 18 5Evaluating distance threshold  0.02260 18 5Evaluating distance threshold  0.02280 18 5Evaluating distance threshold  0.02300 18 5Evaluating distance threshold  0.02320 18 5Evaluating distance threshold  0.02340 18 5Evaluating distance threshold  0.02360 18 5Evaluating distance threshold  0.02380 18 5Evaluating distance threshold  0.02400 18 6Evaluating distance threshold  0.02420 18 6Evaluating distance threshold  0.02440 18 6Evaluating distance threshold  0.02460 18 6Evaluating distance threshold  0.02480 18 6Evaluating distance threshold  0.02500 18 6Evaluating distance threshold  0.02520 18 6Evaluating distance threshold  0.02540 18 6Evaluating distance threshold  0.02560 18 6Evaluating distance threshold  0.02580 18 6Evaluating distance threshold  0.02600 18 6Evaluating distance threshold  0.02620 18 6Evaluating distance threshold  0.02640 18 6Evaluating distance threshold  0.02660 18 6Evaluating distance threshold  0.02680 18 5Evaluating distance threshold  0.02710 18 5Evaluating distance threshold  0.02730 18 5Evaluating distance threshold  0.02750 18 5Evaluating distance threshold  0.02770 18 5Evaluating distance threshold  0.02790 18 5Evaluating distance threshold  0.02810 18 5Evaluating distance threshold  0.02830 18 5Evaluating distance threshold  0.02850 18 5Evaluating distance threshold  0.02870 18 5Evaluating distance threshold  0.02890 18 5Evaluating distance threshold  0.02910 18 5Evaluating distance threshold  0.02930 18 5Evaluating distance threshold  0.02950 18 5Evaluating distance threshold  0.02970 18 5Evaluating distance threshold  0.02990 18 5Evaluating distance threshold  0.03010 18 5Evaluating distance threshold  0.03030 18 5Evaluating distance threshold  0.03050 18 6Evaluating distance threshold  0.03070 18 5Evaluating distance threshold  0.03090 18 5Evaluating distance threshold  0.03110 18 4Evaluating distance threshold  0.03150 18 3Evaluating distance threshold  0.03170 18 3Evaluating distance threshold  0.03190 18 3Evaluating distance threshold  0.03210 18 3Evaluating distance threshold  0.03230 18 2Evaluating distance threshold  0.03250 18 2Evaluating distance threshold  0.03280 18 1Evaluating distance threshold  0.03300 18 1Evaluating distance threshold  0.03320 18 1Evaluating distance threshold  0.03350 18 1Evaluating distance threshold  0.03370 18 1Evaluating distance threshold  0.03390 18 1Evaluating distance threshold  0.03410 18 1Evaluating distance threshold  0.03430 18 1Evaluating distance threshold  0.03450 18 1Evaluating distance threshold  0.03470 18 1Evaluating distance threshold  0.03490 18 1Evaluating distance threshold  0.03510 18 1Evaluating distance threshold  0.03530 18 1Evaluating distance threshold  0.03550 18 1Evaluating distance threshold  0.03570 18 1Evaluating distance threshold  0.03590 18 1Evaluating distance threshold  0.03610 18 1Evaluating distance threshold  0.03630 18 1Evaluating distance threshold  0.03650 18 1Evaluating distance threshold  0.03670 18 1Evaluating distance threshold  0.03690 18 1Evaluating distance threshold  0.03710 18 1Evaluating distance threshold  0.03730 18 1Evaluating distance threshold  0.03750 18 1Evaluating distance threshold  0.03770 18 1Evaluating distance threshold  0.03790 18 1Evaluating distance threshold  0.03810 18 1Evaluating distance threshold  0.03830 18 1Evaluating distance threshold  0.03850 18 1Evaluating distance threshold  0.03870 18 1Evaluating distance threshold  0.03890 18 1Evaluating distance threshold  0.03930 18 1Evaluating distance threshold  0.03950 18 1Evaluating distance threshold  0.03970 18 1Evaluating distance threshold  0.03990 18 1Evaluating distance threshold  0.04010 18 1Evaluating distance threshold  0.04030 18 1Evaluating distance threshold  0.04060 18 1Evaluating distance threshold  0.04080 18 1Evaluating distance threshold  0.04100 18 1Evaluating distance threshold  0.04130 18 1Evaluating distance threshold  0.04160 18 1Evaluating distance threshold  0.04180 18 1Evaluating distance threshold  0.04200 18 1Evaluating distance threshold  0.04220 18 1Evaluating distance threshold  0.04240 18 1Evaluating distance threshold  0.04260 18 1Evaluating distance threshold  0.04280 18 1Evaluating distance threshold  0.04300 18 1Evaluating distance threshold  0.04320 18 1Evaluating distance threshold  0.04340 18 1Evaluating distance threshold  0.04360 18 1Evaluating distance threshold  0.04380 18 1Evaluating distance threshold  0.04400 18 1Evaluating distance threshold  0.04420 18 1Evaluating distance threshold  0.04450 18 1Evaluating distance threshold  0.04470 18 1Evaluating distance threshold  0.04490 18 1Evaluating distance threshold  0.04510 18 1Evaluating distance threshold  0.04530 18 1Evaluating distance threshold  0.04550 18 1Evaluating distance threshold  0.04570 18 1Evaluating distance threshold  0.04590 18 1Evaluating distance threshold  0.04610 18 1Evaluating distance threshold  0.04630 18 1Evaluating distance threshold  0.04650 18 1Evaluating distance threshold  0.04670 18 1Evaluating distance threshold  0.04690 18 1Evaluating distance threshold  0.04710 18 1Evaluating distance threshold  0.04730 18 1Evaluating distance threshold  0.04760 18 1Evaluating distance threshold  0.04780 18 1Evaluating distance threshold  0.04800 18 1Evaluating distance threshold  0.04820 18 1Evaluating distance threshold  0.04840 18 1Evaluating distance threshold  0.04860 18 1Evaluating distance threshold  0.04880 18 1Evaluating distance threshold  0.04900 18 1Evaluating distance threshold  0.04920 18 1Evaluating distance threshold  0.04940 18 1Evaluating distance threshold  0.04960 18 1Evaluating distance threshold  0.04980 18 1Evaluating distance threshold  0.05000 18 1Evaluating distance threshold  0.05020 18 1Evaluating distance threshold  0.05040 18 1Evaluating distance threshold  0.05060 18 1Evaluating distance threshold  0.05080 18 1Evaluating distance threshold  0.05100 18 1Evaluating distance threshold  0.05120 18 1Evaluating distance threshold  0.05140 18 1Evaluating distance threshold  0.05160 18 1Evaluating distance threshold  0.05180 18 1Evaluating distance threshold  0.05200 18 1Evaluating distance threshold  0.05220 18 1Evaluating distance threshold  0.05240 18 1Evaluating distance threshold  0.05260 18 1Evaluating distance threshold  0.05290 18 1Evaluating distance threshold  0.05310 18 1Evaluating distance threshold  0.05330 18 1Evaluating distance threshold  0.05370 18 1Evaluating distance threshold  0.05400 18 1Evaluating distance threshold  0.05420 18 1Evaluating distance threshold  0.05440 18 1Evaluating distance threshold  0.05460 18 1Evaluating distance threshold  0.05480 18 1Evaluating distance threshold  0.05500 18 1Evaluating distance threshold  0.05520 18 1Evaluating distance threshold  0.05540 18 1Evaluating distance threshold  0.05560 18 1Evaluating distance threshold  0.05580 18 1Evaluating distance threshold  0.05600 18 1Evaluating distance threshold  0.05620 18 1Evaluating distance threshold  0.05640 18 1Evaluating distance threshold  0.05660 18 1Evaluating distance threshold  0.05680 18 1Evaluating distance threshold  0.05700 18 1Evaluating distance threshold  0.05720 18 1Evaluating distance threshold  0.05740 18 1Evaluating distance threshold  0.05760 18 1Evaluating distance threshold  0.05780 18 1Evaluating distance threshold  0.05800 18 1Evaluating distance threshold  0.05820 18 1Evaluating distance threshold  0.05840 18 1Evaluating distance threshold  0.05860 18 1Evaluating distance threshold  0.05880 18 1Evaluating distance threshold  0.05900 18 1Evaluating distance threshold  0.05920 18 1Evaluating distance threshold  0.05940 18 1Evaluating distance threshold  0.05960 18 1Evaluating distance threshold  0.05980 18 1Evaluating distance threshold  0.06000 18 1Evaluating distance threshold  0.06020 18 1Evaluating distance threshold  0.06040 18 1Evaluating distance threshold  0.06060 18 1Evaluating distance threshold  0.06080 18 1Evaluating distance threshold  0.06100 18 1Evaluating distance threshold  0.06120 18 1Evaluating distance threshold  0.06140 18 1Evaluating distance threshold  0.06160 18 1Evaluating distance threshold  0.06180 18 1Evaluating distance threshold  0.06200 18 1Evaluating distance threshold  0.06220 18 1Evaluating distance threshold  0.06240 18 1Evaluating distance threshold  0.06260 18 1Evaluating distance threshold  0.06280 18 1Evaluating distance threshold  0.06300 18 1Evaluating distance threshold  0.06320 18 1Evaluating distance threshold  0.06340 18 1Evaluating distance threshold  0.06360 18 1Evaluating distance threshold  0.06380 18 1Evaluating distance threshold  0.06400 18 1Evaluating distance threshold  0.06420 18 1Evaluating distance threshold  0.06440 18 1Evaluating distance threshold  0.06460 18 1Evaluating distance threshold  0.06480 18 1Evaluating distance threshold  0.06500 18 1Evaluating distance threshold  0.06520 18 1Evaluating distance threshold  0.06540 18 1Evaluating distance threshold  0.06560 18 1Evaluating distance threshold  0.06580 18 1Evaluating distance threshold  0.06600 18 1Evaluating distance threshold  0.06620 18 1Evaluating distance threshold  0.06640 18 1Evaluating distance threshold  0.06660 18 1Evaluating distance threshold  0.06680 18 1Evaluating distance threshold  0.06700 18 1Evaluating distance threshold  0.06720 18 1Evaluating distance threshold  0.06740 18 1Evaluating distance threshold  0.06760 18 1Evaluating distance threshold  0.06780 18 1Evaluating distance threshold  0.06800 18 1Evaluating distance threshold  0.06820 18 1Evaluating distance threshold  0.06840 18 1Evaluating distance threshold  0.06860 18 1Evaluating distance threshold  0.06880 18 1Evaluating distance threshold  0.06900 18 1Evaluating distance threshold  0.06920 18 1Evaluating distance threshold  0.06940 18 1Evaluating distance threshold  0.06960 18 1Evaluating distance threshold  0.06980 18 1Evaluating distance threshold  0.07000 18 1Evaluating distance threshold  0.07020 18 1Evaluating distance threshold  0.07040 18 1Evaluating distance threshold  0.07060 18 1Evaluating distance threshold  0.07080 18 1Evaluating distance threshold  0.07100 18 1Evaluating distance threshold  0.07120 18 1Evaluating distance threshold  0.07140 18 1Evaluating distance threshold  0.07160 18 1Evaluating distance threshold  0.07180 18 1Evaluating distance threshold  0.07200 18 1Evaluating distance threshold  0.07220 18 1Evaluating distance threshold  0.07240 18 1Evaluating distance threshold  0.07260 18 1Evaluating distance threshold  0.07280 18 1Evaluating distance threshold  0.07300 18 1Evaluating distance threshold  0.07320 18 1Evaluating distance threshold  0.07340 18 1Evaluating distance threshold  0.07360 18 1Evaluating distance threshold  0.07380 18 1Evaluating distance threshold  0.07400 18 1Evaluating distance threshold  0.07420 18 1Evaluating distance threshold  0.07440 18 1Evaluating distance threshold  0.07460 18 1Evaluating distance threshold  0.07480 18 1Evaluating distance threshold  0.07500 18 1Evaluating distance threshold  0.07520 18 1Evaluating distance threshold  0.07540 18 1Evaluating distance threshold  0.07560 18 1Evaluating distance threshold  0.07580 18 1Evaluating distance threshold  0.07600 18 1Evaluating distance threshold  0.07620 18 1Evaluating distance threshold  0.07640 18 1Evaluating distance threshold  0.07660 18 1Evaluating distance threshold  0.07680 18 1Evaluating distance threshold  0.07700 18 1Evaluating distance threshold  0.07720 18 1Evaluating distance threshold  0.07740 18 1Evaluating distance threshold  0.07760 18 1Evaluating distance threshold  0.07780 18 1Evaluating distance threshold  0.07800 18 1Evaluating distance threshold  0.07820 18 1Evaluating distance threshold  0.07840 18 1Evaluating distance threshold  0.07860 18 1Evaluating distance threshold  0.07880 18 1Evaluating distance threshold  0.07900 18 1Evaluating distance threshold  0.07920 18 1Evaluating distance threshold  0.07940 18 1Evaluating distance threshold  0.07960 18 1Evaluating distance threshold  0.07980 18 1Evaluating distance threshold  0.08000 18 1Evaluating distance threshold  0.08020 18 1Evaluating distance threshold  0.08040 18 1Evaluating distance threshold  0.08060 18 1Evaluating distance threshold  0.08080 18 1Evaluating distance threshold  0.08100 18 1Evaluating distance threshold  0.08120 18 1Evaluating distance threshold  0.08140 18 1Evaluating distance threshold  0.08160 18 1Evaluating distance threshold  0.08180 18 1Evaluating distance threshold  0.08200 18 1Evaluating distance threshold  0.08220 18 1Evaluating distance threshold  0.08240 18 1Evaluating distance threshold  0.08260 18 1Evaluating distance threshold  0.08280 18 1Evaluating distance threshold  0.08300 18 1Evaluating distance threshold  0.08320 18 1Evaluating distance threshold  0.08340 18 1Evaluating distance threshold  0.08360 18 1Evaluating distance threshold  0.08380 18 1Evaluating distance threshold  0.08400 18 1Evaluating distance threshold  0.08420 18 1Evaluating distance threshold  0.08440 18 1Evaluating distance threshold  0.08460 18 1Evaluating distance threshold  0.08480 18 1Evaluating distance threshold  0.08500 18 1Evaluating distance threshold  0.08520 18 1Evaluating distance threshold  0.08540 18 1Evaluating distance threshold  0.08560 18 1Evaluating distance threshold  0.08580 18 1Evaluating distance threshold  0.08600 18 1Evaluating distance threshold  0.08620 18 1Evaluating distance threshold  0.08640 18 1Evaluating distance threshold  0.08660 18 1Evaluating distance threshold  0.08680 18 1Evaluating distance threshold  0.08700 18 1Evaluating distance threshold  0.08720 18 1Evaluating distance threshold  0.08740 18 1Evaluating distance threshold  0.08760 18 1Evaluating distance threshold  0.08780 18 1Evaluating distance threshold  0.08800 18 1Evaluating distance threshold  0.08820 18 1Evaluating distance threshold  0.08840 18 1Evaluating distance threshold  0.08860 18 1Evaluating distance threshold  0.08880 18 1Evaluating distance threshold  0.08900 18 1Evaluating distance threshold  0.08920 18 1Evaluating distance threshold  0.08940 18 1Evaluating distance threshold  0.08960 18 1Evaluating distance threshold  0.08980 18 1Evaluating distance threshold  0.09000 18 1Evaluating distance threshold  0.09020 18 1Evaluating distance threshold  0.09040 18 1Evaluating distance threshold  0.09060 18 1Evaluating distance threshold  0.09080 18 1Evaluating distance threshold  0.09100 18 1Evaluating distance threshold  0.09120 18 1Evaluating distance threshold  0.09140 18 1Evaluating distance threshold  0.09160 18 1Evaluating distance threshold  0.09180 18 1Evaluating distance threshold  0.09200 18 1Evaluating distance threshold  0.09220 18 1Evaluating distance threshold  0.09240 18 1Evaluating distance threshold  0.09260 18 1Evaluating distance threshold  0.09280 18 1Evaluating distance threshold  0.09300 18 1Evaluating distance threshold  0.09320 18 1Evaluating distance threshold  0.09340 18 1Evaluating distance threshold  0.09360 18 1Evaluating distance threshold  0.09380 18 1Evaluating distance threshold  0.09400 18 1Evaluating distance threshold  0.09420 18 1Evaluating distance threshold  0.09440 18 1Evaluating distance threshold  0.09460 18 1Evaluating distance threshold  0.09480 18 1Evaluating distance threshold  0.09500 18 1Evaluating distance threshold  0.09520 18 1Evaluating distance threshold  0.09540 18 1Evaluating distance threshold  0.09560 18 1Evaluating distance threshold  0.09580 18 1Evaluating distance threshold  0.09600 18 1Evaluating distance threshold  0.09620 18 1Evaluating distance threshold  0.09640 18 1Evaluating distance threshold  0.09660 18 1Evaluating distance threshold  0.09680 18 1Evaluating distance threshold  0.09700 18 1Evaluating distance threshold  0.09720 18 1Evaluating distance threshold  0.09740 18 1Evaluating distance threshold  0.09760 18 1Evaluating distance threshold  0.09780 18 1Evaluating distance threshold  0.09800 18 1Evaluating distance threshold  0.09820 18 1Evaluating distance threshold  0.09840 18 1Evaluating distance threshold  0.09860 18 1Evaluating distance threshold  0.09880 18 1Evaluating distance threshold  0.09900 18 1Evaluating distance threshold  0.09920 18 1Evaluating distance threshold  0.09940 18 1Evaluating distance threshold  0.09960 18 1Evaluating distance threshold  0.09980 18 1Threshold	Nodes	Edges	Clusters	LargestCluster	SecondLargestCluster	Score	Singletons
+0.0001	23	2	2	21	2	0	188
+0.0005	24	3	3	20	2	0	187
+0.0008	30	7	5	21	3	0	181
+0.001	36	10	8	21	3	0	175
+0.0014	40	15	9	20	5	-0.154042	171
+0.0018	44	22	11	17	7	-0.154358	167
+0.0021	44	28	10	16	11	-0.14174	167
+0.0023	50	35	11	16	13	-0.120552	161
+0.0026	54	45	11	16	15	-0.0693355	157
+0.0028	55	48	11	16	16	0.0391849	156
+0.003	61	56	12	20	14	0.146054	150
+0.0032	63	60	12	21	14	0.222243	148
+0.0034	71	72	14	24	15	0.330847	140
+0.0036	80	92	15	35	12	0.406827	131
+0.0039	89	118	16	40	12	0.789913	122
+0.0041	89	118	16	41	11	0.763417	122
+0.0043	95	147	16	44	11	0.748345	116
+0.0046	102	170	17	46	13	1.08667	109
+0.0048	102	171	18	47	10	1.09064	109
+0.005	106	195	18	50	9	1.07342	105
+0.0052	110	219	15	57	9	0.262424	101
+0.0054	112	225	13	62	10	0.0428871	99
+0.0056	116	264	13	65	10	0.0217199	95
+0.0058	116	274	12	67	10	-0.00516485	95
+0.006	121	314	10	71	11	-0.0145512	90
+0.0062	123	347	10	73	11	-0.0184032	88
+0.0064	124	356	10	73	11	-0.0284734	87
+0.0066	136	414	12	79	13	-0.0263585	75
+0.0068	138	442	12	81	13	-0.0308432	73
+0.007	138	454	12	82	13	-0.0350851	73
+0.0072	140	505	12	82	15	-0.0284534	71
+0.0074	143	521	12	85	15	-0.0257673	68
+0.0076	148	579	11	89	17	-0.0217738	63
+0.0078	150	639	9	95	17	-0.0274376	61
+0.008	150	650	9	95	17	-0.0348834	61
+0.0082	152	707	9	96	18	-0.0438195	59
+0.0084	154	736	9	98	18	-0.0558595	57
+0.0086	157	786	9	98	22	-0.0584702	54
+0.0088	160	851	9	99	24	-0.0548326	51
+0.009	160	865	9	99	24	-0.0512988	51
+0.0092	160	946	8	99	26	-0.0461502	51
+0.0094	161	1021	8	99	27	-0.0429124	50
+0.0096	161	1035	8	99	27	-0.0472747	50
+0.0098	164	1119	8	101	28	-0.0541231	47
+0.01	166	1137	8	101	30	-0.0567415	45
+0.0102	168	1237	6	101	36	0.0784313	43
+0.0104	170	1321	6	102	37	0.231168	41
+0.0106	171	1333	6	102	38	0.409884	40
+0.0108	171	1430	6	102	38	0.609923	40
+0.011	171	1459	5	140	11	0.299588	40
+0.0112	173	1550	5	142	11	0.156224	38
+0.0114	176	1649	5	145	11	0.0755948	35
+0.0116	176	1665	5	145	11	0.0254633	35
+0.0118	178	1788	5	147	11	-0.00963509	33
+0.012	178	1864	5	147	11	-0.0110652	33
+0.0122	178	1921	5	147	11	-0.0119841	33
+0.0124	178	2022	5	147	11	-0.0121683	33
+0.0126	178	2045	5	147	11	-0.0123514	33
+0.0128	179	2144	5	148	11	-0.0119947	32
+0.013	181	2242	6	148	11	-0.0110423	30
+0.0132	183	2260	7	148	11	-0.00979357	28
+0.0134	183	2375	7	148	11	-0.00854967	28
+0.0136	185	2386	7	150	11	-0.00839216	26
+0.0138	185	2501	6	152	11	-0.00848017	26
+0.014	187	2616	6	153	11	-0.00909915	24
+0.0142	187	2626	6	153	11	-0.00970995	24
+0.0144	187	2741	6	153	11	-0.0103127	24
+0.0146	187	2763	5	155	11	-0.0178376	24
+0.0148	189	2850	6	155	11	-0.0248374	22
+0.015	191	2946	7	155	11	-0.0315773	20
+0.0152	191	2959	7	155	11	-0.0382838	20
+0.0154	193	3054	6	157	13	-0.0342411	18
+0.0156	193	3085	6	157	13	-0.0292837	18
+0.0158	193	3172	6	157	13	-0.0240162	18
+0.016	193	3262	6	157	13	-0.0184088	18
+0.0162	193	3274	6	157	13	-0.0124273	18
+0.0164	195	3374	6	158	13	-0.0126524	16
+0.0166	195	3414	6	158	13	-0.0128769	16
+0.0168	195	3469	6	158	13	-0.0131008	16
+0.017	197	3549	6	158	13	-0.0133242	14
+0.0172	197	3565	6	158	13	-0.0132689	14
+0.0174	197	3621	6	158	13	-0.0129907	14
+0.0176	197	3662	6	158	13	-0.0127125	14
+0.0178	197	3692	6	158	13	-0.0124343	14
+0.018	198	3752	6	159	13	-0.012658	13
+0.0182	198	3763	6	159	13	-0.0128811	13
+0.0184	198	3845	6	159	13	-0.0131037	13
+0.0186	198	3886	6	159	13	-0.0133256	13
+0.0188	198	3907	6	159	13	-0.0135471	13
+0.019	198	3948	6	159	13	-0.0135471	13
+0.0192	198	3964	6	159	13	-0.0135471	13
+0.0194	198	4010	6	159	13	-0.0135471	13
+0.0196	198	4052	6	159	13	-0.0135471	13
+0.0198	198	4069	6	159	13	-0.0135471	13
+0.02	198	4116	6	159	13	-0.0135471	13
+0.0202	198	4128	6	159	13	-0.0129942	13
+0.0204	198	4164	6	159	13	-0.0124413	13
+0.0206	198	4207	6	159	13	-0.0118885	13
+0.0208	198	4222	6	159	13	-0.0113356	13
+0.021	198	4260	5	161	13	-0.0117827	13
+0.0212	198	4265	5	161	13	-0.0122272	13
+0.0214	198	4295	5	161	13	-0.0126694	13
+0.0216	198	4320	5	161	13	-0.0131095	13
+0.0218	198	4334	5	161	13	-0.0135474	13
+0.022	198	4366	5	161	13	-0.0135474	13
+0.0222	198	4372	5	161	13	-0.0135474	13
+0.0224	198	4394	5	161	13	-0.0135474	13
+0.0226	198	4409	5	161	13	-0.0135474	13
+0.0228	198	4422	5	161	13	-0.0135474	13
+0.023	198	4447	5	161	13	-0.0135474	13
+0.0232	198	4457	5	161	13	-0.0135474	13
+0.0234	198	4479	5	161	13	-0.0135474	13
+0.0236	198	4498	5	161	13	-0.0135474	13
+0.0238	198	4510	5	161	13	-0.0135474	13
+0.024	200	4529	6	161	13	-0.0135471	11
+0.0242	200	4533	6	161	13	-0.0135471	11
+0.0244	200	4549	6	161	13	-0.0135471	11
+0.0246	200	4559	6	161	13	-0.0135471	11
+0.0248	200	4572	6	161	13	-0.0135471	11
+0.025	200	4585	6	161	13	-0.0135471	11
+0.0252	200	4594	6	161	13	-0.0135471	11
+0.0254	200	4610	6	161	13	-0.0135471	11
+0.0256	200	4617	6	161	13	-0.0132741	11
+0.0258	200	4625	6	161	13	-0.0130011	11
+0.026	200	4638	6	161	13	-0.00519793	11
+0.0262	200	4643	6	161	13	0.0026052	11
+0.0264	201	4655	6	162	13	0.00988784	10
+0.0266	201	4661	6	162	13	0.0171524	10
+0.0268	201	4677	5	175	12	0.0103728	10
+0.0271	201	4689	5	175	12	0.00404203	10
+0.0273	201	4697	5	175	12	-0.00188338	10
+0.0275	201	4707	5	175	12	-0.00724347	10
+0.0277	202	4717	5	176	12	-0.0127446	9
+0.0279	202	4721	5	176	12	-0.012946	9
+0.0281	202	4740	5	176	12	-0.0131469	9
+0.0283	202	4743	5	176	12	-0.0133474	9
+0.0285	202	4757	5	176	12	-0.0135474	9
+0.0287	202	4767	5	176	12	-0.0135474	9
+0.0289	202	4770	5	176	12	-0.0135474	9
+0.0291	202	4778	5	176	12	-0.0135474	9
+0.0293	202	4783	5	176	12	-0.0135474	9
+0.0295	202	4789	5	176	12	-0.0135474	9
+0.0297	202	4797	5	176	12	-0.0135474	9
+0.0299	202	4801	5	176	12	-0.0130479	9
+0.0301	202	4815	5	176	12	-0.0125485	9
+0.0303	202	4820	5	176	12	-0.00905227	9
+0.0305	204	4831	6	176	12	0.249668	7
+0.0307	204	4838	5	178	12	0.506306	7
+0.0309	204	4843	5	178	12	0.763276	7
+0.0311	206	4857	4	190	12	1	5
+0.0315	206	4865	3	202	2	0.364934	5
+0.0317	206	4871	3	202	2	0.172917	5
+0.0319	207	4882	3	203	2	0.149	4
+0.0321	207	4890	3	203	2	0.134933	4
+0.0323	207	4894	2	205	2	0.125238	4
+0.0325	207	4907	2	205	2	0.169861	4
+0.0328	208	4921	1	208	0	0.107464	3
+0.033	208	4926	1	208	0	0.0637113	3
+0.0332	208	4931	1	208	0	0.0312001	3
+0.0335	208	4945	1	208	0	0.00630044	3
+0.0337	208	4950	1	208	0	-0.0135475	3
+0.0339	208	4957	1	208	0	-0.0135475	3
+0.0341	208	4962	1	208	0	-0.0135475	3
+0.0343	208	4969	1	208	0	-0.0135475	3
+0.0345	208	4973	1	208	0	-0.0135475	3
+0.0347	208	4977	1	208	0	-0.0135475	3
+0.0349	208	4987	1	208	0	-0.0135475	3
+0.0351	208	4991	1	208	0	-0.0135475	3
+0.0353	208	4999	1	208	0	-0.0135475	3
+0.0355	208	5014	1	208	0	-0.0135475	3
+0.0357	208	5018	1	208	0	-0.0133362	3
+0.0359	208	5025	1	208	0	-0.0131249	3
+0.0361	208	5028	1	208	0	-0.0129136	3
+0.0363	208	5038	1	208	0	-0.0127023	3
+0.0365	209	5048	1	209	0	-0.012872	2
+0.0367	209	5056	1	209	0	-0.0130413	2
+0.0369	209	5068	1	209	0	-0.0132104	2
+0.0371	209	5073	1	209	0	-0.0133791	2
+0.0373	209	5080	1	209	0	-0.0135475	2
+0.0375	209	5085	1	209	0	-0.0135475	2
+0.0377	209	5094	1	209	0	-0.0133372	2
+0.0379	209	5099	1	209	0	-0.0131269	2
+0.0381	209	5100	1	209	0	-0.0129166	2
+0.0383	209	5101	1	209	0	-0.012496	2
+0.0385	210	5107	1	210	0	-0.012455	1
+0.0387	210	5112	1	210	0	-0.0124141	1
+0.0389	210	5122	1	210	0	-0.0123732	1
+0.0393	211	5131	1	211	0	-0.0127103	0
+0.0395	211	5133	1	211	0	-0.0130461	0
+0.0397	211	5135	1	211	0	-0.0132136	0
+0.0399	211	5141	1	211	0	-0.0133807	0
+0.0401	211	5143	1	211	0	-0.0135475	0
+0.0403	211	5146	1	211	0	-0.0135475	0
+0.0406	211	5152	1	211	0	-0.0135475	0
+0.0408	211	5158	1	211	0	-0.0135475	0
+0.041	211	5162	1	211	0	-0.0135475	0
+0.0413	211	5167	1	211	0	-0.0135475	0
+0.0416	211	5171	1	211	0	-0.0135475	0
+0.0418	211	5178	1	211	0	-0.0135475	0
+0.042	211	5184	1	211	0	-0.0135475	0
+0.0422	211	5186	1	211	0	-0.0135475	0
+0.0424	211	5195	1	211	0	-0.0135475	0
+0.0426	211	5197	1	211	0	-0.0135475	0
+0.0428	211	5199	1	211	0	-0.0135475	0
+0.043	211	5202	1	211	0	-0.0135475	0
+0.0432	211	5207	1	211	0	-0.0135475	0
+0.0434	211	5215	1	211	0	-0.0135475	0
+0.0436	211	5219	1	211	0	-0.0135475	0
+0.0438	211	5227	1	211	0	-0.0135475	0
+0.044	211	5231	1	211	0	-0.0135475	0
+0.0442	211	5238	1	211	0	-0.0135475	0
+0.0445	211	5247	1	211	0	-0.0135475	0
+0.0447	211	5252	1	211	0	-0.0135475	0
+0.0449	211	5254	1	211	0	-0.0135475	0
+0.0451	211	5262	1	211	0	-0.0135475	0
+0.0453	211	5266	1	211	0	-0.0135475	0
+0.0455	211	5272	1	211	0	-0.0135475	0
+0.0457	211	5278	1	211	0	-0.0135475	0
+0.0459	211	5289	1	211	0	-0.0135475	0
+0.0461	211	5290	1	211	0	-0.0135475	0
+0.0463	211	5302	1	211	0	-0.0135475	0
+0.0465	211	5309	1	211	0	-0.0135475	0
+0.0467	211	5313	1	211	0	-0.0135475	0
+0.0469	211	5329	1	211	0	-0.0135475	0
+0.0471	211	5335	1	211	0	-0.0135475	0
+0.0473	211	5345	1	211	0	-0.0135475	0
+0.0476	211	5361	1	211	0	-0.0135475	0
+0.0478	211	5365	1	211	0	-0.0135475	0
+0.048	211	5376	1	211	0	-0.0135475	0
+0.0482	211	5380	1	211	0	-0.0135475	0
+0.0484	211	5389	1	211	0	-0.0135475	0
+0.0486	211	5394	1	211	0	-0.0135475	0
+0.0488	211	5402	1	211	0	-0.0135475	0
+0.049	211	5407	1	211	0	-0.0135475	0
+0.0492	211	5409	1	211	0	-0.0135475	0
+0.0494	211	5415	1	211	0	-0.0135475	0
+0.0496	211	5418	1	211	0	-0.0135475	0
+0.0498	211	5425	1	211	0	-0.0135475	0
+0.05	211	5432	1	211	0	-0.0135475	0
+0.0502	211	5438	1	211	0	-0.0135475	0
+0.0504	211	5450	1	211	0	-0.0135475	0
+0.0506	211	5455	1	211	0	-0.0135475	0
+0.0508	211	5465	1	211	0	-0.0135475	0
+0.051	211	5467	1	211	0	-0.0135475	0
+0.0512	211	5480	1	211	0	-0.0135475	0
+0.0514	211	5487	1	211	0	-0.0135475	0
+0.0516	211	5494	1	211	0	-0.0135475	0
+0.0518	211	5507	1	211	0	-0.0135475	0
+0.052	211	5509	1	211	0	-0.0135475	0
+0.0522	211	5519	1	211	0	-0.0135475	0
+0.0524	211	5522	1	211	0	-0.0135475	0
+0.0526	211	5533	1	211	0	-0.0135475	0
+0.0529	211	5542	1	211	0	-0.0135475	0
+0.0531	211	5546	1	211	0	-0.0135475	0
+0.0533	211	5552	1	211	0	-0.0135475	0
+0.0537	211	5559	1	211	0	-0.0135475	0
+0.054	211	5571	1	211	0	-0.0135475	0
+0.0542	211	5577	1	211	0	-0.0135475	0
+0.0544	211	5584	1	211	0	-0.0135475	0
+0.0546	211	5590	1	211	0	-0.0135475	0
+0.0548	211	5592	1	211	0	-0.0135475	0
+0.055	211	5599	1	211	0	-0.0135475	0
+0.0552	211	5601	1	211	0	-0.0135475	0
+0.0554	211	5607	1	211	0	-0.0135475	0
+0.0556	211	5615	1	211	0	-0.0135475	0
+0.0558	211	5623	1	211	0	-0.0135475	0
+0.056	211	5629	1	211	0	-0.0135475	0
+0.0562	211	5634	1	211	0	-0.0135475	0
+0.0564	211	5641	1	211	0	-0.0135475	0
+0.0566	211	5643	1	211	0	-0.0135475	0
+0.0568	211	5651	1	211	0	-0.0135475	0
+0.057	211	5659	1	211	0	-0.0135475	0
+0.0572	211	5665	1	211	0	-0.0135475	0
+0.0574	211	5671	1	211	0	-0.0135475	0
+0.0576	211	5677	1	211	0	-0.0135475	0
+0.0578	211	5679	1	211	0	-0.0135475	0
+0.058	211	5682	1	211	0	-0.0135475	0
+0.0582	211	5692	1	211	0	-0.0135475	0
+0.0584	211	5700	1	211	0	-0.0135475	0
+0.0586	211	5709	1	211	0	-0.0135475	0
+0.0588	211	5722	1	211	0	-0.0135475	0
+0.059	211	5730	1	211	0	-0.0135475	0
+0.0592	211	5740	1	211	0	-0.0135475	0
+0.0594	211	5753	1	211	0	-0.0135475	0
+0.0596	211	5766	1	211	0	-0.0135475	0
+0.0598	211	5769	1	211	0	-0.0135475	0
+0.06	211	5772	1	211	0	-0.0135475	0
+0.0602	211	5777	1	211	0	-0.0135475	0
+0.0604	211	5794	1	211	0	-0.0135475	0
+0.0606	211	5802	1	211	0	-0.0135475	0
+0.0608	211	5811	1	211	0	-0.0135475	0
+0.061	211	5822	1	211	0	-0.0135475	0
+0.0612	211	5830	1	211	0	-0.0135475	0
+0.0614	211	5851	1	211	0	-0.0135475	0
+0.0616	211	5858	1	211	0	-0.0135475	0
+0.0618	211	5875	1	211	0	-0.0135475	0
+0.062	211	5881	1	211	0	-0.0135475	0
+0.0622	211	5897	1	211	0	-0.0135475	0
+0.0624	211	5925	1	211	0	-0.0135475	0
+0.0626	211	5938	1	211	0	-0.0135475	0
+0.0628	211	5950	1	211	0	-0.0135475	0
+0.063	211	5964	1	211	0	-0.0135475	0
+0.0632	211	5985	1	211	0	-0.0135475	0
+0.0634	211	6009	1	211	0	-0.0135475	0
+0.0636	211	6025	1	211	0	-0.0135475	0
+0.0638	211	6035	1	211	0	-0.0135475	0
+0.064	211	6054	1	211	0	-0.0135475	0
+0.0642	211	6062	1	211	0	-0.0135475	0
+0.0644	211	6094	1	211	0	-0.0135475	0
+0.0646	211	6114	1	211	0	-0.0135475	0
+0.0648	211	6126	1	211	0	-0.0135475	0
+0.065	211	6154	1	211	0	-0.0135475	0
+0.0652	211	6168	1	211	0	-0.0135475	0
+0.0654	211	6203	1	211	0	-0.0135475	0
+0.0656	211	6224	1	211	0	-0.0135475	0
+0.0658	211	6275	1	211	0	-0.0135475	0
+0.066	211	6299	1	211	0	-0.0135475	0
+0.0662	211	6336	1	211	0	-0.0135475	0
+0.0664	211	6376	1	211	0	-0.0135475	0
+0.0666	211	6405	1	211	0	-0.0135475	0
+0.0668	211	6446	1	211	0	-0.0135475	0
+0.067	211	6470	1	211	0	-0.0135475	0
+0.0672	211	6536	1	211	0	-0.0135475	0
+0.0674	211	6567	1	211	0	-0.0135475	0
+0.0676	211	6650	1	211	0	-0.0135475	0
+0.0678	211	6688	1	211	0	-0.0135475	0
+0.068	211	6747	1	211	0	-0.0135475	0
+0.0682	211	6808	1	211	0	-0.0135475	0
+0.0684	211	6866	1	211	0	-0.0135475	0
+0.0686	211	6949	1	211	0	-0.0135475	0
+0.0688	211	7002	1	211	0	-0.0135475	0
+0.069	211	7117	1	211	0	-0.0135475	0
+0.0692	211	7168	1	211	0	-0.0135475	0
+0.0694	211	7307	1	211	0	-0.0135475	0
+0.0696	211	7358	1	211	0	-0.0135475	0
+0.0698	211	7468	1	211	0	-0.0135475	0
+0.07	211	7542	1	211	0	-0.0135475	0
+0.0702	211	7648	1	211	0	-0.0135475	0
+0.0704	211	7759	1	211	0	-0.0135475	0
+0.0706	211	7846	1	211	0	-0.0135475	0
+0.0708	211	7950	1	211	0	-0.0135475	0
+0.071	211	8031	1	211	0	-0.0135475	0
+0.0712	211	8161	1	211	0	-0.0135475	0
+0.0714	211	8234	1	211	0	-0.0135475	0
+0.0716	211	8374	1	211	0	-0.0135475	0
+0.0718	211	8479	1	211	0	-0.0135475	0
+0.072	211	8609	1	211	0	-0.0135475	0
+0.0722	211	8709	1	211	0	-0.0135475	0
+0.0724	211	8826	1	211	0	-0.0135475	0
+0.0726	211	8971	1	211	0	-0.0135475	0
+0.0728	211	9072	1	211	0	-0.0135475	0
+0.073	211	9236	1	211	0	-0.0135475	0
+0.0732	211	9331	1	211	0	-0.0135475	0
+0.0734	211	9483	1	211	0	-0.0135475	0
+0.0736	211	9577	1	211	0	-0.0135475	0
+0.0738	211	9710	1	211	0	-0.0135475	0
+0.074	211	9815	1	211	0	-0.0135475	0
+0.0742	211	9929	1	211	0	-0.0135475	0
+0.0744	211	10014	1	211	0	-0.0135475	0
+0.0746	211	10093	1	211	0	-0.0135475	0
+0.0748	211	10216	1	211	0	-0.0135475	0
+0.075	211	10288	1	211	0	-0.0135475	0
+0.0752	211	10395	1	211	0	-0.0135475	0
+0.0754	211	10467	1	211	0	-0.0135475	0
+0.0756	211	10577	1	211	0	-0.0135475	0
+0.0758	211	10640	1	211	0	-0.0135475	0
+0.076	211	10721	1	211	0	-0.0135475	0
+0.0762	211	10795	1	211	0	-0.0135475	0
+0.0764	211	10861	1	211	0	-0.0135475	0
+0.0766	211	10930	1	211	0	-0.0135475	0
+0.0768	211	10983	1	211	0	-0.0135475	0
+0.077	211	11054	1	211	0	-0.0135475	0
+0.0772	211	11121	1	211	0	-0.0135475	0
+0.0774	211	11190	1	211	0	-0.0135475	0
+0.0776	211	11248	1	211	0	-0.0135475	0
+0.0778	211	11320	1	211	0	-0.0135475	0
+0.078	211	11371	1	211	0	-0.0135475	0
+0.0782	211	11425	1	211	0	-0.0135475	0
+0.0784	211	11480	1	211	0	-0.0135475	0
+0.0786	211	11519	1	211	0	-0.0135475	0
+0.0788	211	11568	1	211	0	-0.0135475	0
+0.079	211	11615	1	211	0	-0.0135475	0
+0.0792	211	11667	1	211	0	-0.0135475	0
+0.0794	211	11716	1	211	0	-0.0135475	0
+0.0796	211	11759	1	211	0	-0.0135475	0
+0.0798	211	11815	1	211	0	-0.0135475	0
+0.08	211	11861	1	211	0	-0.0135475	0
+0.0802	211	11903	1	211	0	-0.0135475	0
+0.0804	211	11935	1	211	0	-0.0135475	0
+0.0806	211	11979	1	211	0	-0.0135475	0
+0.0808	211	12030	1	211	0	-0.0135475	0
+0.081	211	12060	1	211	0	-0.0135475	0
+0.0812	211	12116	1	211	0	-0.0135475	0
+0.0814	211	12169	1	211	0	-0.0135475	0
+0.0816	211	12212	1	211	0	-0.0135475	0
+0.0818	211	12257	1	211	0	-0.0135475	0
+0.082	211	12298	1	211	0	-0.0135475	0
+0.0822	211	12341	1	211	0	-0.0135475	0
+0.0824	211	12382	1	211	0	-0.0135475	0
+0.0826	211	12437	1	211	0	-0.0135475	0
+0.0828	211	12495	1	211	0	-0.0135475	0
+0.083	211	12542	1	211	0	-0.0135475	0
+0.0832	211	12601	1	211	0	-0.0135475	0
+0.0834	211	12648	1	211	0	-0.0135475	0
+0.0836	211	12704	1	211	0	-0.0135475	0
+0.0838	211	12763	1	211	0	-0.0135475	0
+0.084	211	12824	1	211	0	-0.0135475	0
+0.0842	211	12884	1	211	0	-0.0135475	0
+0.0844	211	12940	1	211	0	-0.0135475	0
+0.0846	211	13003	1	211	0	-0.0135475	0
+0.0848	211	13052	1	211	0	-0.0135475	0
+0.085	211	13118	1	211	0	-0.0135475	0
+0.0852	211	13190	1	211	0	-0.0135475	0
+0.0854	211	13261	1	211	0	-0.0135475	0
+0.0856	211	13355	1	211	0	-0.0135475	0
+0.0858	211	13424	1	211	0	-0.0135475	0
+0.086	211	13514	1	211	0	-0.0135475	0
+0.0862	211	13562	1	211	0	-0.0135475	0
+0.0864	211	13645	1	211	0	-0.0135475	0
+0.0866	211	13702	1	211	0	-0.0135475	0
+0.0868	211	13790	1	211	0	-0.0135475	0
+0.087	211	13871	1	211	0	-0.0135475	0
+0.0872	211	13986	1	211	0	-0.0135475	0
+0.0874	211	14068	1	211	0	-0.0135475	0
+0.0876	211	14187	1	211	0	-0.0135475	0
+0.0878	211	14265	1	211	0	-0.0135475	0
+0.088	211	14392	1	211	0	-0.0135475	0
+0.0882	211	14503	1	211	0	-0.0135475	0
+0.0884	211	14606	1	211	0	-0.0135475	0
+0.0886	211	14744	1	211	0	-0.0135475	0
+0.0888	211	14853	1	211	0	-0.0135475	0
+0.089	211	14989	1	211	0	-0.0135475	0
+0.0892	211	15091	1	211	0	-0.0135475	0
+0.0894	211	15257	1	211	0	-0.0135475	0
+0.0896	211	15377	1	211	0	-0.0135475	0
+0.0898	211	15540	1	211	0	-0.0135475	0
+0.09	211	15652	1	211	0	-0.0135475	0
+0.0902	211	15839	1	211	0	-0.0135475	0
+0.0904	211	15953	1	211	0	-0.0135475	0
+0.0906	211	16095	1	211	0	-0.0135475	0
+0.0908	211	16247	1	211	0	-0.0135475	0
+0.091	211	16398	1	211	0	-0.0135475	0
+0.0912	211	16577	1	211	0	-0.0135475	0
+0.0914	211	16710	1	211	0	-0.0135475	0
+0.0916	211	16874	1	211	0	-0.0135475	0
+0.0918	211	17005	1	211	0	-0.0135475	0
+0.092	211	17192	1	211	0	-0.0135475	0
+0.0922	211	17326	1	211	0	-0.0135475	0
+0.0924	211	17475	1	211	0	-0.0135475	0
+0.0926	211	17586	1	211	0	-0.0135475	0
+0.0928	211	17737	1	211	0	-0.0135475	0
+0.093	211	17864	1	211	0	-0.0135475	0
+0.0932	211	17993	1	211	0	-0.0135475	0
+0.0934	211	18118	1	211	0	-0.0135475	0
+0.0936	211	18264	1	211	0	-0.0135475	0
+0.0938	211	18400	1	211	0	-0.0135475	0
+0.094	211	18539	1	211	0	-0.0135475	0
+0.0942	211	18686	1	211	0	-0.0135475	0
+0.0944	211	18785	1	211	0	-0.0135475	0
+0.0946	211	18921	1	211	0	-0.0135475	0
+0.0948	211	19026	1	211	0	-0.0135475	0
+0.095	211	19160	1	211	0	-0.0135475	0
+0.0952	211	19245	1	211	0	-0.0135475	0
+0.0954	211	19358	1	211	0	-0.0135475	0
+0.0956	211	19458	1	211	0	-0.0135475	0
+0.0958	211	19554	1	211	0	-0.0135475	0
+0.096	211	19637	1	211	0	-0.0135475	0
+0.0962	211	19750	1	211	0	-0.0135475	0
+0.0964	211	19826	1	211	0	-0.0135475	0
+0.0966	211	19911	1	211	0	-0.0135475	0
+0.0968	211	19992	1	211	0	-0.0135475	0
+0.097	211	20081	1	211	0	-0.0135475	0
+0.0972	211	20173	1	211	0	-0.0135475	0
+0.0974	211	20255	1	211	0	-0.0135475	0
+0.0976	211	20338	1	211	0	-0.0135475	0
+0.0978	211	20385	1	211	0	-0.0135475	0
+0.098	211	20466	1	211	0	-0.0135475	0
+0.0982	211	20522	1	211	0	-0.0135475	0
+0.0984	211	20585	1	211	0	-0.0135475	0
+0.0986	211	20641	1	211	0	-0.0135475	0
+0.0988	211	20707	1	211	0	-0.0135475	0
+0.099	211	20760	1	211	0	-0.0135475	0
+0.0992	211	20825	1	211	0	-0.0574999	0
+0.0994	211	20868	1	211	0	-0.101452	0
+0.0996	211	20919	1	211	0	-0.145405	0
+0.0998	211	20950	1	211	0	0	0

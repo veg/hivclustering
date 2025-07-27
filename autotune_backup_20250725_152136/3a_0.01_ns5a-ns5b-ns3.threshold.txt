@@ -1,0 +1,9 @@
+Evaluating distance threshold  0.00001 1 1Evaluating distance threshold  0.01233 1 1Evaluating distance threshold  0.01326 1 1Evaluating distance threshold  0.01469 1 1Evaluating distance threshold  0.02123 1 1Evaluating distance threshold  0.02452 1 1Evaluating distance threshold  0.02802 1 1Evaluating distance threshold  0.04516 1 1Evaluating distance threshold  0.05027 2 2Evaluating distance threshold  0.05496 2 2Evaluating distance threshold  0.05671 2 1Evaluating distance threshold  0.05685 2 1Evaluating distance threshold  0.05727 2 1Evaluating distance threshold  0.05833 2 1Evaluating distance threshold  0.05879 2 1Evaluating distance threshold  0.06444 2 1Evaluating distance threshold  0.06496 2 1Evaluating distance threshold  0.06827 2 1Evaluating distance threshold  0.07010 2 1Evaluating distance threshold  0.07084 2 1Evaluating distance threshold  0.07296 2 1Selected distance threshold of  0.05496
+9 edges on 7 nodes
+Found 2 clusters
+Maximum cluster size = 5 (second largest = 2) nodes
+Unknown : 7
+0 directed edges
+{'Missing dates': 9}
+Fitting the degree distribution to various densities
+Best distribution is 'Negative Binomial'

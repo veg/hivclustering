@@ -1,0 +1,8 @@
+ID1,ID2,Distance
+seq1,seq2,0.001
+seq1,seq3,0.002
+seq2,seq3,0.003
+seq4,seq5,0.005
+seq6,seq7,0.008
+seq8,seq9,0.012
+seq10,seq11,0.015

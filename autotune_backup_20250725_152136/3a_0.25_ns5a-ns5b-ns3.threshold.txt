@@ -1,0 +1,15 @@
+Evaluating distance threshold  0.00001 1 1Evaluating distance threshold  0.01331 1 1Evaluating distance threshold  0.01408 1 1Evaluating distance threshold  0.01776 1 1Evaluating distance threshold  0.02456 1 1Evaluating distance threshold  0.02667 1 1Evaluating distance threshold  0.02830 1 1Evaluating distance threshold  0.03827 1 1Evaluating distance threshold  0.04174 1 1Evaluating distance threshold  0.04230 1 1Evaluating distance threshold  0.05312 1 1Evaluating distance threshold  0.05602 1 1Evaluating distance threshold  0.05775 1 1Evaluating distance threshold  0.05896 1 1Evaluating distance threshold  0.06056 1 1Evaluating distance threshold  0.06083 1 1Evaluating distance threshold  0.06406 1 1Evaluating distance threshold  0.06432 1 1Evaluating distance threshold  0.06586 1 1Evaluating distance threshold  0.07308 1 1Evaluating distance threshold  0.07373 1 1Evaluating distance threshold  0.07705 1 1Evaluating distance threshold  0.07757 1 1Evaluating distance threshold  0.08023 1 1Evaluating distance threshold  0.08550 1 1Evaluating distance threshold  0.08678 1 1Evaluating distance threshold  0.09064 1 1Traceback (most recent call last):
+  File "/home/sweaver/hcv/venv/bin/hivnetworkcsv", line 622, in <module>
+    make_hiv_network()
+  File "/home/sweaver/hcv/venv/bin/hivnetworkcsv", line 20, in make_hiv_network
+    network = build_a_network()
+              ^^^^^^^^^^^^^^^^^
+  File "/home/sweaver/hcv/venv/lib64/python3.11/site-packages/hivclustering/networkbuild.py", line 675, in build_a_network
+    compute_threshold_scores(profile)
+  File "/home/sweaver/hcv/venv/lib64/python3.11/site-packages/hivclustering/networkbuild.py", line 463, in compute_threshold_scores
+    cs = cluster_scaler (records[d[0]][2])
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/sweaver/hcv/venv/lib64/python3.11/site-packages/hivclustering/networkbuild.py", line 427, in cluster_scaler
+    x = (cluster_max-c) / (cluster_max - cluster_min)
+        ~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ZeroDivisionError: division by zero

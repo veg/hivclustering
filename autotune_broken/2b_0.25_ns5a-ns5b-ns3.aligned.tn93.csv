@@ -1,0 +1,11 @@
+ID1,ID2,Distance
+AB030907.1_ns5a-ns5b-ns3,CEC-22-8495-HZD-genotype-2b-consensus-0.25_merged,0.087108
+AB030907.1_ns5a-ns5b-ns3,CEC-22-9095-JVJA-genotype-2b-consensus-0.25_merged,0.0868331
+AB030907.1_ns5a-ns5b-ns3,CEC-22-8310-ACES-genotype-2b-consensus-0.25_merged,0.0920054
+CEC-22-9095-JVJA-genotype-2b-consensus-0.25_merged,CEC-22-8310-ACES-genotype-2b-consensus-0.25_merged,0.0863823
+CEC-22-8310-ACES-genotype-2b-consensus-0.25_merged,CEC-21-5777-HZL-genotype-2b-consensus-0.25_merged,0.100384
+CEC-22-8495-HZD-genotype-2b-consensus-0.25_merged,CEC-22-9095-JVJA-genotype-2b-consensus-0.25_merged,0.0768482
+AB030907.1_ns5a-ns5b-ns3,CEC-21-5777-HZL-genotype-2b-consensus-0.25_merged,0.0914155
+CEC-22-9095-JVJA-genotype-2b-consensus-0.25_merged,CEC-21-5777-HZL-genotype-2b-consensus-0.25_merged,0.0976667
+CEC-22-8495-HZD-genotype-2b-consensus-0.25_merged,CEC-22-8310-ACES-genotype-2b-consensus-0.25_merged,0.0894658
+CEC-22-8495-HZD-genotype-2b-consensus-0.25_merged,CEC-21-5777-HZL-genotype-2b-consensus-0.25_merged,0.0928665
