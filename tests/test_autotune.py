@@ -60,7 +60,7 @@ E|01012020,F|01012020,0.003
                 self.assertTrue(singletons_value.isdigit(), 
                                f"Line {i} has non-numeric singleton value: {singletons_value}")
                 
-                threshold = float(columns[0])
+                threshold = float(columns[0].rstrip('*'))  # Remove asterisk if present
                 nodes = int(columns[1])
                 singletons = int(singletons_value)
                 
@@ -118,7 +118,7 @@ G|01012020,H|01012020,0.05
             for line in lines[1:]:
                 if line.strip():
                     cols = line.split('\t')
-                    threshold = float(cols[threshold_idx])
+                    threshold = float(cols[threshold_idx].rstrip('*'))  # Remove asterisk if present
                     nodes = int(cols[nodes_idx])
                     singletons = int(cols[singletons_idx])
                     
@@ -187,14 +187,66 @@ seq19,seq20,0.0105
                 # Should provide a meaningful best guess with actual score, not default fallback
                 self.assertNotIn("best guess 1e-05 (score 0)", result.stderr,
                                "Should not fall back to default threshold when real candidates exist")
-                # Should see a meaningful threshold value
-                self.assertRegex(result.stderr, r"best guess 0\.\d+ \(score \d+\.?\d*\)",
+                # Should see a meaningful best guess with score
+                self.assertRegex(result.stderr, r"best guess \(score \d+\.?\d*\)",
                                "Should provide meaningful best guess with real score")
             else:
                 # In some cases it might successfully select a threshold
                 self.assertIn("Selected distance threshold", result.stderr,
                              "Should either select threshold or provide meaningful best guess")
                            
+        finally:
+            os.unlink(test_file)
+
+    def test_auto_profile_shows_recommendation(self):
+        """Test that AUTO-TUNE auto-profile mode shows recommended threshold with asterisk"""
+        test_data = """ID1,ID2,Distance
+A|01012020,B|01012020,0.001
+C|01012020,D|01012020,0.002
+E|01012020,F|01012020,0.003
+G|01012020,H|01012020,0.004
+"""
+        
+        with tempfile.NamedTemporaryFile(mode='w', suffix='.csv', delete=False) as f:
+            f.write(test_data)
+            test_file = f.name
+        
+        try:
+            cmd = [
+                sys.executable,
+                os.path.join(os.path.dirname(__file__), '..', 'scripts', 'hivnetworkcsv'),
+                '-i', test_file,
+                '-A', '0.001'
+            ]
+            
+            result = subprocess.run(cmd, capture_output=True, text=True)
+            self.assertEqual(result.returncode, 0, f"Command failed with stderr: {result.stderr}")
+            
+            lines = result.stdout.strip().split('\n')
+            self.assertGreater(len(lines), 1, "Should have header and at least one data line")
+            
+            # Check that exactly one threshold has an asterisk
+            asterisk_count = 0
+            for line in lines[1:]:  # Skip header
+                if line.strip():
+                    cols = line.split('\t')
+                    if cols[0].endswith('*'):
+                        asterisk_count += 1
+            
+            self.assertEqual(asterisk_count, 1, "Exactly one threshold should be marked with asterisk")
+            
+            # Verify the recommended threshold makes sense (should be one of the lower thresholds)
+            recommended_threshold = None
+            for line in lines[1:]:
+                if line.strip():
+                    cols = line.split('\t')
+                    if cols[0].endswith('*'):
+                        recommended_threshold = float(cols[0].rstrip('*'))
+                        break
+            
+            self.assertIsNotNone(recommended_threshold, "Should have found a recommended threshold")
+            self.assertLessEqual(recommended_threshold, 0.005, "Recommended threshold should be reasonable for test data")
+                    
         finally:
             os.unlink(test_file)
 

@@ -718,38 +718,66 @@ def build_a_network(extra_arguments = None):
         compute_threshold_scores(profile)
 
 
+        # Run AUTO-TUNE threshold selection logic for both modes
+        rec = [[k[0],k[-1]] for k in sorted (profile, key = lambda r : r[-1], reverse = True) if k [-1] >= 1.9]
+        
+        selected_threshold = None
+        recommendation_status = None
+        
+        if len (rec) == 1:
+            selected_threshold = rec[0][0]
+            recommendation_status = "Selected (single candidate)"
+        else:
+            if len (rec) > 1:
+                suggested_span = max (rec, key = lambda x: x[0])[0] - min (rec, key = lambda x: x[0])[0]
+                mean_diff = sum ([k[1] - profile[i-1][1] for i,k in enumerate(profile[1:])]) / (len (profile)-1)
+                if mean_diff == 0.0:
+                    # For low-diversity datasets (like HCV), when mean_diff is 0, 
+                    # select the highest scoring threshold among candidates
+                    selected_threshold = rec[0][0]
+                    recommendation_status = "Selected (low-diversity data)"
+                elif (suggested_span / mean_diff < log (len (profile))):
+                    selected_threshold = rec[0][0]
+                    recommendation_status = "Selected (clustered candidates)"
+                else:
+                    recommendation_status = "Multiple dispersed candidates"
+            else:
+                # No candidates with score >= 1.9, find best guess
+                best_guess = sorted (profile, key = lambda r : r[6], reverse = True)
+                selected_threshold = best_guess[0][0]
+                recommendation_status = f"Best guess (score {best_guess[0][6]:.3g})"
+
         if run_settings.auto_prof is not None:
             print ("\t".join (["Threshold","Nodes","Edges","Clusters","LargestCluster","SecondLargestCluster","Score","Singletons"]))
+            
+            # Find the recommended threshold row in the profile
+            recommended_row = None
+            if selected_threshold is not None:
+                for r in profile:
+                    if abs(r[0] - selected_threshold) < 1e-10:  # Handle floating point comparison
+                        recommended_row = r
+                        break
+            
             for r in profile:
-                print ("%g\t%d\t%d\t%d\t%d\t%d\t%g\t%d" % tuple(r))
+                # Mark recommended row with asterisk in threshold column (but keep TSV valid)
+                threshold_str = "%g" % r[0]
+                if recommended_row is not None and r is recommended_row:
+                    threshold_str += "*"
+                print ("%s\t%d\t%d\t%d\t%d\t%d\t%g\t%d" % (threshold_str, r[1], r[2], r[3], r[4], r[5], r[6], r[7]))
+            
             sys.exit (0)
         else:
-            rec = [[k[0],k[-1]] for k in sorted (profile, key = lambda r : r[-1], reverse = True) if k [-1] >= 1.9]
-
-            run_settings.threshold = None
-
-            if len (rec) == 1:
-                run_settings.threshold = rec[0][0]
-            else:
-                if len (rec) > 1:
-                    suggested_span = max (rec, key = lambda x: x[0])[0] - min (rec, key = lambda x: x[0])[0]
-                    mean_diff = sum ([k[1] - profile[i-1][1] for i,k in enumerate(profile[1:])]) / (len (profile)-1)
-                    if mean_diff == 0.0:
-                        # For low-diversity datasets (like HCV), when mean_diff is 0, 
-                        # select the highest scoring threshold among candidates
-                        run_settings.threshold = rec[0][0]
-                    elif (suggested_span / mean_diff < log (len (profile))):
-                        run_settings.threshold = rec[0][0]
+            run_settings.threshold = selected_threshold
 
             if run_settings.threshold is None:
-                if len (rec) == 0:
-                    best_guess = sorted (profile, key = lambda r : r[6], reverse = True)
-                    print ('ERROR : Could not automatically determine a distance threshold; no sufficiently strong outlier, best guess %g (score %g)' % (best_guess[0][0], best_guess[0][6]) , file = sys.stderr)
-                else:
-                    print ('ERROR : Multiple candidate thresholds: %s', ', '.join ([str (r[0]) for r in rec]), file = sys.stderr)
+                print ('ERROR : Multiple candidate thresholds: %s' % ', '.join ([str (r[0]) for r in rec]), file = sys.stderr)
                 sys.exit (1)
             else:
-                print ("Selected distance threshold of % g" % run_settings.threshold, file = sys.stderr)
+                if "Best guess" in recommendation_status:
+                    print ('ERROR : Could not automatically determine a distance threshold; no sufficiently strong outlier, %s' % recommendation_status.lower(), file = sys.stderr)
+                    sys.exit (1)
+                else:
+                    print ("Selected distance threshold of %g" % run_settings.threshold, file = sys.stderr)
                 to_delete = set ()
                 for edge, v in network.edges.items():
                     if network.distances[edge] > run_settings.threshold:
