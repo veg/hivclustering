@@ -47,6 +47,7 @@ E|01012020,F|01012020,0.003
         
         header = lines[0].split('\t')
         self.assertIn('Singletons', header, "Singletons column not found in header")
+        self.assertIn('Recommended', header, "Recommended column not found in header")
         
         singletons_index = header.index('Singletons')
         
@@ -60,8 +61,6 @@ E|01012020,F|01012020,0.003
                 self.assertTrue(singletons_value.isdigit(), 
                                f"Line {i} has non-numeric singleton value: {singletons_value}")
                 
-                if columns[0] == "RECOMMENDED":
-                    continue  # Skip RECOMMENDED row for this test
                 threshold = float(columns[0])
                 nodes = int(columns[1])
                 singletons = int(singletons_value)
@@ -108,6 +107,7 @@ G|01012020,H|01012020,0.05
             header = lines[0].split('\t')
             
             self.assertIn('Singletons', header, "Singletons column not found in header")
+            self.assertIn('Recommended', header, "Recommended column not found in header")
             
             # Verify decreasing singleton pattern and total node conservation
             threshold_idx = header.index('Threshold')
@@ -120,8 +120,6 @@ G|01012020,H|01012020,0.05
             for line in lines[1:]:
                 if line.strip():
                     cols = line.split('\t')
-                    if cols[threshold_idx] == "RECOMMENDED":
-                        continue  # Skip RECOMMENDED row for this test
                     threshold = float(cols[threshold_idx])
                     nodes = int(cols[nodes_idx])
                     singletons = int(cols[singletons_idx])
@@ -203,7 +201,7 @@ seq19,seq20,0.0105
             os.unlink(test_file)
 
     def test_auto_profile_shows_recommendation(self):
-        """Test that AUTO-TUNE auto-profile mode shows RECOMMENDED row"""
+        """Test that AUTO-TUNE auto-profile mode shows Recommended column"""
         test_data = """ID1,ID2,Distance
 A|01012020,B|01012020,0.001
 C|01012020,D|01012020,0.002
@@ -229,28 +227,20 @@ G|01012020,H|01012020,0.004
             lines = result.stdout.strip().split('\n')
             self.assertGreater(len(lines), 1, "Should have header and at least one data line")
             
-            # Check that there's exactly one RECOMMENDED row
+            header = lines[0].split('\t')
+            self.assertIn('Recommended', header, "Should have Recommended column")
+            
+            recommended_idx = header.index('Recommended')
+            
+            # Check that exactly one row has "*" in the Recommended column
             recommended_count = 0
-            recommended_row_data = None
             for line in lines[1:]:  # Skip header
                 if line.strip():
                     cols = line.split('\t')
-                    if cols[0] == "RECOMMENDED":
+                    if len(cols) > recommended_idx and cols[recommended_idx] == "*":
                         recommended_count += 1
-                        recommended_row_data = cols
             
-            self.assertEqual(recommended_count, 1, "Should have exactly one RECOMMENDED row")
-            self.assertIsNotNone(recommended_row_data, "Should have found RECOMMENDED row")
-            
-            # Verify RECOMMENDED row has valid data structure
-            self.assertEqual(len(recommended_row_data), 8, "RECOMMENDED row should have 8 columns")
-            
-            # Verify all numeric columns are valid integers/floats
-            for i in range(1, 8):  # Skip threshold column (index 0)
-                if i == 6:  # Score column can be float
-                    float(recommended_row_data[i])
-                else:  # Other columns should be integers
-                    int(recommended_row_data[i])
+            self.assertEqual(recommended_count, 1, "Exactly one row should be marked as recommended")
                     
         finally:
             os.unlink(test_file)

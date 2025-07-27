@@ -748,23 +748,14 @@ def build_a_network(extra_arguments = None):
                 recommendation_status = f"Best guess (score {best_guess[0][6]:.3g})"
 
         if run_settings.auto_prof is not None:
-            print ("\t".join (["Threshold","Nodes","Edges","Clusters","LargestCluster","SecondLargestCluster","Score","Singletons"]))
+            print ("\t".join (["Threshold","Nodes","Edges","Clusters","LargestCluster","SecondLargestCluster","Score","Singletons","Recommended"]))
             
-            # Print all threshold data
+            # Print all threshold data with recommendation indicator
             for r in profile:
-                print ("%g\t%d\t%d\t%d\t%d\t%d\t%g\t%d" % tuple(r))
-            
-            # Add recommendation row if we have one
-            if selected_threshold is not None:
-                # Find the recommended threshold row in the profile to get its data
-                recommended_row = None
-                for r in profile:
-                    if abs(r[0] - selected_threshold) < 1e-10:  # Handle floating point comparison
-                        recommended_row = r
-                        break
-                
-                if recommended_row is not None:
-                    print ("RECOMMENDED\t%d\t%d\t%d\t%d\t%d\t%g\t%d" % (recommended_row[1], recommended_row[2], recommended_row[3], recommended_row[4], recommended_row[5], recommended_row[6], recommended_row[7]))
+                is_recommended = ""
+                if selected_threshold is not None and abs(r[0] - selected_threshold) < 1e-10:
+                    is_recommended = "*"
+                print ("%g\t%d\t%d\t%d\t%d\t%d\t%g\t%d\t%s" % (r[0], r[1], r[2], r[3], r[4], r[5], r[6], r[7], is_recommended))
             
             sys.exit (0)
         else:
