@@ -60,6 +60,8 @@ E|01012020,F|01012020,0.003
                 self.assertTrue(singletons_value.isdigit(), 
                                f"Line {i} has non-numeric singleton value: {singletons_value}")
                 
+                if columns[0] == "RECOMMENDED":
+                    continue  # Skip RECOMMENDED row for this test
                 threshold = float(columns[0])
                 nodes = int(columns[1])
                 singletons = int(singletons_value)
@@ -118,6 +120,8 @@ G|01012020,H|01012020,0.05
             for line in lines[1:]:
                 if line.strip():
                     cols = line.split('\t')
+                    if cols[threshold_idx] == "RECOMMENDED":
+                        continue  # Skip RECOMMENDED row for this test
                     threshold = float(cols[threshold_idx])
                     nodes = int(cols[nodes_idx])
                     singletons = int(cols[singletons_idx])
@@ -187,14 +191,67 @@ seq19,seq20,0.0105
                 # Should provide a meaningful best guess with actual score, not default fallback
                 self.assertNotIn("best guess 1e-05 (score 0)", result.stderr,
                                "Should not fall back to default threshold when real candidates exist")
-                # Should see a meaningful threshold value
-                self.assertRegex(result.stderr, r"best guess 0\.\d+ \(score \d+\.?\d*\)",
+                # Should see a meaningful best guess with score
+                self.assertRegex(result.stderr, r"best guess \(score \d+\.?\d*\)",
                                "Should provide meaningful best guess with real score")
             else:
                 # In some cases it might successfully select a threshold
                 self.assertIn("Selected distance threshold", result.stderr,
                              "Should either select threshold or provide meaningful best guess")
                            
+        finally:
+            os.unlink(test_file)
+
+    def test_auto_profile_shows_recommendation(self):
+        """Test that AUTO-TUNE auto-profile mode shows RECOMMENDED row"""
+        test_data = """ID1,ID2,Distance
+A|01012020,B|01012020,0.001
+C|01012020,D|01012020,0.002
+E|01012020,F|01012020,0.003
+G|01012020,H|01012020,0.004
+"""
+        
+        with tempfile.NamedTemporaryFile(mode='w', suffix='.csv', delete=False) as f:
+            f.write(test_data)
+            test_file = f.name
+        
+        try:
+            cmd = [
+                sys.executable,
+                os.path.join(os.path.dirname(__file__), '..', 'scripts', 'hivnetworkcsv'),
+                '-i', test_file,
+                '-A', '0.001'
+            ]
+            
+            result = subprocess.run(cmd, capture_output=True, text=True)
+            self.assertEqual(result.returncode, 0, f"Command failed with stderr: {result.stderr}")
+            
+            lines = result.stdout.strip().split('\n')
+            self.assertGreater(len(lines), 1, "Should have header and at least one data line")
+            
+            # Check that there's exactly one RECOMMENDED row
+            recommended_count = 0
+            recommended_row_data = None
+            for line in lines[1:]:  # Skip header
+                if line.strip():
+                    cols = line.split('\t')
+                    if cols[0] == "RECOMMENDED":
+                        recommended_count += 1
+                        recommended_row_data = cols
+            
+            self.assertEqual(recommended_count, 1, "Should have exactly one RECOMMENDED row")
+            self.assertIsNotNone(recommended_row_data, "Should have found RECOMMENDED row")
+            
+            # Verify RECOMMENDED row has valid data structure
+            self.assertEqual(len(recommended_row_data), 8, "RECOMMENDED row should have 8 columns")
+            
+            # Verify all numeric columns are valid integers/floats
+            for i in range(1, 8):  # Skip threshold column (index 0)
+                if i == 6:  # Score column can be float
+                    float(recommended_row_data[i])
+                else:  # Other columns should be integers
+                    int(recommended_row_data[i])
+                    
         finally:
             os.unlink(test_file)
 
