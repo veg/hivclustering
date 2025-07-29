@@ -189,9 +189,9 @@ seq19,seq20,0.0105
                 # Should provide a meaningful best guess with actual score, not default fallback
                 self.assertNotIn("best guess 1e-05 (score 0)", result.stderr,
                                "Should not fall back to default threshold when real candidates exist")
-                # Should see a meaningful best guess with score
-                self.assertRegex(result.stderr, r"best guess \(score \d+\.?\d*\)",
-                               "Should provide meaningful best guess with real score")
+                # Should see a meaningful best guess with threshold and score
+                self.assertRegex(result.stderr, r"best guess [\d\.e\-\+]+ \(score [\d\.e\-\+]+\)",
+                               "Should provide meaningful best guess with threshold and real score")
             else:
                 # In some cases it might successfully select a threshold
                 self.assertIn("Selected distance threshold", result.stderr,

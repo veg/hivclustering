@@ -745,7 +745,7 @@ def build_a_network(extra_arguments = None):
                 # No candidates with score >= 1.9, find best guess
                 best_guess = sorted (profile, key = lambda r : r[6], reverse = True)
                 selected_threshold = best_guess[0][0]
-                recommendation_status = f"Best guess (score {best_guess[0][6]:.3g})"
+                recommendation_status = f"Best guess {best_guess[0][0]:.5g} (score {best_guess[0][6]:.5g})"
 
         if run_settings.auto_prof is not None:
             print ("\t".join (["Threshold","Nodes","Edges","Clusters","LargestCluster","SecondLargestCluster","Score","Singletons","Recommended"]))
