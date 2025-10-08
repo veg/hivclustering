@@ -18,6 +18,7 @@ setup(name='hivclustering',
       package_data={'hivclustering': [
             'data/HBL/*.bf',
     ]},
+    python_requires='>=3.10',
     extras_require={
         'edgefiltering': ['bioext >= 0.21.0','hyphy-python >= 0.1.11','hppy >= 0.9.9'],
     },
