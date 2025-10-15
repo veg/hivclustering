@@ -252,7 +252,8 @@ if 'Settings' in network_json and 'compact_json' in network_json['Settings'] and
 # Return with trace_results key
 to_return = {}
 if(root_trace_results):
-    to_return["trace_results"] = network_json
+    to_return = results_json.copy()  # Preserve original top-level keys
+    to_return["trace_results"] = network_json  # Update trace_results with processed data
 else:
     to_return = network_json
 
