@@ -160,10 +160,11 @@ if import_settings.attributes: # JSON input
     to_import = json.load (import_settings.attributes)
     #If a list of items, then key by ehars_uid
     to_import = {
-        construct_key(v, key_fields, key_delimiter): v 
-        for v in to_import 
+        construct_key(v, key_fields, key_delimiter): v
+        for v in to_import
         if construct_key(v, key_fields, key_delimiter)
     }
+    total_records = len(to_import)
 else: # TSV import
     if import_settings.tab:
         csv_reader = csv.reader (import_settings.tab, delimiter = '\t')
