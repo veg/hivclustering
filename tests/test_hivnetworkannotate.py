@@ -205,6 +205,96 @@ class TestHivnetworkannotateTraceResults(unittest.TestCase):
             os.unlink(fields_path)
             os.unlink(output_path)
 
+    def test_json_attributes_reports_correct_record_count(self):
+        """Regression test for issue #58: -a JSON input must report actual record count in Import summary."""
+        with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as network_file:
+            json.dump(self.network_without_trace_results, network_file)
+            network_path = network_file.name
+
+        attributes_data = [
+            {"patient1": "patient1", "test_field": "value1"},
+            {"patient1": "patient2", "test_field": "value2"},
+            {"patient1": "patient3", "test_field": "value3"},
+        ]
+        with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as attr_file:
+            json.dump(attributes_data, attr_file)
+            attr_path = attr_file.name
+
+        with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as fields_file:
+            json.dump(self.fields_data, fields_file)
+            fields_path = fields_file.name
+
+        with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as output_file:
+            output_path = output_file.name
+
+        try:
+            cmd = [
+                sys.executable,
+                os.path.join(os.path.dirname(__file__), '..', 'scripts', 'hivnetworkannotate'),
+                '-n', network_path,
+                '-a', attr_path,
+                '-g', fields_path,
+                '-o', output_path
+            ]
+
+            result = subprocess.run(cmd, capture_output=True, text=True)
+
+            self.assertEqual(result.returncode, 0,
+                           f"Command failed with stderr: {result.stderr}")
+
+            self.assertIn("Records in file  : 3", result.stderr,
+                         f"Expected 'Records in file  : 3' in stderr, got: {result.stderr}")
+            self.assertNotIn("Records in file  : 0", result.stderr,
+                           "Records in file should not be 0 when JSON attributes contain records")
+
+        finally:
+            os.unlink(network_path)
+            os.unlink(attr_path)
+            os.unlink(fields_path)
+            os.unlink(output_path)
+
+    def test_tsv_attributes_reports_correct_record_count(self):
+        """Ensure TSV (-t) branch still reports correct record count (guard against regression)."""
+        with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as network_file:
+            json.dump(self.network_without_trace_results, network_file)
+            network_path = network_file.name
+
+        tsv_content = "patient1\ttest_field\npatient1\tvalue1\npatient2\tvalue2\npatient3\tvalue3\n"
+        with tempfile.NamedTemporaryFile(mode='w', suffix='.tsv', delete=False) as tsv_file:
+            tsv_file.write(tsv_content)
+            tsv_path = tsv_file.name
+
+        with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as fields_file:
+            json.dump(self.fields_data, fields_file)
+            fields_path = fields_file.name
+
+        with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as output_file:
+            output_path = output_file.name
+
+        try:
+            cmd = [
+                sys.executable,
+                os.path.join(os.path.dirname(__file__), '..', 'scripts', 'hivnetworkannotate'),
+                '-n', network_path,
+                '-t', tsv_path,
+                '-g', fields_path,
+                '-o', output_path
+            ]
+
+            result = subprocess.run(cmd, capture_output=True, text=True)
+
+            self.assertEqual(result.returncode, 0,
+                           f"Command failed with stderr: {result.stderr}")
+
+            self.assertIn("Records in file  : 3", result.stderr,
+                         f"Expected 'Records in file  : 3' in stderr, got: {result.stderr}")
+
+        finally:
+            os.unlink(network_path)
+            os.unlink(tsv_path)
+            os.unlink(fields_path)
+            os.unlink(output_path)
+
 
 if __name__ == '__main__':
     unittest.main()
