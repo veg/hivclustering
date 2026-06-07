@@ -81,6 +81,7 @@ arguments.add_argument  ('-x', '--missing', help  = 'If desired, provide a value
 arguments.add_argument  ('-X', '--clear', help = 'Flush existing attributes', required = False, action = 'store_true')
 arguments.add_argument  ('-i', '--index',   help    = 'The name of the column that indexes records (patient ID); default is to index on the first column', type = str)
 arguments.add_argument  ('-r', '--inplace', help = 'Write attributes to the input file (cannot be stdin)', required = False, action = 'store_true')
+arguments.add_argument  ('-F', '--full-inject', help = 'Add nodes from the attributes file that are not already present in the network', required = False, action = 'store_true')
 
 input_group = arguments.add_mutually_exclusive_group(required=True)
 input_group.add_argument  ('-a', '--attributes',   help    = 'The JSON file with node attributes', type = argparse.FileType('r'))
@@ -215,6 +216,8 @@ for n in network_json["Nodes"]:
         if node_attribute_key in n:
             del n[node_attribute_key]  # Clear attributes if requested
 
+injected_nodes = []
+
 # Now match nodes by the key constructed from the input data
 for node_key, values in to_import.items():
     if node_key in nodes_indexed_by_id:  # Match by the constructed key
@@ -226,6 +229,38 @@ for node_key, values in to_import.items():
                     node_dict[field_names[k]] = store_this
                     if nodes_indexed_by_id[node_key]['id'] in uninjected_set[field_names[k]]:
                         uninjected_set[field_names[k]].remove(nodes_indexed_by_id[node_key]['id'])
+    elif import_settings.full_inject:  # If full-inject is enabled, construct a new node
+        new_node = {
+            "id": node_key,
+            node_attribute_key: {}
+        }
+        node_dict = new_node[node_attribute_key]
+        for k, val in values.items():
+            if k in field_transformations:
+                store_this = field_transformations[k](val)
+                if store_this is not None:
+                    node_dict[field_names[k]] = store_this
+        injected_nodes.append(new_node)
+
+if import_settings.full_inject and len(injected_nodes) > 0:
+    # 1. Record original mapping of old index -> node ID to remap edge indices
+    index_to_id = {i: node["id"] for i, node in enumerate(network_json["Nodes"])}
+    
+    # 2. Append newly injected nodes
+    network_json["Nodes"].extend(injected_nodes)
+    
+    # 3. Sort all nodes alphabetically by ID to take advantage of Front (prefix) compression
+    network_json["Nodes"] = sorted(network_json["Nodes"], key=lambda x: x["id"])
+    
+    # 4. Build mapping of node ID -> new index
+    id_to_new_index = {node["id"]: i for i, node in enumerate(network_json["Nodes"])}
+    
+    # 5. Remap Edges source/target indices to match the new sorted node order
+    for edge in network_json.get("Edges", []):
+        source_id = index_to_id[edge["source"]]
+        target_id = index_to_id[edge["target"]]
+        edge["source"] = id_to_new_index[source_id]
+        edge["target"] = id_to_new_index[target_id]
 
 print ("\nImport summary", file = sys.stderr)
 print ("\t Records in file  : %d" % total_records, file = sys.stderr)
