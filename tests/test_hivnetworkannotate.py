@@ -295,6 +295,93 @@ class TestHivnetworkannotateTraceResults(unittest.TestCase):
             os.unlink(fields_path)
             os.unlink(output_path)
 
+    def test_duplicate_attributes_with_sequence_matching(self):
+        """Test that duplicate attributes matching selects the correct row using sequence ID tokens."""
+        # Patient 1 has two entries in attributes:
+        # - Entry A: has sequence (TNA_eligible = 1), document_uid = seq1, lab_seq = 101
+        # - Entry B: no sequence (TNA_eligible = 0), document_uid = seq_no, lab_seq = 102
+        # We check that the node gets annotated with the correct has_sequence = True and lab_seq = 101.
+        network_data = {
+            "Nodes": [
+                {"id": "patient1|seq1"}
+            ],
+            "Edges": []
+        }
+        
+        attributes_data = [
+            {
+                "patient1": "patient1",
+                "document_uid": "seq_no",
+                "lab_seq": "102",
+                "TNA_eligible": "0"
+            },
+            {
+                "patient1": "patient1",
+                "document_uid": "seq1",
+                "lab_seq": "101",
+                "TNA_eligible": "1"
+            }
+        ]
+        
+        fields_data = {
+            "TNA_eligible": {
+                "label": "has_sequence",
+                "type": "String"
+            },
+            "lab_seq": {
+                "label": "lab_seq",
+                "type": "String"
+            },
+            "keying": {
+                "fields": ["patient1"],
+                "delimiter": "|"
+            }
+        }
+        
+        with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as network_file:
+            json.dump(network_data, network_file)
+            network_path = network_file.name
+
+        with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as attr_file:
+            json.dump(attributes_data, attr_file)
+            attr_path = attr_file.name
+
+        with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as fields_file:
+            json.dump(fields_data, fields_file)
+            fields_path = fields_file.name
+
+        with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as output_file:
+            output_path = output_file.name
+
+        try:
+            cmd = [
+                sys.executable,
+                os.path.join(os.path.dirname(__file__), '..', 'scripts', 'hivnetworkannotate'),
+                '-n', network_path,
+                '-a', attr_path,
+                '-g', fields_path,
+                '-o', output_path
+            ]
+
+            result = subprocess.run(cmd, capture_output=True, text=True)
+
+            self.assertEqual(result.returncode, 0,
+                           f"Command failed with stderr: {result.stderr}")
+
+            # Read the output and verify structure
+            with open(output_path, 'r') as f:
+                output_json = json.load(f)
+            
+            node = output_json["Nodes"][0]
+            self.assertEqual(node["patient_attributes"]["has_sequence"], True)
+            self.assertEqual(node["patient_attributes"]["lab_seq"], "101")
+
+        finally:
+            os.unlink(network_path)
+            os.unlink(attr_path)
+            os.unlink(fields_path)
+            os.unlink(output_path)
+
 
 if __name__ == '__main__':
     unittest.main()
