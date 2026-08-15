@@ -41,7 +41,8 @@ usage: hivnetworkcsv [-h] [-i INPUT] [-u UDS] [-d DOT] [-c CLUSTER]
                      [--cycle-report-file CYCLE_REPORT_FILENAME]
                      [-g TRIANGLES] [-C {report,remove}] [-F CONTAMINANT_FILE]
                      [-M] [-B] [--no-degree-fit] [-X EXTRACT] [-O OUTPUT]
-                     [-P PRIOR] [-A AUTO_PROF] [--after AFTER]
+                     [-P PRIOR] [--prior-identity {entity,sequence}]
+                     [-A AUTO_PROF] [--after AFTER]
                      [--before BEFORE] [--import-attributes IMPORT_ATTR]
                      [--subcluster-annotation SUBCLUSTER_ANNOTATION SUBCLUSTER_ANNOTATION]
                      [-q]
@@ -140,6 +141,16 @@ optional arguments:
                         When running in JSON output mode, provide a JSON file
                         storing a previous (subset) version of the network for
                         consistent cluster naming
+  --prior-identity {entity,sequence}
+                        How nodes are matched against the prior network (-P)
+                        when deciding which nodes are new, which were removed,
+                        which moved between clusters, and how much each cluster
+                        grew. "entity" (the default) matches on the entity
+                        (person) ID, i.e. the node ID up to the first "|", so
+                        that re-sequencing a person already in the network is
+                        not reported as growth; "sequence" matches on the full
+                        sequence ID (the behavior before v1.9.10). The two are
+                        equivalent when node IDs carry no entity prefix.
   -A AUTO_PROF, --auto-profile AUTO_PROF
                         If provided supercedes most other output and inference
                         settings; will add edges from shortest to longest and
