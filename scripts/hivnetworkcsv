@@ -15,6 +15,17 @@ def ensure_key (dict_object, key, default_value = {}):
         dict_object[key] = default_value
     return dict_object[key]
 
+def identity_of (node_id):
+    '''
+        The identity used to decide whether a node in the current network is the same
+        thing as a node in the prior network (-P). Under the default 'entity' setting this
+        is the person the sequence came from, so that replacing or adding a sequence for
+        someone already in the network does not make them a new node.
+    '''
+    if settings().prior_identity == 'sequence':
+        return node_id
+    return entity_id_from_string (node_id)
+
 def make_hiv_network():
 
     network = build_a_network()
@@ -111,7 +122,8 @@ def make_hiv_network():
         
         if settings().prior is not None:
             try:
-                existing_nodes      = {} # node ID -> cluster ID
+                sequence_clusters   = {} # full sequence ID -> cluster ID
+                entity_clusters     = {} # entity ID -> {cluster ID : how many prior sequences were in it}
                 prior_network       = ht_process_network_json(json.load (settings().prior))
                 
                 
@@ -120,7 +132,7 @@ def make_hiv_network():
                 else:
                     prior_network_nodes = prior_network["Nodes"]
 
-                existing_edges      = {} # node ID -> set of other node IDs
+                existing_edges      = {} # identity -> set of other identities it was linked to
                 prior_network_edges = prior_network["Edges"]
                 new_clusters        = network.retrieve_clusters ()
                 if 'Subclusters' in prior_network:
@@ -146,14 +158,16 @@ def make_hiv_network():
                 new_cluster_sizes = {}
                 node_to_prior_cluster = {}
                 
-                old_node_ids = set()
+                old_node_ids = set()      # identities (see identity_of) present in the prior network
+                old_sequence_ids = set()  # full sequence IDs present in the prior network
 
 
                 for n in prior_network_nodes:
-                    old_node_ids.add (n["id"])
+                    old_node_ids.add (identity_of (n["id"]))
+                    old_sequence_ids.add (n["id"])
                     if n["cluster"] is not None:
                         numeric_id = int (n["cluster"])
-                        
+
                         node_to_prior_cluster [n["id"]] = numeric_id
 
 
@@ -162,17 +176,34 @@ def make_hiv_network():
                         else:
                             old_cluster_sizes[numeric_id] += 1
 
-                        existing_nodes[n["id"]] = numeric_id
+                        sequence_clusters[n["id"]] = numeric_id
+                        by_cluster = ensure_key (entity_clusters, identity_of (n["id"]), {})
+                        by_cluster[numeric_id] = by_cluster[numeric_id] + 1 if numeric_id in by_cluster else 1
                         max_id = max (max_id, numeric_id)
                         if n["cluster"] in cluster_sizes:
                             cluster_sizes[numeric_id] += 1
                         else:
                             cluster_sizes[numeric_id] = 1
-                            
-                            
+
+                def prior_cluster_of (node_id):
+                    '''
+                        Which cluster of the prior network this node belonged to, or None if it
+                        was not there (or was there but unclustered). An exact sequence match wins;
+                        failing that, the node inherits the cluster of the entity it belongs to.
+                        A person whose sequences were split over several prior clusters is
+                        attributed to the largest of them (ties broken by cluster ID).
+                    '''
+                    if node_id in sequence_clusters:
+                        return sequence_clusters[node_id]
+                    by_cluster = entity_clusters.get (identity_of (node_id))
+                    if by_cluster:
+                        return sorted (by_cluster.items(), key = lambda kv: (-kv[1], kv[0]))[0][0]
+                    return None
+
+
                 for e in prior_network_edges:
                     try:
-                        node_pair = [prior_network_nodes[e['source']]["id"],prior_network_nodes[e['target']]["id"]]
+                        node_pair = [identity_of (prior_network_nodes[e['source']]["id"]),identity_of (prior_network_nodes[e['target']]["id"])]
                         for i, n in enumerate (node_pair):
                             if n not in existing_edges:
                                 existing_edges[n] = set ()
@@ -186,9 +217,11 @@ def make_hiv_network():
                 # check if any of the old nodes got deleted
                 
                 new_node_ids = set ()
+                new_sequence_ids = set ()
 
                 for n in network.nodes:
-                    new_node_ids.add (n.id)
+                    new_node_ids.add (identity_of (n.id))
+                    new_sequence_ids.add (n.id)
                     if not n.cluster_id in new_cluster_sizes:
                         new_cluster_sizes[n.cluster_id] = 1
                     else:
@@ -197,18 +230,25 @@ def make_hiv_network():
                     if not n.cluster_id in cluster_map:
                         cluster_map[n.cluster_id] = set ()
 
-                    if n.id in existing_nodes:
-                        cluster_map[n.cluster_id].add (existing_nodes[n.id])
+                    prior_cluster = prior_cluster_of (n.id)
+                    if prior_cluster is not None:
+                        cluster_map[n.cluster_id].add (prior_cluster)
                     else:
                         cluster_map[n.cluster_id].add (None) # tag for a node not in previous clusters
 
                 removed_nodes = old_node_ids - new_node_ids
-                
+
                 if len(removed_nodes):
                     ensure_key (network_info, "Notes",[])
                     network_info["Notes"].append ("Removed %d nodes from the previous network" % len(removed_nodes))
-                    print ("[WARNING] %s, %s" % (network_info["Notes"][-1], ", ".join (list(removed_nodes))), file = sys.stderr)
-                    
+                    print ("[WARNING] %s, %s" % (network_info["Notes"][-1], ", ".join (sorted (removed_nodes))), file = sys.stderr)
+
+                # sequences that are gone while the person they came from is still in the network;
+                # these are re-sequencing events, not network growth or attrition
+                replaced_sequences = set ([s for s in old_sequence_ids - new_sequence_ids if identity_of (s) not in removed_nodes])
+                if len (replaced_sequences) and not settings().quiet:
+                    print ("[INFO] %d sequences were replaced for entities that remain in the network, %s" % (len (replaced_sequences), ", ".join (sorted (replaced_sequences))), file = sys.stderr)
+
                 mapped_to_existing_clusters = set ()
                 used_existing_clusters = set ()
 
@@ -372,14 +412,14 @@ def make_hiv_network():
                                         if nid in cluster_remap:
                                             del cluster_remap[nid]
                                         for n in new_clusters[nid]:
-                                            if n.id in old_node_ids:
+                                            if identity_of (n.id) in old_node_ids:
                                                 n.add_attribute ("moved_clusters")
                                                 
                                 for nid in leftovers:
                                     if nid in cluster_remap:
                                         del cluster_remap[nid]
                                     for n in new_clusters[nid]:
-                                        if n.id in old_node_ids:
+                                        if identity_of (n.id) in old_node_ids:
                                             n.add_attribute ("moved_clusters")
                                 
                             else:
@@ -387,7 +427,7 @@ def make_hiv_network():
                                     if nid in cluster_remap:
                                         del cluster_remap[nid]
                                     for n in new_clusters[nid]:
-                                        if n.id in old_node_ids:
+                                        if identity_of (n.id) in old_node_ids:
                                             n.add_attribute ("moved_clusters")
                                         
                             
@@ -402,12 +442,13 @@ def make_hiv_network():
         
                 
                 for n in network.nodes:
-                    if not n.id in existing_nodes:
+                    prior_cluster = prior_cluster_of (n.id)
+                    if prior_cluster is None:
                         n.add_attribute ("new_node")
-                        node_to_prior_cluster[n.id] = None
                     else:
                         n.remove_attribute ("new_node")
-                        
+                    node_to_prior_cluster[n.id] = prior_cluster
+
                     n.remove_attribute ("new_cluster")
 
                     if n.cluster_id in cluster_remap:
@@ -447,15 +488,17 @@ def make_hiv_network():
                 for e in network.edges:
                     p1p2 = False
                     p2p1 = False
-                    if e.p1.id in existing_edges:
-                        if not e.p2.id in existing_edges[e.p1.id]:
+                    p1 = identity_of (e.p1.id)
+                    p2 = identity_of (e.p2.id)
+                    if p1 in existing_edges:
+                        if not p2 in existing_edges[p1]:
                             e.update_attributes ("added-to-prior")
-                        else:  
+                        else:
                             p1p2 = True
-                    if e.p2.id in existing_edges:
-                        if not e.p1.id in existing_edges[e.p2.id]:
+                    if p2 in existing_edges:
+                        if not p1 in existing_edges[p2]:
                             e.update_attributes ("added-to-prior")
-                        else:  
+                        else:
                             p2p1 = True
                             
                     if p1p2 != p2p1: 
@@ -529,7 +572,7 @@ def make_hiv_network():
                         subscluster_id = id.split (".")[1]
                         ensure_key (prior_network_subclusters_by_id, cluster_id, {})
                         ensure_key (prior_network_subclusters_by_id[cluster_id], distance, {})
-                        prior_network_subclusters_by_id[cluster_id][distance][subscluster_id] = frozenset ([prior_network_nodes[k]["id"] for k in members])
+                        prior_network_subclusters_by_id[cluster_id][distance][subscluster_id] = frozenset ([identity_of (prior_network_nodes[k]["id"]) for k in members])
             else:
                 prior_network_subclusters_by_id = None       
                    
@@ -554,7 +597,7 @@ def make_hiv_network():
                     if prior_network_subclusters_by_id and cstr in prior_network_subclusters_by_id and tstr in prior_network_subclusters_by_id[cstr]:
                         start_id = 1 + len (prior_network_subclusters_by_id[cstr][tstr])                    
                         for sub_id,subcluster_nodes in subclusters.items():
-                            my_nodes = frozenset ([n.id for n in subcluster_nodes])
+                            my_nodes = frozenset ([identity_of (n.id) for n in subcluster_nodes])
                             for pid, previous_set in prior_network_subclusters_by_id[cstr][tstr].items():
                                 if not my_nodes.isdisjoint (previous_set):
                                     ensure_key (matched_subclusters, sub_id, [])

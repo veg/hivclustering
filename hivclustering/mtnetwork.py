@@ -18,7 +18,25 @@ from functools import partial, lru_cache, cmp_to_key
 import collections
 
 __all__ = ['edge', 'patient', 'transmission_network', 'parseAEH', 'parseLANL',
-           'parsePlain', 'parseRegExp', 'describe_vector', 'tm_to_datetime', 'datetime_to_tm', ]
+           'parsePlain', 'parseRegExp', 'describe_vector', 'tm_to_datetime', 'datetime_to_tm',
+           'entity_id_from_string', 'ENTITY_ID_SEPARATOR', ]
+
+ENTITY_ID_SEPARATOR = '|'
+'''
+    Sequences that belong to the same entity (person) are named
+    ENTITY<separator>SEQUENCE..., e.g. "PID001|SPECIMEN17~2~PR_RT~1212".
+'''
+
+
+def entity_id_from_string(node_id, separator=ENTITY_ID_SEPARATOR):
+    '''
+        Map a sequence (node) ID to the ID of the entity (person) that it belongs to,
+        i.e. everything up to the first separator; IDs without a separator are their own
+        entity. This mirrors HIVTxNetwork.entity_id_from_string in hivtrace-viz, so that
+        both ends of the pipeline agree on what constitutes an individual.
+    '''
+    at = node_id.find(separator)
+    return node_id[:at] if at >= 0 else node_id
 #-------------------------------------------------------------------------------
 
 def parseAEH(str, position = None):

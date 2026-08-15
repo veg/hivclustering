@@ -1,4 +1,4 @@
-__version__ = '1.9.6'
+__version__ = '1.9.10'
 
 from .mtnetwork import *
 
